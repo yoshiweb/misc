@@ -46,9 +46,6 @@ input[type="text"] {
 
 /* Style the RSS feed columns */
 #rss-feed-columns {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
 }
 
 /* Style individual RSS feed column */
@@ -57,7 +54,6 @@ input[type="text"] {
   padding: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
   width: 100%;
-  max-width: 23rem;
   margin-bottom: 2rem;
 }
 
@@ -131,4 +127,13 @@ input[type="text"] {
 .buttons {
   display: flex;
   gap: 0.5rem;
+}
+
+
+.masonry {
+  display: grid;
+  grid-gap: 1rem;
+  gap: 1rem;
+  grid-template-columns: repeat( auto-fill, minmax( 250px, 1fr ) );
+  grid-auto-rows: 0; /* 小さな値を指定 */
 }

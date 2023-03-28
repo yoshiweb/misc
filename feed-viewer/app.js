@@ -44,9 +44,17 @@ async function fetchRssFeed(url) {
 // RSSフィードのアイテムをカラムに表示する
 function displayFeed(url, feedTitle, items) {
     const columnsContainer = document.getElementById("rss-feed-columns");
+    columnsContainer.classList.add("masonry");
+
+    const columnItem = document.createElement("div");
+    columnItem.classList.add("masonry-item");
+
 
     const column = document.createElement("div");
     column.classList.add("rss-feed-column");
+    column.classList.add("masonry-content");
+
+
 
     const titleBar = document.createElement("div");
     titleBar.classList.add("title-bar");
@@ -84,8 +92,8 @@ function displayFeed(url, feedTitle, items) {
         `;
         column.appendChild(entry);
     });
-
-    columnsContainer.appendChild(column);
+    columnItem.appendChild(column);
+    columnsContainer.appendChild(columnItem);
 }
 
 // URLと対応するカラムを削除する
@@ -98,3 +106,54 @@ function removeRssFeed(url, column) {
         column.remove();
     }
 }
+
+
+
+
+//グリッドアイテムの grid-row-end プロパティを更新（設定）する関数
+const resizeGridItem = (item) => {
+
+    //グリッドコンテナを取得
+    const grid = document.getElementsByClassName('masonry')[0];
+
+    //グリッドコンテナの grid-auto-rows の値を取得
+    const rowHeight = parseInt(window.getComputedStyle(grid).getPropertyValue('grid-auto-rows'));
+    //グリッドコンテナの grid-row-gap の値を取得
+    const rowGap = parseInt(window.getComputedStyle(grid).getPropertyValue('grid-row-gap'));
+
+
+
+    //grid-row-end の span に指定する値を算出
+    const rowSpan = Math.ceil((item.querySelector('.masonry-content').getBoundingClientRect().height + rowGap) / (rowHeight + rowGap));
+    //グリッドアイテムの grid-row-end プロパティを更新（設定）
+    item.style.gridRowEnd = 'span ' + rowSpan;
+}
+
+//全てのアイテムの grid-row-end プロパティを更新する関数
+const resizeAllGridItems = () => {
+
+    //全てのグリッドアイテムを取得
+    const allItems = document.getElementsByClassName('masonry-item');
+
+
+
+    for (let i = 0; i < allItems.length; i++) {
+        resizeGridItem(allItems[i]);
+    }
+}
+
+//リサイズ時に全てのアイテムの grid-row-end プロパティを更新
+let timer = false;
+window.addEventListener('resize', () => {
+    if (timer !== false) {
+        clearTimeout(timer);
+    }
+    timer = setTimeout(function () {
+        resizeAllGridItems();
+    }, 200);
+});
+
+//ロード時に全てのアイテムの grid-row-end プロパティを設定
+window.addEventListener('load', () => {
+    resizeAllGridItems();
+}); 
