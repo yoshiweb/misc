@@ -1,39 +1,60 @@
 document.getElementById("fetch-rss").addEventListener("click", function () {
     const url = document.getElementById("rss-url").value;
-    localStorage.setItem("rss-url", url);
-    fetchRssFeed(url);
+    addRssFeed(url);
 });
 
-// ページが読み込まれたときにローカルストレージからURLを取得し、存在する場合はRSSフィードを取得する
 document.addEventListener("DOMContentLoaded", function () {
-    const storedUrl = localStorage.getItem("rss-url");
-    if (storedUrl) {
-        document.getElementById("rss-url").value = storedUrl;
-        fetchRssFeed(storedUrl);
+    const storedUrls = getStoredUrls();
+    if (storedUrls) {
+        storedUrls.forEach(url => {
+            fetchRssFeed(url);
+        });
     }
 });
+
+function getStoredUrls() {
+    return JSON.parse(localStorage.getItem("rss-urls")) || [];
+}
+
+function addRssFeed(url) {
+    const storedUrls = getStoredUrls();
+    if (!storedUrls.includes(url)) {
+        storedUrls.push(url);
+        localStorage.setItem("rss-urls", JSON.stringify(storedUrls));
+        fetchRssFeed(url);
+    }
+}
 
 async function fetchRssFeed(url) {
     const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
     const data = await response.json();
 
     if (data.status === "ok") {
-        displayFeed(data.items);
+        displayFeed(url, data.items);
     } else {
         alert("Error fetching RSS feed");
     }
 }
 
-function displayFeed(items) {
-    const content = document.getElementById("rss-feed-content");
-    content.innerHTML = "";
+function displayFeed(url, items) {
+    const columnsContainer = document.getElementById("rss-feed-columns");
+
+    const column = document.createElement("div");
+    column.classList.add("rss-feed-column");
+
+    const title = document.createElement("h2");
+    title.innerText = url;
+    column.appendChild(title);
 
     items.forEach(item => {
         const entry = document.createElement("div");
         entry.innerHTML = `
-            <h2><a href="${item.link}" target="_blank">${item.title}</a></h2>
+            <h3><a href="${item.link}" target="_blank">${item.title}</a></h3>
             <p>${item.description}</p>
         `;
-        content.appendChild(entry);
+        column.appendChild(entry);
     });
+
+    columnsContainer.appendChild(column);
 }
+
