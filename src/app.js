@@ -1,8 +1,10 @@
+// 新しいRSSフィードを追加するイベントリスナーを設定
 document.getElementById("fetch-rss").addEventListener("click", function () {
     const url = document.getElementById("rss-url").value;
     addRssFeed(url);
 });
 
+// ページが読み込まれたときにローカルストレージからURLを取得し、表示する
 document.addEventListener("DOMContentLoaded", function () {
     const storedUrls = getStoredUrls();
     if (storedUrls) {
@@ -12,10 +14,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 
+// ローカルストレージからURLを取得する
 function getStoredUrls() {
     return JSON.parse(localStorage.getItem("rss-urls")) || [];
 }
 
+// URLをローカルストレージに追加し、RSSフィードを取得する
 function addRssFeed(url) {
     const storedUrls = getStoredUrls();
     if (!storedUrls.includes(url)) {
@@ -25,6 +29,7 @@ function addRssFeed(url) {
     }
 }
 
+// URLからRSSフィードを取得し、結果を表示する
 async function fetchRssFeed(url) {
     const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
     const data = await response.json();
@@ -36,6 +41,7 @@ async function fetchRssFeed(url) {
     }
 }
 
+// RSSフィードのアイテムをカラムに表示する
 function displayFeed(url, items) {
     const columnsContainer = document.getElementById("rss-feed-columns");
 
@@ -46,6 +52,15 @@ function displayFeed(url, items) {
     title.innerText = url;
     column.appendChild(title);
 
+    // 削除ボタンを追加し、クリックイベントを設定
+    const deleteButton = document.createElement("button");
+    deleteButton.innerText = "Delete";
+    deleteButton.addEventListener("click", () => {
+        removeRssFeed(url, column);
+    });
+    column.appendChild(deleteButton);
+
+    // 各フィードアイテムをカラムに追加
     items.forEach(item => {
         const entry = document.createElement("div");
         entry.innerHTML = `
@@ -58,3 +73,13 @@ function displayFeed(url, items) {
     columnsContainer.appendChild(column);
 }
 
+// URLと対応するカラムを削除する
+function removeRssFeed(url, column) {
+    const storedUrls = getStoredUrls();
+    const index = storedUrls.indexOf(url);
+    if (index > -1) {
+        storedUrls.splice(index, 1);
+        localStorage.setItem("rss-urls", JSON.stringify(storedUrls));
+        column.remove();
+    }
+}

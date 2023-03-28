@@ -33,6 +33,8 @@ button {
     margin-top: 20px;
 }
 
+/* ... 既存のスタイル ... */
+
 #rss-feed-columns {
     display: flex;
     flex-wrap: wrap;
