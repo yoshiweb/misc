@@ -36,6 +36,7 @@ async function fetchRssFeed(url) {
 
     if (data.status === "ok") {
         displayFeed(url, data.feed.title, data.items);
+        resizeAllGridItems();
     } else {
         alert("Error fetching RSS feed");
     }
@@ -69,16 +70,20 @@ function displayFeed(url, feedTitle, items) {
     titleBar.appendChild(buttons);
 
     const rssButton = document.createElement("button");
-    rssButton.innerText = "RSS";
+    rssButton.innerText = "rss_feed";
     rssButton.classList.add("rss-button");
+    rssButton.classList.add("material-symbols-outlined");
+
     rssButton.addEventListener("click", () => {
         window.open(url, '_blank');
     });
     buttons.appendChild(rssButton);
 
     const deleteButton = document.createElement("button");
-    deleteButton.innerText = "Delete";
+    deleteButton.innerText = "delete";
     deleteButton.classList.add("delete-button");
+    deleteButton.classList.add("material-symbols-outlined");
+
     deleteButton.addEventListener("click", () => {
         removeRssFeed(url, column);
     });
@@ -105,6 +110,7 @@ function removeRssFeed(url, column) {
         localStorage.setItem("rss-urls", JSON.stringify(storedUrls));
         column.remove();
     }
+    resizeAllGridItems();
 }
 
 
