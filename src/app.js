@@ -1,6 +1,16 @@
 document.getElementById("fetch-rss").addEventListener("click", function () {
     const url = document.getElementById("rss-url").value;
+    localStorage.setItem("rss-url", url);
     fetchRssFeed(url);
+});
+
+// ページが読み込まれたときにローカルストレージからURLを取得し、存在する場合はRSSフィードを取得する
+document.addEventListener("DOMContentLoaded", function () {
+    const storedUrl = localStorage.getItem("rss-url");
+    if (storedUrl) {
+        document.getElementById("rss-url").value = storedUrl;
+        fetchRssFeed(storedUrl);
+    }
 });
 
 async function fetchRssFeed(url) {
