@@ -35,37 +35,52 @@ async function fetchRssFeed(url) {
     const data = await response.json();
 
     if (data.status === "ok") {
-        displayFeed(url, data.items);
+        displayFeed(url, data.feed.title, data.items);
     } else {
         alert("Error fetching RSS feed");
     }
 }
 
 // RSSフィードのアイテムをカラムに表示する
-function displayFeed(url, items) {
+function displayFeed(url, feedTitle, items) {
     const columnsContainer = document.getElementById("rss-feed-columns");
 
     const column = document.createElement("div");
     column.classList.add("rss-feed-column");
 
-    const title = document.createElement("h2");
-    title.innerText = url;
-    column.appendChild(title);
+    const titleBar = document.createElement("div");
+    titleBar.classList.add("title-bar");
+    column.appendChild(titleBar);
 
-    // 削除ボタンを追加し、クリックイベントを設定
+    const title = document.createElement("h2");
+    title.innerText = feedTitle;
+    titleBar.appendChild(title);
+
+    const buttons = document.createElement("div");
+    buttons.classList.add("buttons");
+    titleBar.appendChild(buttons);
+
+    const rssButton = document.createElement("button");
+    rssButton.innerText = "RSS";
+    rssButton.classList.add("rss-button");
+    rssButton.addEventListener("click", () => {
+        window.open(url, '_blank');
+    });
+    buttons.appendChild(rssButton);
+
     const deleteButton = document.createElement("button");
     deleteButton.innerText = "Delete";
+    deleteButton.classList.add("delete-button");
     deleteButton.addEventListener("click", () => {
         removeRssFeed(url, column);
     });
-    column.appendChild(deleteButton);
+    buttons.appendChild(deleteButton);
 
     // 各フィードアイテムをカラムに追加
     items.forEach(item => {
         const entry = document.createElement("div");
         entry.innerHTML = `
-            <h3><a href="${item.link}" target="_blank">${item.title}</a></h3>
-            <p>${item.description}</p>
+            <h4><a href="${item.link}" target="_blank">${item.title}</a></h4>
         `;
         column.appendChild(entry);
     });

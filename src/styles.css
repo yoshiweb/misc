@@ -1,52 +1,134 @@
+/* Reset some default browser styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Set a default font for the app */
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
+  font-size: 12px;
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  background-color: #f4f4f4;
 }
 
+/* Style the container */
 .container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
 }
 
-h1 {
-    text-align: center;
-    margin-bottom: 20px;
+/* Style the form */
+form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2rem;
 }
 
-input {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
+/* Style the input field */
+input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
 }
 
-button {
-    width: 100%;
-    padding: 10px;
-    background-color: blue;
-    color: white;
-    cursor: pointer;
+/* Style the submit button */
+#fetch-rss {
+  background-color: #333;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  margin-bottom: 10px;
+  cursor: pointer;
 }
 
-#rss-feed-content {
-    margin-top: 20px;
-}
-
-/* ... 既存のスタイル ... */
-
+/* Style the RSS feed columns */
 #rss-feed-columns {
-    display: flex;
-    flex-wrap: wrap;
-    margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
 }
 
+/* Style individual RSS feed column */
 .rss-feed-column {
-    flex: 1;
-    min-width: 300px;
-    margin: 10px;
-    padding: 20px;
-    background-color: #f5f5f5;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  width: 100%;
+  max-width: 23rem;
+  margin-bottom: 2rem;
+}
+
+/* Style the title and URL */
+.rss-feed-column h2,
+.rss-feed-column h3 {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Style the delete button */
+.rss-feed-column button {
+  background-color: #f44336;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  display: inline-block;
+}
+
+/* Style the individual feed items */
+.rss-feed-column div {
+  /* margin-bottom: 1.5rem; */
+}
+
+/* Style the feed item title */
+.rss-feed-column h4 {
+  font-weight: normal;
+  margin-bottom: 0.5rem;
+}
+
+/* Style the feed item link */
+.rss-feed-column a {
+  color: #333;
+  text-decoration: none;
+}
+
+/* Style the feed item link on hover */
+.rss-feed-column a:hover {
+  color: #1a73e8;
+}
+
+
+.title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.delete-button {
+  background-color: #f44336;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.rss-button {
+  background-color: #1a73e8;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  display: inline-block;
+}
+
+
+.buttons {
+  display: flex;
+  gap: 0.5rem;
 }
