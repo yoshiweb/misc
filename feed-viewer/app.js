@@ -99,6 +99,7 @@ function displayFeed(url, feedTitle, items) {
     });
     columnItem.appendChild(column);
     columnsContainer.appendChild(columnItem);
+    resizeGridItem(columnItem);
 }
 
 // URLと対応するカラムを削除する
@@ -112,9 +113,6 @@ function removeRssFeed(url, column) {
     }
     resizeAllGridItems();
 }
-
-
-
 
 //グリッドアイテムの grid-row-end プロパティを更新（設定）する関数
 const resizeGridItem = (item) => {
@@ -158,8 +156,3 @@ window.addEventListener('resize', () => {
         resizeAllGridItems();
     }, 200);
 });
-
-//ロード時に全てのアイテムの grid-row-end プロパティを設定
-window.addEventListener('load', () => {
-    resizeAllGridItems();
-}); 
