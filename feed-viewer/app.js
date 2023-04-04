@@ -2,13 +2,17 @@
     'use strict'
 
 
-
-    // ローカルストレージからURLを取得する
+    /**
+     * ローカルストレージからURLを取得する
+     */
     function getStoredUrls() {
         return JSON.parse(localStorage.getItem("rss-urls")) || [];
     }
 
-    // URLをローカルストレージに追加し、RSSフィードを取得する
+
+    /**
+     * URLをローカルストレージに追加し、RSSフィードを取得する
+     */
     function addRssFeed(url) {
         const storedUrls = getStoredUrls();
         if (!storedUrls.includes(url)) {
@@ -18,7 +22,10 @@
         }
     }
 
-    // URLからRSSフィードを取得し、結果を表示する
+
+    /**
+     * URLからRSSフィードを取得し、結果を表示する
+     */
     async function fetchRssFeed(url) {
         const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
         const data = await response.json();
@@ -31,7 +38,9 @@
         }
     }
 
-    // RSSフィードのアイテムをカラムに表示する
+    /**
+     * RSSフィードのアイテムをカラムに表示する
+     */
     function displayFeed(url, feed, items) {
         const columnsContainer = document.getElementById("rss-feed-columns");
         columnsContainer.classList.add("masonry");
@@ -111,7 +120,9 @@
         resizeGridItem(columnItem);
     }
 
-    // URLと対応するカラムを削除する
+    /**
+     * URLと対応するカラムを削除する
+     */
     function removeRssFeed(url, column) {
         const storedUrls = getStoredUrls();
         const index = storedUrls.indexOf(url);
