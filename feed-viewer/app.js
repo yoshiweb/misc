@@ -180,11 +180,12 @@
     });
 
     // ページが読み込まれたときにローカルストレージからURLを取得し、表示する
-    document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", async function () {
         const storedUrls = getStoredUrls();
         if (storedUrls) {
-            for (let i = 0; i < storedUrls.length; i++) {
-                fetchRssFeed(storedUrls[i]);
+            // 逆順に回す
+            for (let i = storedUrls.length - 1; i >= 0; i--) {
+                await fetchRssFeed(storedUrls[i]);
             }
         }
     });
