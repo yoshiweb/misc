@@ -107,6 +107,17 @@ function displayFeed(url, feed, items) {
     });
     columnItem.appendChild(column);
     columnsContainer.appendChild(columnItem);
+
+    // タイトルバーダブルクリック
+    titleBar.addEventListener('dblclick', function (event) {
+        if (event.target.tagName.toLowerCase() !== 'a') {
+            // 開閉
+            itemContents.style.display = itemContents.style.display === 'none' ? '' : 'none';
+            resizeGridItem(columnItem);
+        }
+    });
+
+    // 並び替え
     resizeGridItem(columnItem);
 }
 
