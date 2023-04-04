@@ -62,10 +62,7 @@ function displayFeed(url, feed, items) {
     column.appendChild(titleBar);
 
     const title = document.createElement("h2");
-    title.innerHTML = `
-            <a href="${feed.link}" target="_blank">${feed.title}</a>
-        `;
-
+    title.innerHTML = `<a href="${feed.link}" target="_blank">${feed.title}</a>`;
     titleBar.appendChild(title);
 
     const buttons = document.createElement("div");
@@ -92,13 +89,21 @@ function displayFeed(url, feed, items) {
     });
     buttons.appendChild(deleteButton);
 
+
+
+    const itemContents = document.createElement("div");
+    itemContents.classList.add("item-contents");
+    column.appendChild(itemContents);
+
+
+
     // 各フィードアイテムをカラムに追加
     items.forEach(item => {
         const entry = document.createElement("div");
         entry.innerHTML = `
             <h4><a href="${item.link}" target="_blank">${item.title}</a></h4>
         `;
-        column.appendChild(entry);
+        itemContents.appendChild(entry);
     });
     columnItem.appendChild(column);
     columnsContainer.appendChild(columnItem);
