@@ -56,7 +56,7 @@ function displayFeed(url, feed, items) {
     column.classList.add("masonry-content");
 
 
-
+    // タイトルバー
     const titleBar = document.createElement("div");
     titleBar.classList.add("title-bar");
     column.appendChild(titleBar);
@@ -65,10 +65,12 @@ function displayFeed(url, feed, items) {
     title.innerHTML = `<a href="${feed.link}" target="_blank" rel="noopener noreferrer">${feed.title}</a>`;
     titleBar.appendChild(title);
 
+    // タイトルバー ボタン
     const buttons = document.createElement("div");
     buttons.classList.add("buttons");
     titleBar.appendChild(buttons);
 
+    // RSSボタン
     const rssButton = document.createElement("button");
     rssButton.innerText = "rss_feed";
     rssButton.classList.add("rss-button");
@@ -79,6 +81,7 @@ function displayFeed(url, feed, items) {
     });
     buttons.appendChild(rssButton);
 
+    // 削除ボタン
     const deleteButton = document.createElement("button");
     deleteButton.innerText = "delete";
     deleteButton.classList.add("delete-button");
@@ -90,14 +93,12 @@ function displayFeed(url, feed, items) {
     buttons.appendChild(deleteButton);
 
 
-
+    // アイテムコンテンツ
     const itemContents = document.createElement("div");
     itemContents.classList.add("item-contents");
     column.appendChild(itemContents);
 
-
-
-    // 各フィードアイテムをカラムに追加
+    // 各フィードアイテムを追加
     items.forEach(item => {
         const entry = document.createElement("div");
         entry.innerHTML = `
