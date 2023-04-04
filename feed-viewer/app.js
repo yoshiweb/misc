@@ -27,14 +27,16 @@
      * URLからRSSフィードを取得し、結果を表示する
      */
     async function fetchRssFeed(url) {
-        const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
-        const data = await response.json();
+        if (url) {
+            const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
+            const data = await response.json();
 
-        if (data.status === "ok") {
-            displayFeed(url, data.feed, data.items);
-            resizeAllGridItems();
-        } else {
-            alert("Error fetching RSS feed");
+            if (data.status === "ok") {
+                displayFeed(url, data.feed, data.items);
+                resizeAllGridItems();
+            } else {
+                console.log("Error fetching RSS feed", url, data);
+            }
         }
     }
 
@@ -144,13 +146,13 @@
 
         //グリッドコンテナの grid-auto-rows の値を取得
         const rowHeight = parseInt(window.getComputedStyle(grid).getPropertyValue('grid-auto-rows'));
+
         //グリッドコンテナの grid-row-gap の値を取得
         const rowGap = parseInt(window.getComputedStyle(grid).getPropertyValue('grid-row-gap'));
 
-
-
         //grid-row-end の span に指定する値を算出
         const rowSpan = Math.ceil((item.querySelector('.masonry-content').getBoundingClientRect().height + rowGap) / (rowHeight + rowGap));
+
         //グリッドアイテムの grid-row-end プロパティを更新（設定）
         item.style.gridRowEnd = 'span ' + rowSpan;
     }
@@ -163,20 +165,19 @@
         //全てのグリッドアイテムを取得
         const allItems = document.getElementsByClassName('masonry-item');
 
-
-
         for (let i = 0; i < allItems.length; i++) {
             resizeGridItem(allItems[i]);
         }
     }
 
 
-
     // 新しいRSSフィードを追加するイベントリスナーを設定
     document.getElementById("fetch-rss").addEventListener("click", function () {
         const url = document.getElementById("rss-url").value;
-        addRssFeed(url);
-        document.getElementById("rss-url").value = '';
+        if (url) {
+            addRssFeed(url);
+            document.getElementById("rss-url").value = '';
+        }
     });
 
     // ページが読み込まれたときにローカルストレージからURLを取得し、表示する
