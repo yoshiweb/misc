@@ -172,6 +172,7 @@
     document.getElementById("fetch-rss").addEventListener("click", function () {
         const url = document.getElementById("rss-url").value;
         addRssFeed(url);
+        document.getElementById("rss-url").value = '';
     });
 
     // ページが読み込まれたときにローカルストレージからURLを取得し、表示する
