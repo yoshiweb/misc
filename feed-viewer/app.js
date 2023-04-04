@@ -61,6 +61,9 @@
         titleBar.classList.add("title-bar");
         column.appendChild(titleBar);
 
+        column.setAttribute('draggable', 'true');
+
+
         const title = document.createElement("h2");
         title.innerHTML = `<a href="${feed.link}" target="_blank" rel="noopener noreferrer">${feed.title}</a>`;
         titleBar.appendChild(title);
