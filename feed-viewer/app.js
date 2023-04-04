@@ -62,7 +62,7 @@ function displayFeed(url, feed, items) {
     column.appendChild(titleBar);
 
     const title = document.createElement("h2");
-    title.innerHTML = `<a href="${feed.link}" target="_blank">${feed.title}</a>`;
+    title.innerHTML = `<a href="${feed.link}" target="_blank" rel="noopener noreferrer">${feed.title}</a>`;
     titleBar.appendChild(title);
 
     const buttons = document.createElement("div");
@@ -101,7 +101,7 @@ function displayFeed(url, feed, items) {
     items.forEach(item => {
         const entry = document.createElement("div");
         entry.innerHTML = `
-            <h4><a href="${item.link}" target="_blank">${item.title}</a></h4>
+            <h4><a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a></h4>
         `;
         itemContents.appendChild(entry);
     });
