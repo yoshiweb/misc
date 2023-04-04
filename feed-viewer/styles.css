@@ -6,8 +6,8 @@
 }
 
 /* Set a default font for the app */
-body {
-  font-size: 12px;
+html, body {
+  font-size: 14px;
   font-family: Arial, sans-serif;
   line-height: 1.6;
   background-color: #f4f4f4;
@@ -79,7 +79,9 @@ input[type="text"] {
 
 /* Style the feed item title */
 .rss-feed-column h4 {
+  font-size: 0.9rem;
   font-weight: normal;
+  line-height: 1.2;
   margin-bottom: 0.5rem;
 }
 
