@@ -35,7 +35,7 @@ async function fetchRssFeed(url) {
     const data = await response.json();
 
     if (data.status === "ok") {
-        displayFeed(url, data.feed.title, data.items);
+        displayFeed(url, data.feed, data.items);
         resizeAllGridItems();
     } else {
         alert("Error fetching RSS feed");
@@ -43,7 +43,7 @@ async function fetchRssFeed(url) {
 }
 
 // RSSフィードのアイテムをカラムに表示する
-function displayFeed(url, feedTitle, items) {
+function displayFeed(url, feed, items) {
     const columnsContainer = document.getElementById("rss-feed-columns");
     columnsContainer.classList.add("masonry");
 
@@ -62,7 +62,10 @@ function displayFeed(url, feedTitle, items) {
     column.appendChild(titleBar);
 
     const title = document.createElement("h2");
-    title.innerText = feedTitle;
+    title.innerHTML = `
+            <a href="${feed.link}" target="_blank">${feed.title}</a>
+        `;
+
     titleBar.appendChild(title);
 
     const buttons = document.createElement("div");
