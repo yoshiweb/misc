@@ -1,21 +1,7 @@
 (async () => {
     'use strict'
 
-    // 新しいRSSフィードを追加するイベントリスナーを設定
-    document.getElementById("fetch-rss").addEventListener("click", function () {
-        const url = document.getElementById("rss-url").value;
-        addRssFeed(url);
-    });
 
-    // ページが読み込まれたときにローカルストレージからURLを取得し、表示する
-    document.addEventListener("DOMContentLoaded", function () {
-        const storedUrls = getStoredUrls();
-        if (storedUrls) {
-            for (let i = 0; i < storedUrls.length; i++) {
-                fetchRssFeed(storedUrls[i]);
-            }
-        }
-    });
 
     // ローカルストレージからURLを取得する
     function getStoredUrls() {
@@ -171,10 +157,21 @@
 
 
 
+    // 新しいRSSフィードを追加するイベントリスナーを設定
+    document.getElementById("fetch-rss").addEventListener("click", function () {
+        const url = document.getElementById("rss-url").value;
+        addRssFeed(url);
+    });
 
-
-
-
+    // ページが読み込まれたときにローカルストレージからURLを取得し、表示する
+    document.addEventListener("DOMContentLoaded", function () {
+        const storedUrls = getStoredUrls();
+        if (storedUrls) {
+            for (let i = 0; i < storedUrls.length; i++) {
+                fetchRssFeed(storedUrls[i]);
+            }
+        }
+    });
 
 
     //リサイズ時に全てのアイテムの grid-row-end プロパティを更新
