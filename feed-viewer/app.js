@@ -8,9 +8,9 @@ document.getElementById("fetch-rss").addEventListener("click", function () {
 document.addEventListener("DOMContentLoaded", function () {
     const storedUrls = getStoredUrls();
     if (storedUrls) {
-        storedUrls.forEach(url => {
-            fetchRssFeed(url);
-        });
+        for (let i = 0; i < storedUrls.length; i++) {
+            fetchRssFeed(storedUrls[i]);
+        }
     }
 });
 
