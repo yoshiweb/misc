@@ -86,7 +86,7 @@
         deleteButton.classList.add("material-symbols-outlined");
 
         deleteButton.addEventListener("click", () => {
-            removeRssFeed(url, column);
+            removeRssFeed(url, columnItem);
         });
         buttons.appendChild(deleteButton);
 
