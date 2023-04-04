@@ -134,8 +134,10 @@
         resizeAllGridItems();
     }
 
-    //グリッドアイテムの grid-row-end プロパティを更新（設定）する関数
-    const resizeGridItem = (item) => {
+    /**
+     * グリッドアイテムの grid-row-end プロパティを更新（設定）する
+     */
+    function resizeGridItem(item) {
 
         //グリッドコンテナを取得
         const grid = document.getElementsByClassName('masonry')[0];
@@ -153,8 +155,10 @@
         item.style.gridRowEnd = 'span ' + rowSpan;
     }
 
-    //全てのアイテムの grid-row-end プロパティを更新する関数
-    const resizeAllGridItems = () => {
+    /**
+     * 全てのアイテムの grid-row-end プロパティを更新する
+     */
+    function resizeAllGridItems() {
 
         //全てのグリッドアイテムを取得
         const allItems = document.getElementsByClassName('masonry-item');
