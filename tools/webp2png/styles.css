@@ -1,0 +1,19 @@
+body {
+  text-align: center;
+}
+#container {
+  margin: 0 auto;
+  width: 512px;
+}
+#dropArea {
+  border: 2px dashed #cccccc;
+  width: 100%;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+#outputImage {
+  width: 100%;
+}

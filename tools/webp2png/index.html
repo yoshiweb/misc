@@ -4,84 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WebP to PNG Converter</title>
-<style>
-  body {
-    text-align: center;
-  }
-  #container {
-    margin: 0 auto;
-    width: 512px;
-  }
-  #dropArea {
-    border: 2px dashed #cccccc;
-    width: 100%;
-    height: 200px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-  }
-  #inputImage {
-    display: none;
-  }
-  #outputImage {
-    display: none;
-    width: 100%;
-  }
-</style>
+<link rel="stylesheet" href="styles.css"> <!-- External CSS file -->
 </head>
 <body>
 
-<div id="container">  <!-- Wrap all content in a container -->
-  <div id="dropArea" ondragover="preventDefault(event)" ondrop="handleDrop(event)" onclick="document.getElementById('inputImage').click()">ここにWebP画像をドラッグ&ドロップするとPNG画像へ変換します</div>
-  <input type="file" id="inputImage" accept="image/webp" onchange="handleFileSelect(event)" style="display:none;"/>
+<div id="container">
+  <div id="dropArea">ここにWebP画像をドラッグ&ドロップするとPNG画像へ変換します</div>
+  <input type="file" id="inputImage" accept="image/webp" style="display:none;"/>
   <canvas id="canvas" style="display:none;"></canvas>
-  <img id="outputImage" alt="Converted Image"/>
+  <img id="outputImage" alt="Converted Image" style="display:none;"/>
 </div>
 
-<script>
-  function preventDefault(event) {
-    event.preventDefault();
-  }
-
-  function handleDrop(event) {
-    event.preventDefault();
-    const inputImage = event.dataTransfer.files[0];
-    processImage(inputImage);
-  }
-
-  function handleFileSelect(event) {
-    const inputImage = event.target.files[0];
-    processImage(inputImage);
-  }
-
-  function processImage(inputImage) {
-    if(inputImage && inputImage.type === 'image/webp') {
-      convertToPNG(inputImage);
-    } else {
-      alert('Please select a WebP image.');
-    }
-  }
-
-  function convertToPNG(inputImage) {
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    const img = new Image();
-    img.src = URL.createObjectURL(inputImage);
-    
-    img.onload = function() {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-      
-      const pngURL = canvas.toDataURL('image/png');
-      const outputImage = document.getElementById('outputImage');
-      outputImage.src = pngURL;
-      outputImage.style.display = 'block';  /* Show the image element once the image is loaded */
-    };
-  }
-</script>
+<script src="script.js"></script> <!-- External JavaScript file -->
 
 </body>
 </html>
