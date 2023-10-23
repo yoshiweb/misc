@@ -5,9 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WebP to PNG Converter</title>
 <style>
+  body {
+    text-align: center;
+  }
+  #container {
+    margin: 0 auto;
+    width: 512px;
+  }
   #dropArea {
     border: 2px dashed #cccccc;
-    width: 300px;
+    width: 100%;
     height: 200px;
     display: flex;
     align-items: center;
@@ -18,18 +25,19 @@
     display: none;
   }
   #outputImage {
-    display: none;  /* Hide the image element initially */
+    display: none;
+    width: 100%;
   }
 </style>
 </head>
 <body>
 
-<div id="dropArea" ondragover="preventDefault(event)" ondrop="handleDrop(event)" onclick="document.getElementById('inputImage').click()">ドロップエリア</div>
-<input type="file" id="inputImage" accept="image/webp" onchange="handleFileSelect(event)" style="display:none;"/>
-
-<canvas id="canvas" style="display:none;"></canvas>
-
-<img id="outputImage" alt="Converted Image"/>
+<div id="container">  <!-- Wrap all content in a container -->
+  <div id="dropArea" ondragover="preventDefault(event)" ondrop="handleDrop(event)" onclick="document.getElementById('inputImage').click()">ここにWebP画像をドラッグ&ドロップするとPNG画像へ変換します</div>
+  <input type="file" id="inputImage" accept="image/webp" onchange="handleFileSelect(event)" style="display:none;"/>
+  <canvas id="canvas" style="display:none;"></canvas>
+  <img id="outputImage" alt="Converted Image"/>
+</div>
 
 <script>
   function preventDefault(event) {
