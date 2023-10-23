@@ -17,6 +17,9 @@
   #inputImage {
     display: none;
   }
+  #outputImage {
+    display: none;  /* Hide the image element initially */
+  }
 </style>
 </head>
 <body>
@@ -67,6 +70,7 @@
       const pngURL = canvas.toDataURL('image/png');
       const outputImage = document.getElementById('outputImage');
       outputImage.src = pngURL;
+      outputImage.style.display = 'block';  /* Show the image element once the image is loaded */
     };
   }
 </script>
