@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PNG/JPG to WebP Converter</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="container">
+  <div id="dropArea">ここにPNG/JPG画像をドラッグ&ドロップするとWebP画像へ変換します</div>
+  <input type="file" id="inputImage" accept="image/png, image/jpeg" style="display:none;"/>
+  <canvas id="canvas" style="display:none;"></canvas>
+  <img id="outputImage" alt="Converted Image" style="display:none;"/>
+  <a id="downloadLink" style="display:none;">Download Converted Image</a>
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
