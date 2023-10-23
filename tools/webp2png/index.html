@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebP to PNG Converter</title>
+</head>
+<body>
+
+<input type="file" id="inputImage" accept="image/webp" onchange="convertToPNG()"/>
+
+<canvas id="canvas" style="display:none;"></canvas>
+
+<img id="outputImage" alt="Converted Image"/>
+
+<script>
+  function convertToPNG() {
+    const inputImage = document.getElementById('inputImage');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    const img = new Image();
+    img.src = URL.createObjectURL(inputImage.files[0]);
+    
+    img.onload = function() {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      
+      const pngURL = canvas.toDataURL('image/png');
+      const outputImage = document.getElementById('outputImage');
+      outputImage.src = pngURL;
+    };
+  }
+</script>
+
+</body>
+</html>
