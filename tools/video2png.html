@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>動画サムネイルジェネレーター</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- ZIPファイル生成のためのJSZipライブラリ -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        /* カスタムスタイル */
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+        }
+        /* サムネイルのホバーエフェクト */
+        .thumbnail-img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">動画サムネイルジェネレーター</h1>
+            <p class="text-gray-600 mt-2">ローカル動画から指定した間隔でサムネイルを生成し、ZIPで一括ダウンロードできます。</p>
+        </header>
+
+        <main class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+            <!-- 1. ファイル選択エリア -->
+            <div class="mb-6">
+                <label for="fileInput" class="block text-lg font-medium text-gray-700 mb-2">1. 動画ファイルを選択</label>
+                <input type="file" id="fileInput" accept="video/*" class="block w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-full file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-blue-50 file:text-blue-700
+                    hover:file:bg-blue-100
+                "/>
+            </div>
+
+            <!-- 動画プレーヤーエリア -->
+            <div id="videoContainer" class="hidden mb-6">
+                <video id="videoPlayer" controls class="w-full rounded-lg shadow-md bg-black"></video>
+            </div>
+
+            <!-- 2. 間隔指定エリア -->
+            <div id="intervalContainer" class="hidden mb-6">
+                 <label for="intervalInput" class="block text-lg font-medium text-gray-700 mb-2">2. キャプチャー間隔（秒）</label>
+                 <input type="number" id="intervalInput" value="10" min="1" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <!-- 3. 操作ボタンとステータス表示 -->
+            <div class="text-center mb-6 space-y-4 sm:space-y-0 sm:space-x-4">
+                <button id="captureButton" disabled class="bg-blue-600 text-white font-bold py-3 px-8 rounded-full hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300 shadow-md hover:shadow-lg">
+                    画像に変換
+                </button>
+                <button id="downloadButton" class="hidden bg-green-600 text-white font-bold py-3 px-8 rounded-full hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300 shadow-md hover:shadow-lg">
+                    ZIPでダウンロード
+                </button>
+                <p id="status" class="mt-4 text-gray-600 h-6"></p>
+            </div>
+
+            <!-- サムネイル表示エリア -->
+            <div id="thumbnail-container-wrapper" class="hidden">
+                <h2 class="text-2xl font-bold border-b pb-2 mb-4">生成されたサムネイル</h2>
+                <div id="thumbnail-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <!-- サムネイルがここに追加されます -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const videoContainer = document.getElementById('videoContainer');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const intervalContainer = document.getElementById('intervalContainer');
+        const intervalInput = document.getElementById('intervalInput');
+        const captureButton = document.getElementById('captureButton');
+        const downloadButton = document.getElementById('downloadButton');
+        const status = document.getElementById('status');
+        const thumbnailContainerWrapper = document.getElementById('thumbnail-container-wrapper');
+        const thumbnailContainer = document.getElementById('thumbnail-container');
+
+        // サムネイルのData URLを保存する配列
+        let generatedThumbnails = [];
+
+        // 1. ファイルが選択されたときの処理
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                // UIリセット
+                thumbnailContainer.innerHTML = '';
+                thumbnailContainerWrapper.classList.add('hidden');
+                downloadButton.classList.add('hidden');
+                generatedThumbnails = [];
+                status.textContent = '';
+                
+                const fileURL = URL.createObjectURL(file);
+                videoPlayer.src = fileURL;
+                
+                videoPlayer.onloadedmetadata = () => {
+                    videoContainer.classList.remove('hidden');
+                    intervalContainer.classList.remove('hidden');
+                    captureButton.disabled = false;
+                };
+            }
+        });
+
+        // 2. 「画像に変換」ボタンが押されたときの処理
+        captureButton.addEventListener('click', async () => {
+            if (!videoPlayer.src || videoPlayer.duration === Infinity) {
+                status.textContent = '動画が正しく読み込まれていません。';
+                return;
+            }
+
+            // UI設定
+            captureButton.disabled = true;
+            downloadButton.classList.add('hidden');
+            status.textContent = 'サムネイルを生成中です...';
+            thumbnailContainer.innerHTML = '';
+            thumbnailContainerWrapper.classList.remove('hidden');
+            generatedThumbnails = [];
+
+            const duration = videoPlayer.duration;
+            const interval = parseInt(intervalInput.value, 10) || 10;
+
+            try {
+                // 指定された間隔でループ
+                for (let time = interval; time < duration; time += interval) {
+                    status.textContent = `${time.toFixed(0)}秒地点の画像をキャプチャー中...`;
+                    const thumbnailUrl = await captureFrameAt(time);
+                    generatedThumbnails.push({ name: `thumbnail_${time.toFixed(0)}s.jpg`, data: thumbnailUrl });
+                    
+                    displayThumbnail(thumbnailUrl, time);
+                }
+                
+                if (generatedThumbnails.length > 0) {
+                    status.textContent = 'サムネイルの生成が完了しました！';
+                    downloadButton.classList.remove('hidden'); // ダウンロードボタンを表示
+                } else {
+                    status.textContent = '指定された間隔で生成できるサムネイルがありません。';
+                }
+
+            } catch (error) {
+                console.error('キャプチャー中にエラーが発生しました:', error);
+                status.textContent = 'エラーが発生しました。コンソールを確認してください。';
+            } finally {
+                captureButton.disabled = false;
+            }
+        });
+
+        // 3. 「ZIPでダウンロード」ボタンが押されたときの処理
+        downloadButton.addEventListener('click', async () => {
+            if (generatedThumbnails.length === 0) {
+                status.textContent = 'ダウンロードするサムネイルがありません。';
+                return;
+            }
+
+            status.textContent = 'ZIPファイルを生成中です...';
+            downloadButton.disabled = true;
+
+            try {
+                const zip = new JSZip();
+                
+                generatedThumbnails.forEach(thumb => {
+                    // Data URLからBase64部分のみを抽出
+                    const base64Data = thumb.data.split(',')[1];
+                    zip.file(thumb.name, base64Data, { base64: true });
+                });
+
+                const content = await zip.generateAsync({ type: "blob" });
+                
+                // ダウンロードリンクを作成してクリック
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = 'thumbnails.zip';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                status.textContent = 'ZIPファイルのダウンロードが開始されました。';
+
+            } catch (error) {
+                console.error('ZIP生成エラー:', error);
+                status.textContent = 'ZIPファイルの生成に失敗しました。';
+            } finally {
+                downloadButton.disabled = false;
+            }
+        });
+
+        /**
+         * サムネイルをDOMに追加して表示する関数
+         * @param {string} thumbnailUrl - 画像のData URL
+         * @param {number} time - キャプチャーした時間
+         */
+        function displayThumbnail(thumbnailUrl, time) {
+            const imgWrapper = document.createElement('div');
+            imgWrapper.className = 'relative';
+
+            const img = document.createElement('img');
+            img.src = thumbnailUrl;
+            img.className = 'thumbnail-img w-full h-auto rounded-md shadow-sm border border-gray-200 cursor-pointer transition-transform duration-200';
+            
+            img.onclick = () => {
+                videoPlayer.currentTime = time;
+                videoPlayer.play();
+            };
+            
+            // 時間表示用のラベル
+            const timeLabel = document.createElement('span');
+            timeLabel.className = 'absolute bottom-1 right-1 bg-black bg-opacity-50 text-white text-xs px-1.5 py-0.5 rounded';
+            timeLabel.textContent = `${time.toFixed(0)}s`;
+
+            imgWrapper.appendChild(img);
+            imgWrapper.appendChild(timeLabel);
+            thumbnailContainer.appendChild(imgWrapper);
+        }
+
+        /**
+         * 指定された時間のビデオフレームをキャプチャーし、Data URLを返す関数
+         * @param {number} time - キャプチャーする時間（秒）
+         * @returns {Promise<string>} - 画像のData URL
+         */
+        function captureFrameAt(time) {
+            return new Promise((resolve, reject) => {
+                const originalTime = videoPlayer.currentTime;
+                const wasPaused = videoPlayer.paused;
+
+                if (!wasPaused) videoPlayer.pause();
+                
+                const onSeeked = () => {
+                    videoPlayer.removeEventListener('seeked', onSeeked);
+                    videoPlayer.removeEventListener('error', onError);
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = videoPlayer.videoWidth;
+                    canvas.height = videoPlayer.videoHeight;
+                    const context = canvas.getContext('2d');
+                    context.drawImage(videoPlayer, 0, 0, canvas.width, canvas.height);
+
+                    videoPlayer.currentTime = originalTime;
+                    if (!wasPaused) videoPlayer.play();
+
+                    resolve(canvas.toDataURL('image/jpeg', 0.9)); // JPEG形式で品質を少し指定
+                };
+                
+                const onError = (e) => {
+                    videoPlayer.removeEventListener('seeked', onSeeked);
+                    videoPlayer.removeEventListener('error', onError);
+                    reject(new Error('動画のシーク中にエラーが発生しました。'));
+                }
+
+                videoPlayer.addEventListener('seeked', onSeeked, { once: true });
+                videoPlayer.addEventListener('error', onError, { once: true });
+
+                videoPlayer.currentTime = time;
+            });
+        }
+    </script>
+
+</body>
+</html>
