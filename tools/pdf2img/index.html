@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF to Image Converter</title>
+    <!-- UIを整えるためにTailwind CSSを使用します -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- pdf.jsライブラリをCDNから読み込みます -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <!-- ZIPファイル作成のためのJSZipライブラリを読み込みます -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        /* ローディング中のスピナーのスタイル */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* ドラッグオーバー時のスタイル */
+        .drag-over {
+            border-color: #3b82f6; /* Tailwind blue-500 */
+            background-color: #eff6ff; /* Tailwind blue-50 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <!-- ドロップゾーン -->
+        <div id="drop-zone" class="max-w-4xl mx-auto bg-white p-6 md:p-8 rounded-2xl shadow-lg border-2 border-transparent transition-all duration-300">
+            
+            <header class="mb-6 text-center">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800">PDFを画像に変換</h1>
+                <p class="mt-2 text-gray-600">PDFファイルを下のエリアにドラッグ＆ドロップするか、ファイルを選択してください。</p>
+            </header>
+            
+            <!-- ドラッグ＆ドロップエリアの視覚的表現 -->
+            <div id="file-upload-visual-area" class="mt-4 mb-6 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md transition-all duration-300">
+                <div class="space-y-1 text-center">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                    <div class="flex text-sm text-gray-600">
+                        <label for="pdf-file" class="relative cursor-pointer bg-white rounded-md font-medium text-violet-600 hover:text-violet-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-violet-500">
+                            <span>ファイルを選択</span>
+                            <input id="pdf-file" name="pdf-file" type="file" class="sr-only" accept="application/pdf">
+                        </label>
+                        <p class="pl-1">するか、ドラッグ＆ドロップ</p>
+                    </div>
+                    <p class="text-xs text-gray-500">PDFファイルのみ対応</p>
+                </div>
+            </div>
+
+            <!-- ZIPダウンロードボタンエリア -->
+            <div class="text-right mb-6 h-10"> <!-- 高さを固定してレイアウトのガタつきを防ぐ -->
+                <button id="download-zip" class="hidden w-full sm:w-auto bg-green-500 text-white font-bold py-2 px-4 rounded-full hover:bg-green-600 transition duration-300 disabled:bg-gray-400">
+                    画像をZIPでダウンロード
+                </button>
+            </div>
+
+            <!-- 処理状況表示エリア -->
+            <div id="status-area" class="flex items-center gap-3 text-gray-600 h-8"></div>
+            
+            <hr class="my-6">
+            
+            <!-- 画像表示エリア -->
+            <div id="image-container" class="space-y-8">
+                <!-- ここに生成された画像が追加されます -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        // HTML要素を取得
+        const fileInput = document.getElementById('pdf-file');
+        const statusArea = document.getElementById('status-area');
+        const imageContainer = document.getElementById('image-container');
+        const downloadButton = document.getElementById('download-zip');
+        const dropZone = document.getElementById('drop-zone');
+        const dropZoneVisual = document.getElementById('file-upload-visual-area'); // 視覚的エリア
+
+        let generatedImages = [];
+        let originalFileName = '';
+
+        // --- ドラッグ＆ドロップのイベントリスナー ---
+        dropZone.addEventListener('dragover', (event) => {
+            event.preventDefault(); 
+            dropZoneVisual.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', (event) => {
+            event.preventDefault();
+            dropZoneVisual.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dropZoneVisual.classList.remove('drag-over');
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        // ファイル選択ボタンのイベントリスナー
+        fileInput.addEventListener('change', (event) => {
+            if (event.target.files.length > 0) {
+                handleFile(event.target.files[0]);
+            }
+        });
+
+        async function handleFile(file) {
+            if (!file || file.type !== 'application/pdf') {
+                alert('PDFファイルを選択してください。');
+                return;
+            }
+            
+            originalFileName = file.name.replace(/\.[^/.]+$/, "");
+
+            generatedImages = [];
+            imageContainer.innerHTML = '';
+            downloadButton.classList.add('hidden');
+            updateStatus('loading', 'PDFを読み込んでいます...');
+
+            try {
+                const fileReader = new FileReader();
+                fileReader.onload = async function() {
+                    const typedarray = new Uint8Array(this.result);
+                    const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                    const totalPages = pdf.numPages;
+
+                    updateStatus('loading', `全${totalPages}ページを処理中...`);
+
+                    for (let i = 1; i <= totalPages; i++) {
+                        updateStatus('loading', `${i} / ${totalPages} ページ目を画像に変換しています...`);
+                        
+                        const page = await pdf.getPage(i);
+                        const scale = 2.0;
+                        const viewport = page.getViewport({ scale: scale });
+
+                        const canvas = document.createElement('canvas');
+                        const context = canvas.getContext('2d');
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+
+                        await page.render({
+                            canvasContext: context,
+                            viewport: viewport
+                        }).promise;
+
+                        const imageDataUrl = canvas.toDataURL('image/png');
+                        
+                        generatedImages.push({
+                            name: `page_${String(i).padStart(3, '0')}.png`,
+                            dataUrl: imageDataUrl
+                        });
+                        
+                        displayImage(i, imageDataUrl);
+                    }
+
+                    updateStatus('success', '変換が完了しました。');
+                    downloadButton.classList.remove('hidden');
+                };
+                fileReader.readAsArrayBuffer(file);
+
+            } catch (error) {
+                console.error('PDFの処理中にエラーが発生しました:', error);
+                updateStatus('error', 'エラーが発生しました。ファイルが壊れている可能性があります。');
+            }
+        }
+        
+        downloadButton.addEventListener('click', async () => {
+            if (generatedImages.length === 0) {
+                alert('ダウンロードする画像がありません。');
+                return;
+            }
+
+            updateStatus('loading', 'ZIPファイルを作成中です...');
+            downloadButton.disabled = true;
+
+            try {
+                const zip = new JSZip();
+                for (const image of generatedImages) {
+                    const base64Data = image.dataUrl.split(',')[1];
+                    zip.file(image.name, base64Data, { base64: true });
+                }
+
+                const content = await zip.generateAsync({ type: "blob" });
+
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = `${originalFileName}.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+
+                updateStatus('success', 'ZIPファイルのダウンロードを開始しました。');
+
+            } catch (error) {
+                console.error('ZIPファイルの作成中にエラーが発生しました:', error);
+                updateStatus('error', 'ZIPファイルの作成に失敗しました。');
+            } finally {
+                downloadButton.disabled = false;
+            }
+        });
+
+        function updateStatus(type, message) {
+            let iconHtml = '';
+            if (type === 'loading') {
+                iconHtml = '<div class="loader"></div>';
+            } else if (type === 'success') {
+                iconHtml = '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+            } else if (type === 'error') {
+                iconHtml = '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+            }
+            statusArea.innerHTML = `${iconHtml}<span>${message}</span>`;
+        }
+        
+        function displayImage(pageNum, imageDataUrl) {
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'p-4 border rounded-lg bg-gray-50';
+
+            const pageHeader = document.createElement('h3');
+            pageHeader.className = 'text-lg font-semibold mb-3 text-gray-700';
+            pageHeader.textContent = `ページ ${pageNum}`;
+            
+            const img = document.createElement('img');
+            img.src = imageDataUrl;
+            img.alt = `PDFの${pageNum}ページ目`;
+            img.className = 'w-full h-auto rounded-md shadow-md border';
+
+            pageDiv.appendChild(pageHeader);
+            pageDiv.appendChild(img);
+            imageContainer.appendChild(pageDiv);
+        }
+
+    </script>
+
+</body>
+</html>
+

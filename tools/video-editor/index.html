@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Video Editor</title>
+    <!-- Tailwind CSSの読み込み -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- アイコン用のPhosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        /* カスタムデザインシステムとタイムライン用の詳細スタイル */
+        :root {
+            --timeline-header-width: 120px;
+            --track-height: 80px;
+            --ruler-height: 30px;
+            --playhead-color: #ef4444; /* Tailwind red-500 */
+        }
+
+        body {
+            background-color: #0f172a; /* slate-900 */
+            color: #f8fafc; /* slate-50 */
+            user-select: none; /* UI要素の誤選択を防止 */
+        }
+
+        /* タイムラインのグリッド背景（時間軸の目安） */
+        .timeline-grid {
+            background-size: 50px 100%;
+            background-image: linear-gradient(to right, #334155 1px, transparent 1px); /* slate-700 */
+            transition: background-size 0.2s;
+        }
+
+        /* トラック上のクリップ共通スタイル */
+        .clip {
+            position: absolute;
+            height: calc(100% - 10px);
+            top: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            font-size: 0.75rem;
+            overflow: hidden;
+            white-space: nowrap;
+            transition: filter 0.2s, box-shadow 0.2s;
+        }
+
+        .clip:hover {
+            filter: brightness(1.2);
+        }
+
+        /* 選択中のクリップのハイライト */
+        .clip.selected {
+            box-shadow: 0 0 0 2px #fff, 0 0 10px rgba(255,255,255,0.5);
+            z-index: 25;
+        }
+
+        /* 画像クリップ固有スタイル */
+        .clip-image {
+            background-color: #3b82f6; /* blue-500 */
+            border: 1px solid #60a5fa; /* blue-400 */
+        }
+
+        /* 音声クリップ固有スタイル */
+        .clip-audio {
+            background-color: #10b981; /* emerald-500 */
+            border: 1px solid #34d399; /* emerald-400 */
+        }
+
+        /* クリップのリサイズ用ハンドル（右端） */
+        .resize-handle {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 8px;
+            background-color: rgba(255, 255, 255, 0.2);
+            cursor: ew-resize;
+            z-index: 10;
+            transition: background-color 0.2s;
+        }
+
+        .resize-handle:hover {
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* シークバー（再生ヘッド） */
+        .playhead {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: var(--playhead-color);
+            z-index: 50;
+            pointer-events: none; /* ドラッグ操作の妨げにならないよう */
+        }
+
+        .playhead::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -5px;
+            width: 12px;
+            height: 12px;
+            background-color: var(--playhead-color);
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+        }
+
+        /* スクロールバーのカスタマイズ */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b; 
+        }
+
+        /* ドラッグオーバー時のハイライト */
+        .drag-over {
+            border-color: #3b82f6 !important; /* blue-500 */
+            background-color: rgba(59, 130, 246, 0.1) !important;
+        }
+        
+        /* 動的なアスペクト比用のカスタムユーティリティ */
+        .aspect-vertical { aspect-ratio: 9 / 16; }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col font-sans overflow-hidden">
+
+    <!-- ヘッダーエリア -->
+    <header class="h-14 bg-slate-800 border-b border-slate-700 flex justify-between items-center px-6 shrink-0 z-20">
+        <div class="flex items-center gap-2">
+            <i class="ph ph-film-strip text-blue-400 text-2xl"></i>
+            <h1 class="text-lg tracking-wide">Simple Video Editor</h1>
+        </div>
+        <div class="flex items-center gap-6">
+            
+            <!-- 設定UI -->
+            <div class="flex items-center gap-3 bg-slate-900/50 px-3 py-1.5 rounded-lg border border-slate-700">
+                <div class="flex items-center gap-2">
+                    <label for="setting-resolution" class="text-xs text-slate-400">サイズ</label>
+                    <select id="setting-resolution" class="bg-slate-700 text-xs text-slate-200 px-2 py-1 rounded border border-slate-600 outline-none cursor-pointer hover:bg-slate-600 transition-colors">
+                        <option value="1920x1080">1920x1080 (16:9)</option>
+                        <option value="1080x1920">1080x1920 (9:16)</option>
+                        <option value="1080x1080">1080x1080 (1:1)</option>
+                    </select>
+                </div>
+                <div class="w-px h-4 bg-slate-600"></div>
+                <div class="flex items-center gap-2">
+                    <label for="setting-duration" class="text-xs text-slate-400">長さ(秒)</label>
+                    <input type="number" id="setting-duration" value="60" min="5" max="300" class="bg-slate-700 text-xs text-slate-200 px-2 py-1 rounded border border-slate-600 outline-none w-16 text-right">
+                </div>
+            </div>
+
+            <button id="btn-export" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded text-sm transition-colors flex items-center gap-2 shadow-lg">
+                <i id="icon-export" class="ph ph-export"></i>
+                <span id="text-export">エクスポート</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- メインワークスペース（上部） -->
+    <main class="flex-1 flex min-h-0 bg-slate-900">
+        
+        <!-- 左パネル：アセットライブラリ -->
+        <aside class="w-72 bg-slate-800/80 border-r border-slate-700 flex flex-col z-10 shrink-0">
+            <div class="p-4 border-b border-slate-700 flex justify-between items-center">
+                <h2 class="text-sm text-slate-300">素材ライブラリ</h2>
+                <button class="text-slate-400 hover:text-white transition-colors" title="素材を追加" onclick="document.getElementById('file-input').click()">
+                    <i class="ph ph-plus-circle text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- ドラッグ＆ドロップエリア -->
+            <div class="p-4">
+                <input type="file" id="file-input" multiple accept="image/*,audio/*" class="hidden">
+                <div id="drop-zone" class="border-2 border-dashed border-slate-600 rounded-lg p-6 flex flex-col items-center justify-center text-center text-slate-400 hover:border-blue-500 hover:text-blue-400 transition-colors cursor-pointer bg-slate-800/50">
+                    <i class="ph ph-upload-simple text-3xl mb-2 pointer-events-none"></i>
+                    <p class="text-xs leading-relaxed pointer-events-none">画像や音声を<br>ドラッグ＆ドロップ<br><span class="text-[10px] mt-1 block">(またはクリック)</span></p>
+                </div>
+            </div>
+
+            <!-- アセットリスト -->
+            <div id="asset-list" class="flex-1 overflow-y-auto p-4 space-y-3">
+                <div id="empty-state" class="text-center text-slate-500 text-xs py-4">
+                    読み込まれた素材はありません
+                </div>
+            </div>
+        </aside>
+
+        <!-- 中央パネル：プレビューモニター -->
+        <section class="flex-1 flex flex-col items-center justify-center p-6 relative bg-slate-950 overflow-hidden">
+            <!-- Canvasコンテナ (IDを追加してJavaScriptからアスペクト比を操作可能に) -->
+            <div id="canvas-container" class="w-full max-h-[70vh] aspect-video bg-black shadow-2xl border border-slate-800 flex items-center justify-center relative rounded-md overflow-hidden transition-all duration-300">
+                <canvas id="preview-canvas" width="1920" height="1080" class="w-full h-full object-contain"></canvas>
+                <div id="canvas-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-slate-600 pointer-events-none">
+                    <i class="ph ph-monitor-play text-6xl mb-4"></i>
+                    <p class="text-sm">プレビュー領域</p>
+                </div>
+            </div>
+
+            <!-- プレイヤーコントロール -->
+            <div class="mt-6 bg-slate-800/80 px-6 py-3 rounded-full border border-slate-700 flex items-center gap-6 shadow-lg backdrop-blur-sm shrink-0">
+                <button id="btn-rewind" class="text-slate-400 hover:text-white transition-colors" title="最初に戻る">
+                    <i class="ph ph-skip-back-circle text-2xl"></i>
+                </button>
+                <button id="btn-play-pause" class="text-slate-100 hover:text-blue-400 transition-colors transform hover:scale-110" title="再生">
+                    <i id="icon-play-pause" class="ph ph-play-circle text-4xl"></i>
+                </button>
+                <button id="btn-stop" class="text-slate-400 hover:text-white transition-colors" title="停止">
+                    <i class="ph ph-stop-circle text-2xl"></i>
+                </button>
+                <div class="w-px h-6 bg-slate-600"></div>
+                <div id="time-display" class="font-mono text-lg tracking-wider text-slate-200 w-24 text-center">
+                    00:00.0
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- タイムラインワークスペース（下部） -->
+    <footer class="h-72 bg-slate-800 border-t border-slate-700 flex flex-col shrink-0 z-20 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.3)]">
+        <!-- タイムラインツールバー -->
+        <div class="h-10 bg-slate-800 border-b border-slate-700 flex items-center px-4 justify-between text-slate-400">
+            <div class="flex gap-4">
+                <button id="btn-split" class="hover:text-white flex items-center gap-1 text-sm opacity-50 cursor-not-allowed transition-opacity" title="未実装"><i class="ph ph-scissors"></i>分割</button>
+                <button id="btn-delete" class="hover:text-red-400 flex items-center gap-1 text-sm transition-colors"><i class="ph ph-trash"></i>削除</button>
+            </div>
+            <div class="flex items-center gap-2">
+                <i class="ph ph-magnifying-glass-minus text-lg"></i>
+                <!-- ズームスライダー (min: 20px/sec, max: 200px/sec) -->
+                <input type="range" id="zoom-slider" min="20" max="200" value="100" class="w-24 accent-blue-500 cursor-pointer">
+                <i class="ph ph-magnifying-glass-plus text-lg"></i>
+            </div>
+        </div>
+
+        <!-- タイムライン本体 -->
+        <div class="flex-1 flex relative overflow-hidden bg-slate-900" id="timeline-scroll-area">
+            <!-- トラックヘッダー -->
+            <div class="w-[var(--timeline-header-width)] bg-slate-800 border-r border-slate-700 flex flex-col shrink-0 z-10 shadow-lg">
+                <div class="h-[var(--ruler-height)] border-b border-slate-700 bg-slate-800"></div>
+                <div class="h-[var(--track-height)] border-b border-slate-700 flex items-center px-3 gap-2">
+                    <i class="ph ph-image text-slate-400"></i><span class="text-xs text-slate-300">画像</span>
+                </div>
+                <div class="h-[var(--track-height)] border-b border-slate-700 flex items-center px-3 gap-2">
+                    <i class="ph ph-speaker-high text-slate-400"></i><span class="text-xs text-slate-300">音声</span>
+                </div>
+            </div>
+
+            <!-- トラックエリア -->
+            <div class="flex-1 overflow-x-auto overflow-y-hidden relative timeline-grid" id="timeline-container">
+                <!-- 時間軸ルーラー（JavaScriptで動的生成） -->
+                <div id="timeline-ruler" class="h-[var(--ruler-height)] border-b border-slate-700 flex items-end px-2 text-[10px] text-slate-500 sticky top-0 bg-slate-900/90 backdrop-blur z-0 select-none cursor-text relative">
+                </div>
+                <!-- 画像トラックエリア -->
+                <div id="track-visual" class="h-[var(--track-height)] border-b border-slate-700/50 relative bg-slate-800/30"></div>
+                <!-- 音声トラックエリア -->
+                <div id="track-audio" class="h-[var(--track-height)] border-b border-slate-700/50 relative bg-slate-800/30"></div>
+                <!-- シークバー -->
+                <div id="playhead" class="playhead" style="left: 0px;"></div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        /**
+         * System State Management
+         */
+        const AppState = {
+            pixelsPerSecond: 100, // デフォルト: 1秒 = 100ピクセル
+            currentTime: 0.0,
+            isPlaying: false,
+            duration: 60.0, // UIと連動して初期値60秒
+            assets: [],
+            tracks: { visual: [], audio: [] }
+        };
+
+        // UIのインタラクション状態を管理するローカルステート
+        const UIState = {
+            action: null, // 'move' または 'resize'
+            clipId: null,
+            trackType: null,
+            startX: 0,
+            initialLeft: 0,
+            initialWidth: 0,
+            el: null,
+            selectedClipId: null,     // 選択されたクリップのID
+            selectedTrackType: null   // 選択されたクリップのトラックタイプ
+        };
+
+        const DOM = {
+            canvasContainer: document.getElementById('canvas-container'),
+            canvas: document.getElementById('preview-canvas'),
+            canvasPlaceholder: document.getElementById('canvas-placeholder'),
+            dropZone: document.getElementById('drop-zone'),
+            fileInput: document.getElementById('file-input'),
+            assetList: document.getElementById('asset-list'),
+            emptyState: document.getElementById('empty-state'),
+            trackVisual: document.getElementById('track-visual'),
+            trackAudio: document.getElementById('track-audio'),
+            timelineContainer: document.getElementById('timeline-container'),
+            ruler: document.getElementById('timeline-ruler'),
+            playhead: document.getElementById('playhead'),
+            timeDisplay: document.getElementById('time-display'),
+            btnRewind: document.getElementById('btn-rewind'),
+            btnPlayPause: document.getElementById('btn-play-pause'),
+            iconPlayPause: document.getElementById('icon-play-pause'),
+            btnStop: document.getElementById('btn-stop'),
+            btnExport: document.getElementById('btn-export'),
+            iconExport: document.getElementById('icon-export'),
+            textExport: document.getElementById('text-export'),
+            btnDelete: document.getElementById('btn-delete'),
+            zoomSlider: document.getElementById('zoom-slider'),
+            settingResolution: document.getElementById('setting-resolution'),
+            settingDuration: document.getElementById('setting-duration')
+        };
+
+        let audioCtx = null;
+        let audioDest = null;
+        let isExporting = false;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+
+        function ensureAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                audioDest = audioCtx.createMediaStreamDestination();
+            }
+        }
+
+        function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        /**
+         * 構成設定UIのイベントハンドリング
+         */
+        function setupSettingsHandlers() {
+            // 解像度の変更処理
+            DOM.settingResolution.addEventListener('change', (e) => {
+                const [w, h] = e.target.value.split('x').map(Number);
+                // キャンバスの内部解像度を更新
+                DOM.canvas.width = w;
+                DOM.canvas.height = h;
+
+                // プレビューコンテナの見た目（アスペクト比）を調整
+                DOM.canvasContainer.classList.remove('aspect-video', 'aspect-vertical', 'aspect-square');
+                if (w === 1920 && h === 1080) {
+                    DOM.canvasContainer.classList.add('aspect-video');
+                } else if (w === 1080 && h === 1920) {
+                    DOM.canvasContainer.classList.add('aspect-vertical');
+                } else if (w === 1080 && h === 1080) {
+                    DOM.canvasContainer.classList.add('aspect-square');
+                }
+                
+                // 新しい解像度で再描画
+                renderFrame();
+            });
+
+            // 動画長の変更処理
+            DOM.settingDuration.addEventListener('change', (e) => {
+                let newDuration = parseInt(e.target.value);
+                if (isNaN(newDuration) || newDuration < 5) newDuration = 5;
+                if (newDuration > 300) newDuration = 300; // 上限5分
+                
+                e.target.value = newDuration; // UI側の数値を補正値に合わせる
+                AppState.duration = newDuration;
+                
+                // 再生位置が新しい終端を超えていたら調整
+                if (AppState.currentTime > AppState.duration) {
+                    AppState.currentTime = AppState.duration;
+                    updatePlayheadUI();
+                    renderFrame();
+                }
+                
+                // ルーラーを再描画してタイムラインの長さを合わせる
+                renderRuler();
+            });
+        }
+
+        function setupFileHandlers() {
+            DOM.dropZone.addEventListener('click', () => DOM.fileInput.click());
+            DOM.fileInput.addEventListener('change', (e) => processFiles(e.target.files));
+
+            DOM.dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                DOM.dropZone.classList.add('drag-over');
+            });
+            DOM.dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                DOM.dropZone.classList.remove('drag-over');
+            });
+            DOM.dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                DOM.dropZone.classList.remove('drag-over');
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    processFiles(e.dataTransfer.files);
+                }
+            });
+        }
+
+        async function processFiles(files) {
+            if (!files || files.length === 0) return;
+            if (DOM.emptyState) DOM.emptyState.style.display = 'none';
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const isImage = file.type.startsWith('image/');
+                const isAudio = file.type.startsWith('audio/');
+
+                if (!isImage && !isAudio) continue;
+
+                try {
+                    const dataUrl = await readFileAsDataURL(file);
+                    
+                    const asset = {
+                        id: 'asset_' + Date.now() + '_' + i,
+                        name: file.name,
+                        type: isImage ? 'image' : 'audio',
+                        src: dataUrl,
+                        file: file,
+                        duration: 0
+                    };
+
+                    if (isImage) {
+                        asset.duration = 5.0;
+                        const img = new Image();
+                        img.src = dataUrl;
+                        asset.imageObj = img;
+                    }
+
+                    if (isAudio) {
+                        asset.duration = await getAudioDuration(dataUrl);
+                        asset.audioObj = new Audio(dataUrl);
+                        
+                        ensureAudioContext();
+                        const source = audioCtx.createMediaElementSource(asset.audioObj);
+                        source.connect(audioCtx.destination);
+                        source.connect(audioDest);
+                    }
+
+                    AppState.assets.push(asset);
+                    renderAssetListItem(asset);
+                    
+                } catch (error) {
+                    console.error("Failed to process file: " + file.name, error);
+                }
+            }
+            DOM.fileInput.value = '';
+        }
+
+        function getAudioDuration(url) {
+            return new Promise((resolve, reject) => {
+                const audio = new Audio(url);
+                audio.preload = 'metadata';
+                audio.addEventListener('loadedmetadata', () => resolve(audio.duration));
+                audio.addEventListener('error', (e) => reject(new Error("Failed to load audio metadata.")));
+            });
+        }
+
+        function renderAssetListItem(asset) {
+            const el = document.createElement('div');
+            el.className = 'flex items-center gap-3 p-2 bg-slate-700/50 rounded cursor-grab hover:bg-slate-700 transition-colors border border-slate-600 mb-3';
+            el.setAttribute('draggable', 'true');
+            el.dataset.id = asset.id;
+
+            el.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', asset.id);
+                e.dataTransfer.effectAllowed = 'copy';
+            });
+
+            const iconClass = asset.type === 'image' ? 'ph-image text-blue-400' : 'ph-waveform text-emerald-400';
+            const typeText = asset.type === 'image' ? '画像' : `音声 - ${formatTime(asset.duration)}`;
+
+            let thumbnailHtml = `<div class="w-12 h-12 bg-slate-800 rounded flex items-center justify-center shrink-0 border border-slate-600 overflow-hidden">`;
+            if (asset.type === 'image') {
+                thumbnailHtml += `<img src="${asset.src}" class="w-full h-full object-cover" alt="thumb">`;
+            } else {
+                thumbnailHtml += `<i class="ph ${iconClass} text-xl"></i>`;
+            }
+            thumbnailHtml += `</div>`;
+
+            el.innerHTML = `
+                ${thumbnailHtml}
+                <div class="overflow-hidden">
+                    <p class="text-sm truncate" title="${asset.name}">${asset.name}</p>
+                    <p class="text-xs text-slate-400">${typeText}</p>
+                </div>
+            `;
+            DOM.assetList.appendChild(el);
+        }
+
+        function formatTime(seconds) {
+            if (!seconds || isNaN(seconds)) return "00:00";
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function setupTimelineHandlers() {
+            [DOM.trackVisual, DOM.trackAudio].forEach(track => {
+                track.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'copy';
+                });
+            });
+
+            DOM.trackVisual.addEventListener('drop', (e) => handleTrackDrop(e, 'visual'));
+            DOM.trackAudio.addEventListener('drop', (e) => handleTrackDrop(e, 'audio'));
+
+            DOM.ruler.addEventListener('click', (e) => {
+                const rect = DOM.ruler.getBoundingClientRect();
+                const offsetX = e.clientX - rect.left + DOM.timelineContainer.scrollLeft;
+                AppState.currentTime = Math.max(0, Math.min(offsetX / AppState.pixelsPerSecond, AppState.duration));
+                if (AppState.isPlaying) pauseAllAudio();
+                updatePlayheadUI();
+                renderFrame();
+            });
+
+            DOM.timelineContainer.addEventListener('click', (e) => {
+                if (e.target === DOM.trackVisual || e.target === DOM.trackAudio || e.target === DOM.timelineContainer) {
+                    UIState.selectedClipId = null;
+                    UIState.selectedTrackType = null;
+                    renderTimeline();
+                }
+            });
+
+            document.addEventListener('mousemove', handleTimelineMouseMove);
+            document.addEventListener('mouseup', handleTimelineMouseUp);
+
+            DOM.btnPlayPause.addEventListener('click', togglePlayback);
+            DOM.btnStop.addEventListener('click', stopPlayback);
+            DOM.btnRewind.addEventListener('click', () => {
+                if (isExporting) return;
+                AppState.currentTime = 0;
+                if (AppState.isPlaying) pauseAllAudio();
+                updatePlayheadUI();
+                renderFrame();
+            });
+
+            DOM.btnExport.addEventListener('click', startExport);
+
+            DOM.btnDelete.addEventListener('click', () => {
+                if (!UIState.selectedClipId || !UIState.selectedTrackType) return;
+                
+                AppState.tracks[UIState.selectedTrackType] = AppState.tracks[UIState.selectedTrackType].filter(
+                    clip => clip.id !== UIState.selectedClipId
+                );
+                
+                UIState.selectedClipId = null;
+                UIState.selectedTrackType = null;
+                renderTimeline();
+                renderFrame();
+            });
+
+            DOM.zoomSlider.addEventListener('input', (e) => {
+                AppState.pixelsPerSecond = parseInt(e.target.value);
+                DOM.timelineContainer.style.backgroundSize = `${AppState.pixelsPerSecond}px 100%`;
+                renderRuler();
+                renderTimeline();
+                updatePlayheadUI();
+            });
+        }
+
+        function renderRuler() {
+            DOM.ruler.innerHTML = '';
+            // プロジェクトの最大長（UIで設定された長さ）＋余白（5秒）を描画
+            const maxSeconds = AppState.duration + 5; 
+            
+            for (let i = 0; i <= maxSeconds; i++) {
+                const el = document.createElement('div');
+                el.style.position = 'absolute';
+                el.style.left = `${i * AppState.pixelsPerSecond}px`;
+                
+                if (AppState.pixelsPerSecond < 50 && i % 5 !== 0) {
+                    el.innerText = '|';
+                } else {
+                    el.innerText = formatTime(i);
+                }
+                
+                DOM.ruler.appendChild(el);
+            }
+        }
+
+        function handleTrackDrop(e, trackType) {
+            e.preventDefault();
+            const assetId = e.dataTransfer.getData('text/plain');
+            const asset = AppState.assets.find(a => a.id === assetId);
+            
+            if (!asset) return;
+            if (trackType === 'visual' && asset.type !== 'image') return;
+            if (trackType === 'audio' && asset.type !== 'audio') return;
+
+            const rect = e.currentTarget.getBoundingClientRect();
+            const offsetX = e.clientX - rect.left + DOM.timelineContainer.scrollLeft;
+            const startTime = Math.max(0, Math.min(offsetX / AppState.pixelsPerSecond, AppState.duration));
+
+            AppState.tracks[trackType].push({
+                id: 'clip_' + Date.now(),
+                assetId: asset.id,
+                start: startTime,
+                duration: asset.duration
+            });
+
+            renderTimeline();
+            renderFrame();
+        }
+
+        function renderTimeline() {
+            DOM.trackVisual.innerHTML = '';
+            DOM.trackAudio.innerHTML = '';
+
+            const createClipUI = (clip, trackType) => {
+                const asset = AppState.assets.find(a => a.id === clip.assetId);
+                if (!asset) return null;
+
+                const el = document.createElement('div');
+                el.className = `clip clip-${trackType === 'visual' ? 'image' : 'audio'}`;
+                
+                if (UIState.selectedClipId === clip.id) {
+                    el.classList.add('selected');
+                }
+
+                el.style.left = (clip.start * AppState.pixelsPerSecond) + 'px';
+                el.style.width = (clip.duration * AppState.pixelsPerSecond) + 'px';
+                el.dataset.id = clip.id;
+                
+                const icon = trackType === 'visual' ? 'ph-image' : 'ph-waveform';
+                el.innerHTML = `<i class="ph ${icon} mr-2 pointer-events-none"></i> <span class="pointer-events-none truncate">${asset.name}</span>`;
+
+                const handle = document.createElement('div');
+                handle.className = 'resize-handle';
+                el.appendChild(handle);
+
+                el.addEventListener('mousedown', (e) => {
+                    UIState.selectedClipId = clip.id;
+                    UIState.selectedTrackType = trackType;
+                    
+                    document.querySelectorAll('.clip').forEach(c => c.classList.remove('selected'));
+                    el.classList.add('selected');
+
+                    if (e.target.classList.contains('resize-handle')) return;
+                    
+                    UIState.action = 'move';
+                    UIState.clipId = clip.id;
+                    UIState.trackType = trackType;
+                    UIState.startX = e.clientX;
+                    UIState.initialLeft = parseFloat(el.style.left);
+                    UIState.el = el;
+                    el.style.zIndex = 30;
+                });
+
+                handle.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    UIState.action = 'resize';
+                    UIState.clipId = clip.id;
+                    UIState.trackType = trackType;
+                    UIState.startX = e.clientX;
+                    UIState.initialWidth = parseFloat(el.style.width);
+                    UIState.el = el;
+                });
+
+                return el;
+            };
+
+            AppState.tracks.visual.forEach(clip => {
+                const el = createClipUI(clip, 'visual');
+                if (el) DOM.trackVisual.appendChild(el);
+            });
+
+            AppState.tracks.audio.forEach(clip => {
+                const el = createClipUI(clip, 'audio');
+                if (el) DOM.trackAudio.appendChild(el);
+            });
+        }
+
+        function handleTimelineMouseMove(e) {
+            if (!UIState.action || !UIState.el) return;
+            
+            const dx = e.clientX - UIState.startX;
+            
+            if (UIState.action === 'move') {
+                let newLeft = UIState.initialLeft + dx;
+                newLeft = Math.max(0, newLeft);
+                
+                // プロジェクトの長さを超えないように制限
+                const maxLeft = AppState.duration * AppState.pixelsPerSecond;
+                newLeft = Math.min(newLeft, maxLeft);
+                
+                UIState.el.style.left = newLeft + 'px';
+            } else if (UIState.action === 'resize') {
+                let newWidth = UIState.initialWidth + dx;
+                newWidth = Math.max(10, newWidth);
+                
+                if (UIState.trackType === 'audio') {
+                    const clip = AppState.tracks.audio.find(c => c.id === UIState.clipId);
+                    const asset = AppState.assets.find(a => a.id === clip.assetId);
+                    const maxWidth = asset.duration * AppState.pixelsPerSecond;
+                    newWidth = Math.min(newWidth, maxWidth);
+                }
+                
+                UIState.el.style.width = newWidth + 'px';
+            }
+        }
+
+        function handleTimelineMouseUp(e) {
+            if (!UIState.action) return;
+            
+            const clip = AppState.tracks[UIState.trackType].find(c => c.id === UIState.clipId);
+            if (clip && UIState.el) {
+                if (UIState.action === 'move') {
+                    const finalLeft = parseFloat(UIState.el.style.left);
+                    clip.start = finalLeft / AppState.pixelsPerSecond;
+                } else if (UIState.action === 'resize') {
+                    const finalWidth = parseFloat(UIState.el.style.width);
+                    clip.duration = finalWidth / AppState.pixelsPerSecond;
+                }
+            }
+            
+            UIState.action = null;
+            UIState.el = null;
+            UIState.clipId = null;
+            
+            renderTimeline();
+            renderFrame();
+            manageAudioPlayback();
+        }
+
+        function updatePlayheadUI() {
+            DOM.playhead.style.left = (AppState.currentTime * AppState.pixelsPerSecond) + 'px';
+            
+            const m = Math.floor(AppState.currentTime / 60);
+            const s = Math.floor(AppState.currentTime % 60);
+            const ms = Math.floor((AppState.currentTime % 1) * 10);
+            DOM.timeDisplay.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ms}`;
+        }
+
+        function renderFrame() {
+            const ctx = DOM.canvas.getContext('2d');
+            const w = DOM.canvas.width;
+            const h = DOM.canvas.height;
+            
+            ctx.clearRect(0, 0, w, h);
+
+            const activeClip = AppState.tracks.visual.find(clip => 
+                AppState.currentTime >= clip.start && AppState.currentTime < clip.start + clip.duration
+            );
+
+            if (activeClip) {
+                const asset = AppState.assets.find(a => a.id === activeClip.assetId);
+                if (asset && asset.imageObj && asset.imageObj.complete) {
+                    const img = asset.imageObj;
+                    const scale = Math.min(w / img.width, h / img.height);
+                    const drawW = img.width * scale;
+                    const drawH = img.height * scale;
+                    const drawX = (w - drawW) / 2;
+                    const drawY = (h - drawH) / 2;
+                    
+                    ctx.drawImage(img, drawX, drawY, drawW, drawH);
+                }
+                DOM.canvasPlaceholder.style.display = 'none';
+            } else {
+                DOM.canvasPlaceholder.style.display = 'flex';
+            }
+        }
+
+        let animationFrameId = null;
+        let lastTimestamp = 0;
+
+        function togglePlayback() {
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            AppState.isPlaying = !AppState.isPlaying;
+            
+            if (AppState.isPlaying) {
+                DOM.iconPlayPause.classList.replace('ph-play-circle', 'ph-pause-circle');
+                lastTimestamp = performance.now();
+                animationFrameId = requestAnimationFrame(playbackLoop);
+            } else {
+                DOM.iconPlayPause.classList.replace('ph-pause-circle', 'ph-play-circle');
+                cancelAnimationFrame(animationFrameId);
+                pauseAllAudio();
+            }
+        }
+
+        function stopPlayback() {
+            AppState.isPlaying = false;
+            AppState.currentTime = 0;
+            DOM.iconPlayPause.classList.replace('ph-pause-circle', 'ph-play-circle');
+            cancelAnimationFrame(animationFrameId);
+            pauseAllAudio();
+            updatePlayheadUI();
+            renderFrame();
+        }
+
+        function playbackLoop(timestamp) {
+            if (!AppState.isPlaying) return;
+
+            const dt = (timestamp - lastTimestamp) / 1000;
+            lastTimestamp = timestamp;
+
+            AppState.currentTime += dt;
+
+            // UI設定されたプロジェクト長で強制停止
+            if (AppState.currentTime >= AppState.duration) {
+                AppState.currentTime = AppState.duration;
+                stopPlayback();
+                
+                if (isExporting && mediaRecorder && mediaRecorder.state === "recording") {
+                    mediaRecorder.stop();
+                }
+                return;
+            }
+
+            updatePlayheadUI();
+            renderFrame();
+            manageAudioPlayback();
+
+            animationFrameId = requestAnimationFrame(playbackLoop);
+        }
+
+        function pauseAllAudio() {
+            AppState.assets.forEach(asset => {
+                if (asset.type === 'audio' && asset.audioObj) {
+                    asset.audioObj.pause();
+                }
+            });
+        }
+
+        function manageAudioPlayback() {
+            AppState.tracks.audio.forEach(clip => {
+                const asset = AppState.assets.find(a => a.id === clip.assetId);
+                if (!asset || !asset.audioObj) return;
+
+                const audio = asset.audioObj;
+                const clipEnd = clip.start + clip.duration;
+
+                if (AppState.currentTime >= clip.start && AppState.currentTime < clipEnd) {
+                    if (audio.paused) {
+                        audio.currentTime = AppState.currentTime - clip.start;
+                        audio.play().catch(e => console.warn("Audio play blocked:", e));
+                    } else {
+                        const expectedTime = AppState.currentTime - clip.start;
+                        if (Math.abs(audio.currentTime - expectedTime) > 0.15) {
+                            audio.currentTime = expectedTime;
+                        }
+                    }
+                } else {
+                    if (!audio.paused) {
+                        audio.pause();
+                    }
+                }
+            });
+        }
+
+        function startExport() {
+            if (isExporting || AppState.tracks.visual.length === 0) return;
+            
+            ensureAudioContext();
+            isExporting = true;
+            recordedChunks = [];
+
+            DOM.textExport.innerText = "書き出し中...";
+            DOM.iconExport.classList.replace('ph-export', 'ph-spinner');
+            DOM.iconExport.classList.add('animate-spin');
+            DOM.btnExport.classList.replace('bg-blue-600', 'bg-red-600');
+            DOM.btnExport.classList.replace('hover:bg-blue-500', 'hover:bg-red-500');
+
+            // フレームレートを30FPSで固定してキャンバスをキャプチャ
+            const canvasStream = DOM.canvas.captureStream(30);
+            const audioStream = audioDest.stream;
+
+            const combinedStream = new MediaStream([
+                ...canvasStream.getVideoTracks(),
+                ...audioStream.getAudioTracks()
+            ]);
+
+            const options = { mimeType: 'video/webm; codecs=vp9,opus' };
+            try {
+                mediaRecorder = new MediaRecorder(combinedStream, options);
+            } catch (e) {
+                console.warn("VP9 is not supported, falling back to default webm.");
+                mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
+            }
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    recordedChunks.push(e.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `project_${Date.now()}.webm`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                isExporting = false;
+                DOM.textExport.innerText = "エクスポート";
+                DOM.iconExport.classList.replace('ph-spinner', 'ph-export');
+                DOM.iconExport.classList.remove('animate-spin');
+                DOM.btnExport.classList.replace('bg-red-600', 'bg-blue-600');
+                DOM.btnExport.classList.replace('hover:bg-red-500', 'hover:bg-blue-500');
+            };
+
+            mediaRecorder.start();
+            AppState.currentTime = 0;
+            updatePlayheadUI();
+            
+            if (!AppState.isPlaying) {
+                togglePlayback();
+            }
+        }
+
+        function initApp() {
+            console.log("Simple Video Editor - Full initialized...");
+            setupSettingsHandlers();
+            setupFileHandlers();
+            setupTimelineHandlers();
+            renderRuler(); // 初期化時にルーラーを描画
+        }
+
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
