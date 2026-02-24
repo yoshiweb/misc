@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>筆順文章アニメーター</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .kanji-char-box {
+            display: inline-block;
+            width: 100px;
+            height: 100px;
+            margin: 5px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            vertical-align: top;
+        }
+
+        .kanji-char-box svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .kanji-char-box path {
+            fill: none;
+            stroke: #4f46e5;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* 既存のテキスト（画数番号）は非表示 */
+        .kanji-char-box text {
+            display: none;
+        }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #6366f1;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 sm:p-10">
+
+    <header class="text-center w-full max-w-4xl mb-10">
+        <h1 class="text-3xl font-bold text-slate-900 mb-2">筆順文章アニメーター</h1>
+        <p class="text-slate-500">入力した文章を1文字ずつ、書き順通りにアニメーションします。</p>
+    </header>
+
+    <main class="w-full max-w-4xl">
+        <!-- 入力エリア -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm mb-8">
+            <div class="flex flex-col gap-4">
+                <textarea 
+                    id="text-input" 
+                    class="w-full p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none text-lg resize-none"
+                    rows="2"
+                    placeholder="アニメーションさせたい文章を入力してください（例：あいうえお、漢字練習）"
+                ></textarea>
+                
+                <div class="flex justify-between items-center">
+                    <div id="status-container" class="flex items-center gap-2 text-sm text-slate-500">
+                        <!-- ステータス表示用 -->
+                    </div>
+                    <button id="start-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-full font-bold transition-all flex items-center gap-2">
+                        <i data-lucide="play-circle" class="w-5 h-5"></i>
+                        アニメーション開始
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 表示エリア -->
+        <div id="display-area" class="flex flex-wrap justify-center p-6 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl min-h-[300px]">
+            <p id="placeholder-text" class="text-slate-400 self-center">ここにアニメーションが表示されます</p>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        const elements = {
+            input: document.getElementById('text-input'),
+            startBtn: document.getElementById('start-btn'),
+            displayArea: document.getElementById('display-area'),
+            placeholder: document.getElementById('placeholder-text'),
+            status: document.getElementById('status-container')
+        };
+
+        const state = {
+            isProcessing: false,
+            abortController: null
+        };
+
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        // UnicodeからKanjiVGのURLを生成
+        function getKanjiVGUrl(char) {
+            const code = char.charCodeAt(0).toString(16).padStart(5, '0');
+            return `https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/${code}.svg`;
+        }
+
+        async function fetchSVG(char) {
+            try {
+                const response = await fetch(getKanjiVGUrl(char));
+                if (!response.ok) return null;
+                const text = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, "image/svg+xml");
+                return doc.querySelector('svg');
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function animateChar(charContainer, svgElement) {
+            charContainer.appendChild(svgElement);
+            svgElement.setAttribute('viewBox', '0 0 109 109');
+            
+            const paths = Array.from(svgElement.querySelectorAll('path'));
+            
+            // 全てのパスを初期化（透明に）
+            paths.forEach(path => {
+                const len = path.getTotalLength();
+                path.style.strokeDasharray = len;
+                path.style.strokeDashoffset = len;
+                path.style.transition = 'none';
+            });
+
+            // 1画ずつアニメーション
+            for (const path of paths) {
+                if (!state.isProcessing) return;
+                
+                await new Promise(resolve => {
+                    const duration = 500; // 0.5秒
+                    path.style.transition = `stroke-dashoffset ${duration}ms ease-in-out`;
+                    
+                    const onEnd = (e) => {
+                        if (e.propertyName === 'stroke-dashoffset') {
+                            path.removeEventListener('transitionend', onEnd);
+                            resolve();
+                        }
+                    };
+                    path.addEventListener('transitionend', onEnd);
+                    
+                    requestAnimationFrame(() => {
+                        path.style.strokeDashoffset = '0';
+                    });
+
+                    // フォールバック
+                    setTimeout(resolve, duration + 50);
+                });
+                await delay(100);
+            }
+        }
+
+        async function startAnimation() {
+            if (state.isProcessing) {
+                state.isProcessing = false;
+                elements.startBtn.innerHTML = '<i data-lucide="play-circle" class="w-5 h-5"></i>アニメーション開始';
+                lucide.createIcons();
+                return;
+            }
+
+            const text = elements.input.value.trim();
+            if (!text) return;
+
+            state.isProcessing = true;
+            elements.startBtn.innerHTML = '<i data-lucide="square" class="w-5 h-5"></i>停止';
+            lucide.createIcons();
+            
+            elements.displayArea.innerHTML = '';
+            elements.status.innerHTML = '<div class="loader"></div><span>準備中...</span>';
+
+            const chars = Array.from(text);
+
+            for (let i = 0; i < chars.length; i++) {
+                if (!state.isProcessing) break;
+
+                const char = chars[i];
+                elements.status.innerHTML = `<div class="loader"></div><span>描画中: ${i + 1} / ${chars.length}文字目</span>`;
+
+                const charBox = document.createElement('div');
+                charBox.className = 'kanji-char-box flex items-center justify-center';
+                elements.displayArea.appendChild(charBox);
+
+                const svg = await fetchSVG(char);
+
+                if (svg) {
+                    await animateChar(charBox, svg);
+                } else {
+                    // データがない場合（英数字など）はそのまま表示
+                    charBox.innerHTML = `<span class="text-4xl text-slate-300 font-bold">${char}</span>`;
+                    await delay(500);
+                }
+            }
+
+            state.isProcessing = false;
+            elements.startBtn.innerHTML = '<i data-lucide="play-circle" class="w-5 h-5"></i>アニメーション開始';
+            elements.status.innerHTML = '<span class="text-green-600">完了しました</span>';
+            lucide.createIcons();
+        }
+
+        elements.startBtn.addEventListener('click', startAnimation);
+    </script>
+</body>
+</html>
