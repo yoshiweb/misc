@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Node Fusion - Abstract Strategy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #0a0a0f;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            touch-action: none;
+        }
+        canvas {
+            display: block;
+        }
+        #ui {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2rem;
+        }
+        .panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            pointer-events: auto;
+        }
+        .score-box {
+            font-size: 2.5rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+            color: #4facfe;
+            text-align: center;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        .btn:hover { transform: translateY(-2px); opacity: 0.9; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div id="ui">
+    <div class="score-box" id="scoreDisplay">SCORE: 0</div>
+    
+    <div id="startMenu" class="flex flex-col items-center justify-center h-full">
+        <div class="panel max-w-sm text-center">
+            <h1 class="text-3xl font-black mb-4">NODE FUSION</h1>
+            <p class="text-sm opacity-70 mb-6">
+                マウス/スワイプで移動。<br>
+                同色のコアを吸収して進化せよ。<br>
+                異色に触れると崩壊する。
+            </p>
+            <div class="btn" onclick="app.start()">ENTER FLOW</div>
+        </div>
+    </div>
+
+    <div id="gameOverMenu" class="flex flex-col items-center justify-center h-full hidden">
+        <div class="panel max-w-sm text-center">
+            <h2 class="text-2xl font-bold text-red-400 mb-2">SYSTEM CRASH</h2>
+            <p id="finalScore" class="text-lg mb-6">Evolution: 0</p>
+            <div class="btn" onclick="app.start()">REBOOT</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const COLORS = {
+        PLAYER: '#4facfe',
+        CORE: '#00f2fe',
+        ENEMY: '#f093fb',
+        BG: '#0a0a0f'
+    };
+
+    class Particle {
+        constructor(x, y, color, speed = 5) {
+            this.x = x;
+            this.y = y;
+            this.color = color;
+            this.radius = Math.random() * 3;
+            this.vx = (Math.random() - 0.5) * speed;
+            this.vy = (Math.random() - 0.5) * speed;
+            this.alpha = 1;
+        }
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.alpha -= 0.02;
+        }
+        draw(ctx) {
+            ctx.save();
+            ctx.globalAlpha = this.alpha;
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    class App {
+        constructor() {
+            this.canvas = document.getElementById('canvas');
+            this.ctx = this.canvas.getContext('2d');
+            this.score = 0;
+            this.state = 'MENU';
+            this.player = { x: 0, y: 0, radius: 20, targetRadius: 20 };
+            this.mouse = { x: 0, y: 0 };
+            this.nodes = [];
+            this.particles = [];
+            this.shake = 0;
+            
+            this.init();
+        }
+
+        init() {
+            window.addEventListener('resize', () => this.resize());
+            window.addEventListener('mousemove', e => this.handleMove(e.clientX, e.clientY));
+            window.addEventListener('touchmove', e => {
+                this.handleMove(e.touches[0].clientX, e.touches[0].clientY);
+                e.preventDefault();
+            }, { passive: false });
+            
+            this.resize();
+            this.loop();
+        }
+
+        resize() {
+            this.canvas.width = window.innerWidth;
+            this.canvas.height = window.innerHeight;
+            this.player.x = this.canvas.width / 2;
+            this.player.y = this.canvas.height / 2;
+        }
+
+        handleMove(x, y) {
+            this.mouse.x = x;
+            this.mouse.y = y;
+        }
+
+        start() {
+            this.state = 'PLAY';
+            this.score = 0;
+            this.player.radius = 20;
+            this.player.targetRadius = 20;
+            this.nodes = [];
+            this.particles = [];
+            document.getElementById('startMenu').classList.add('hidden');
+            document.getElementById('gameOverMenu').classList.add('hidden');
+            document.getElementById('scoreDisplay').innerText = 'SCORE: 0';
+        }
+
+        gameOver() {
+            this.state = 'GAMEOVER';
+            this.shake = 30;
+            this.explode(this.player.x, this.player.y, COLORS.PLAYER, 40);
+            document.getElementById('gameOverMenu').classList.remove('hidden');
+            document.getElementById('finalScore').innerText = `Evolution: ${this.score}`;
+        }
+
+        explode(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                this.particles.push(new Particle(x, y, color));
+            }
+        }
+
+        spawnNode() {
+            const isEnemy = Math.random() > 0.6;
+            const side = Math.floor(Math.random() * 4);
+            let x, y;
+            if (side === 0) { x = Math.random() * this.canvas.width; y = -20; }
+            else if (side === 1) { x = this.canvas.width + 20; y = Math.random() * this.canvas.height; }
+            else if (side === 2) { x = Math.random() * this.canvas.width; y = this.canvas.height + 20; }
+            else { x = -20; y = Math.random() * this.canvas.height; }
+
+            const angle = Math.atan2(this.player.y - y, this.player.x - x);
+            this.nodes.push({
+                x, y,
+                vx: Math.cos(angle) * (2 + Math.random() * 2),
+                vy: Math.sin(angle) * (2 + Math.random() * 2),
+                radius: 10 + Math.random() * 10,
+                isEnemy: isEnemy,
+                color: isEnemy ? COLORS.ENEMY : COLORS.CORE
+            });
+        }
+
+        update() {
+            if (this.state !== 'PLAY') {
+                this.particles.forEach((p, i) => {
+                    p.update();
+                    if (p.alpha <= 0) this.particles.splice(i, 1);
+                });
+                return;
+            }
+
+            // Lerp player to mouse
+            this.player.x += (this.mouse.x - this.player.x) * 0.15;
+            this.player.y += (this.mouse.y - this.player.y) * 0.15;
+            
+            // Smooth radius change
+            this.player.radius += (this.player.targetRadius - this.player.radius) * 0.1;
+
+            if (Math.random() < 0.05) this.spawnNode();
+
+            this.nodes.forEach((node, i) => {
+                node.x += node.vx;
+                node.y += node.vy;
+
+                const dx = node.x - this.player.x;
+                const dy = node.y - this.player.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < this.player.radius + node.radius) {
+                    if (node.isEnemy) {
+                        this.gameOver();
+                    } else {
+                        this.score += Math.floor(node.radius);
+                        document.getElementById('scoreDisplay').innerText = `SCORE: ${this.score}`;
+                        this.player.targetRadius += 1.5;
+                        this.explode(node.x, node.y, node.color, 10);
+                        this.nodes.splice(i, 1);
+                        this.shake = 5;
+                    }
+                }
+
+                // Remove offscreen
+                if (node.x < -100 || node.x > this.canvas.width + 100 || node.y < -100 || node.y > this.canvas.height + 100) {
+                    this.nodes.splice(i, 1);
+                }
+            });
+
+            this.particles.forEach((p, i) => {
+                p.update();
+                if (p.alpha <= 0) this.particles.splice(i, 1);
+            });
+
+            // Gradually shrink player (maintenance requirement)
+            if (this.player.targetRadius > 20) {
+                this.player.targetRadius -= 0.02;
+            }
+        }
+
+        draw() {
+            this.ctx.fillStyle = COLORS.BG;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+            this.ctx.save();
+            if (this.shake > 0) {
+                this.ctx.translate((Math.random() - 0.5) * this.shake, (Math.random() - 0.5) * this.shake);
+                this.shake *= 0.9;
+            }
+
+            // Background nodes (decoration)
+            this.ctx.globalAlpha = 0.2;
+            this.nodes.forEach(node => {
+                this.ctx.beginPath();
+                this.ctx.arc(node.x, node.y, node.radius + 10, 0, Math.PI * 2);
+                this.ctx.strokeStyle = node.color;
+                this.ctx.stroke();
+            });
+            this.ctx.globalAlpha = 1.0;
+
+            // Particles
+            this.particles.forEach(p => p.draw(this.ctx));
+
+            // Nodes
+            this.nodes.forEach(node => {
+                this.ctx.beginPath();
+                this.ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+                this.ctx.fillStyle = node.color;
+                this.ctx.shadowBlur = 15;
+                this.ctx.shadowColor = node.color;
+                this.ctx.fill();
+                this.ctx.shadowBlur = 0;
+            });
+
+            // Player
+            if (this.state === 'PLAY') {
+                this.ctx.beginPath();
+                this.ctx.arc(this.player.x, this.player.y, this.player.radius, 0, Math.PI * 2);
+                this.ctx.fillStyle = COLORS.PLAYER;
+                this.ctx.shadowBlur = 20;
+                this.ctx.shadowColor = COLORS.PLAYER;
+                this.ctx.fill();
+                this.ctx.shadowBlur = 0;
+                
+                // Inner core
+                this.ctx.beginPath();
+                this.ctx.arc(this.player.x, this.player.y, this.player.radius * 0.6, 0, Math.PI * 2);
+                this.ctx.fillStyle = '#fff';
+                this.ctx.fill();
+            }
+
+            this.ctx.restore();
+        }
+
+        loop() {
+            this.update();
+            this.draw();
+            requestAnimationFrame(() => this.loop());
+        }
+    }
+
+    const app = new App();
+</script>
+</body>
+</html>
