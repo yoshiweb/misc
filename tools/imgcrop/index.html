@@ -105,9 +105,7 @@
                             一括トリミングを実行
                         </button>
                         
-                        <button id="reset-btn" class="w-full bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium py-2 px-4 rounded-lg transition">
-                            別の画像を選び直す
-                        </button>
+                        
                     </div>
                 </div>
 
@@ -183,7 +181,6 @@
         const mainImage = document.getElementById('main-image');
         const aspectRatioSelect = document.getElementById('aspect-ratio');
         const executeBtn = document.getElementById('execute-btn');
-        const resetBtn = document.getElementById('reset-btn');
         const thumbnailList = document.getElementById('thumbnail-list');
         const fileCountSpan = document.getElementById('file-count');
         const loadingOverlay = document.getElementById('loading-overlay');
@@ -472,11 +469,7 @@
             cropper.setAspectRatio(isNaN(val) ? NaN : val);
         });
 
-        resetBtn.addEventListener('click', () => {
-            showConfirm('リセットの確認', 'アップロードした画像をすべてリセットして初めからやり直しますか？', 'リセットする', () => {
-                resetWorkspace();
-            });
-        });
+        
 
         // --- トリミング実行ロジック ---
         executeBtn.addEventListener('click', async () => {
