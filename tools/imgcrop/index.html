@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一括画像トリミング＆ZIPツール</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Cropper.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- ヘッダー -->
+    <header class="bg-indigo-600 text-white p-4 shadow-md">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold flex items-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                一括画像トリミングツール
+            </h1>
+        </div>
+    </header>
+
+    <main class="flex-grow p-4 md:p-6 max-w-6xl mx-auto w-full">
+        
+        <!-- Step 1: アップロードエリア -->
+        <div id="upload-area" class="mt-10">
+            <div class="max-w-2xl mx-auto bg-white p-10 rounded-2xl shadow-sm border-2 border-dashed border-indigo-300 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-indigo-50 transition-colors duration-200" id="drop-zone">
+                <svg class="w-16 h-16 text-indigo-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                <h2 class="text-xl font-semibold text-slate-700 mb-2">複数の画像をここにドロップ</h2>
+                <p class="text-slate-500 mb-6">またはクリックしてファイルを選択</p>
+                <button class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 transition">
+                    画像を選択する
+                </button>
+                <input type="file" id="file-input" multiple accept="image/*" class="hidden">
+            </div>
+            <div class="text-center mt-6 text-sm text-slate-500">
+                <p>※画像はサーバーに送信されず、すべてブラウザ内で安全に処理されます。</p>
+            </div>
+        </div>
+
+        <!-- Step 2 & 3: ワークスペース (初期非表示) -->
+        <div id="workspace" class="hidden flex flex-col lg:flex-row gap-6">
+            
+            <!-- 左側: プレビュー＆トリミングエリア -->
+            <div class="lg:w-2/3 flex flex-col gap-4">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="font-bold text-slate-700 text-lg">1. 基準となる切り抜き範囲を指定</h2>
+                        <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">1枚目の画像</span>
+                    </div>
+                    <div class="w-full h-[500px] bg-slate-100 rounded overflow-hidden relative">
+                        <img id="main-image" src="" alt="トリミングプレビュー" class="max-w-full hidden">
+                    </div>
+                    <p class="text-sm text-slate-500 mt-3 flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        ここで指定した「サイズ（幅×高さ）」が他の画像にも適用されます。
+                    </p>
+                </div>
+            </div>
+
+            <!-- 右側: 設定＆アクションエリア -->
+            <div class="lg:w-1/3 flex flex-col gap-4">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="font-bold text-slate-700 text-lg mb-4">2. 一括処理の設定</h2>
+                    
+                    <div class="space-y-5">
+                        <!-- アスペクト比設定 -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">アスペクト比（比率）</label>
+                            <select id="aspect-ratio" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                                <option value="NaN">自由サイズ</option>
+                                <option value="1">1:1 (正方形)</option>
+                                <optgroup label="横向き">
+                                    <option value="1.3333333333">4:3</option>
+                                    <option value="1.7777777778">16:9</option>
+                                    <option value="1.4142135623">A判・B判 (A4, B5など)</option>
+                                </optgroup>
+                                <optgroup label="縦向き">
+                                    <option value="0.75">3:4</option>
+                                    <option value="0.5625">9:16</option>
+                                    <option value="0.7071067811">A判・B判 (A4, B5など)</option>
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <!-- 支点設定 -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">他画像の切り取り基準（支点）</label>
+                            <select id="origin-point" class="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                                <option value="center">中央合わせ (推奨)</option>
+                                <option value="topleft">左上</option>
+                                <option value="topright">右上</option>
+                                <option value="bottomleft">左下</option>
+                                <option value="bottomright">右下</option>
+                            </select>
+                            <p class="text-xs text-slate-500 mt-1">2枚目以降の画像を切り取る際、どこを起点に枠を合わせるかを指定します。</p>
+                        </div>
+
+                        <hr class="border-slate-200">
+
+                        <!-- 実行ボタン -->
+                        <button id="execute-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg shadow-md transition flex justify-center items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z"></path></svg>
+                            一括トリミングを実行
+                        </button>
+                        
+                        
+                    </div>
+                </div>
+
+                <!-- ファイルリスト -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex-grow">
+                    <h3 class="font-bold text-slate-700 flex justify-between items-end mb-3">
+                        <span>処理対象の画像</span>
+                        <span class="text-sm font-normal text-slate-500"><span id="file-count" class="font-bold text-indigo-600">0</span> 枚</span>
+                    </h3>
+                    <div id="thumbnail-list" class="flex flex-wrap gap-3 max-h-48 overflow-y-auto p-2 pt-3">
+                        <!-- サムネイルが動的に追加されます -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Step 4: トリミング結果エリア (初期非表示) -->
+        <div id="result-area" class="hidden mt-6 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 border-b border-slate-100 pb-4">
+                <h2 class="font-bold text-slate-700 text-xl">3. トリミング結果</h2>
+                <button id="download-zip-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition flex justify-center items-center gap-2 w-full sm:w-auto">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    ZIPで一括ダウンロード
+                </button>
+            </div>
+            <div id="cropped-results" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <!-- 結果の画像がここに追加される -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ローディングオーバーレイ -->
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-900 bg-opacity-60 z-50 flex items-center justify-center hidden backdrop-blur-sm">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-sm w-full mx-4">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-indigo-600 mx-auto mb-4"></div>
+            <h3 id="loading-title" class="text-lg font-bold text-slate-800 mb-1">処理中...</h3>
+            <p id="loading-desc" class="text-sm text-slate-500">しばらくお待ちください</p>
+        </div>
+    </div>
+
+    <!-- カスタムモーダル (新規追加) -->
+    <div id="custom-modal" class="fixed inset-0 bg-slate-900 bg-opacity-60 z-[60] flex items-center justify-center hidden backdrop-blur-sm">
+        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full mx-4">
+            <h3 id="modal-title" class="text-lg font-bold text-slate-800 mb-2">確認</h3>
+            <p id="modal-message" class="text-slate-600 mb-6">メッセージ</p>
+            <div class="flex justify-end gap-3" id="modal-buttons">
+                <!-- ボタンが動的に挿入されます -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ライブラリの読み込み -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <script>
+        // --- 状態管理 ---
+        let loadedFiles = []; // { name, type, img }
+        let croppedFiles = []; // { name, blob, url }
+        let cropper = null;
+        let mainImageIndex = 0; // 現在の基準画像のインデックス
+        // 基準画像を切り替えた際に、前の画像で指定していた切り抜き位置を
+        // 正規化して一時的に保持する（幅/高さに対する割合）。切替後に復元する。
+        let savedNormalizedCrop = null;
+
+        // --- DOM要素 ---
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const uploadArea = document.getElementById('upload-area');
+        const workspace = document.getElementById('workspace');
+        const mainImage = document.getElementById('main-image');
+        const aspectRatioSelect = document.getElementById('aspect-ratio');
+        const executeBtn = document.getElementById('execute-btn');
+        const thumbnailList = document.getElementById('thumbnail-list');
+        const fileCountSpan = document.getElementById('file-count');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingTitle = document.getElementById('loading-title');
+        const resultArea = document.getElementById('result-area');
+        const croppedResultsContainer = document.getElementById('cropped-results');
+        const downloadZipBtn = document.getElementById('download-zip-btn');
+
+        // モーダル用DOM
+        const customModal = document.getElementById('custom-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalButtons = document.getElementById('modal-buttons');
+
+        // --- イベントリスナー: アップロード ---
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('bg-indigo-50', 'border-indigo-500');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('bg-indigo-50', 'border-indigo-500');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('bg-indigo-50', 'border-indigo-500');
+            if (e.dataTransfer.files.length > 0) {
+                processFiles(e.dataTransfer.files);
+            }
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                processFiles(e.target.files);
+            }
+        });
+
+        // --- UI関数 ---
+        function showLoading(title) {
+            loadingTitle.textContent = title;
+            loadingOverlay.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.add('hidden');
+        }
+
+        // 警告モーダル表示関数
+        function showAlert(title, message) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modalButtons.innerHTML = `<button id="modal-ok-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition">OK</button>`;
+            customModal.classList.remove('hidden');
+            document.getElementById('modal-ok-btn').addEventListener('click', () => {
+                customModal.classList.add('hidden');
+            });
+        }
+
+        // 確認モーダル表示関数
+        function showConfirm(title, message, confirmBtnText, onConfirm) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modalButtons.innerHTML = `
+                <button id="modal-cancel-btn" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg font-medium transition">キャンセル</button>
+                <button id="modal-confirm-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition">${confirmBtnText}</button>
+            `;
+            customModal.classList.remove('hidden');
+            
+            document.getElementById('modal-cancel-btn').addEventListener('click', () => {
+                customModal.classList.add('hidden');
+            });
+            document.getElementById('modal-confirm-btn').addEventListener('click', () => {
+                customModal.classList.add('hidden');
+                onConfirm();
+            });
+        }
+
+        // --- ファイル処理 ---
+        async function processFiles(files) {
+            const validFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+            
+            if (validFiles.length === 0) {
+                showAlert('エラー', '画像ファイルを選択してください。');
+                return;
+            }
+
+            showLoading('画像を読み込み中...');
+
+            try {
+                // ファイルをImageオブジェクトとして読み込む
+                const promises = validFiles.map(file => {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const img = new Image();
+                            img.onload = () => resolve({ name: file.name, type: file.type, img: img });
+                            img.onerror = reject;
+                            img.src = e.target.result;
+                        };
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    });
+                });
+
+                const newFiles = await Promise.all(promises);
+                // 既存のファイル配列に追加できるようにする
+                loadedFiles = loadedFiles.concat(newFiles);
+                
+                // 最初の読み込み時のみ基準インデックスを0にする
+                if (loadedFiles.length === newFiles.length) {
+                    mainImageIndex = 0; 
+                }
+                
+                setupWorkspace();
+
+            } catch (error) {
+                console.error("読み込みエラー:", error);
+                showAlert('エラー', '画像の読み込みに失敗しました。');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // --- ワークスペースの初期化 ---
+        function setupWorkspace() {
+            // UI切り替え
+            uploadArea.classList.add('hidden');
+            workspace.classList.remove('hidden');
+
+            initCropper(mainImageIndex);
+            renderThumbnails();
+        }
+
+        // Cropperの初期化・再設定
+        function initCropper(index) {
+            if (cropper) {
+                cropper.destroy();
+            }
+
+            mainImage.src = loadedFiles[index].img.src;
+            mainImage.classList.remove('hidden');
+
+            const initialRatio = parseFloat(aspectRatioSelect.value);
+
+            cropper = new Cropper(mainImage, {
+                aspectRatio: isNaN(initialRatio) ? NaN : initialRatio,
+                viewMode: 1,
+                autoCropArea: 0.8,
+                background: false,
+                ready() {
+                    // もし前の画像での切り抜き位置が保存されていれば、それを新しい画像サイズに合わせて復元する
+                    if (savedNormalizedCrop && loadedFiles[index]) {
+                        try {
+                            const newImg = loadedFiles[index].img;
+                            const newW = newImg.naturalWidth;
+                            const newH = newImg.naturalHeight;
+
+                            let w = savedNormalizedCrop.width * newW;
+                            let h = savedNormalizedCrop.height * newH;
+                            let x = savedNormalizedCrop.x * newW;
+                            let y = savedNormalizedCrop.y * newH;
+
+                            // サイズが大きすぎないように調整
+                            w = Math.min(w, newW);
+                            h = Math.min(h, newH);
+
+                            // 位置を画像内に収める
+                            x = Math.max(0, Math.min(x, newW - w));
+                            y = Math.max(0, Math.min(y, newH - h));
+
+                            // setData で切り抜き位置を復元
+                            cropper.setData({ x, y, width: w, height: h });
+                        } catch (e) {
+                            // 失敗しても何もしない
+                        } finally {
+                            savedNormalizedCrop = null;
+                        }
+                    }
+                }
+            });
+        }
+
+        // サムネイルの描画とイベント設定
+        function renderThumbnails() {
+            thumbnailList.innerHTML = '';
+            loadedFiles.forEach((item, index) => {
+                const thumbContainer = document.createElement('div');
+                thumbContainer.className = 'relative group cursor-pointer';
+                
+                const img = document.createElement('img');
+                img.src = item.img.src;
+                img.className = `w-14 h-14 object-cover rounded-md border-2 transition-colors ${index === mainImageIndex ? 'border-indigo-600 shadow-sm' : 'border-slate-200 hover:border-indigo-400'}`;
+                img.title = item.name + (index === mainImageIndex ? ' (基準)' : '');
+                
+                // クリックで基準画像を切り替え（切り抜き位置を保持して復元）
+                img.addEventListener('click', () => {
+                    if (mainImageIndex === index) return;
+
+                    // 既存のCropperがある場合は現在の切り抜き位置を正規化して保存
+                    if (cropper && loadedFiles[mainImageIndex]) {
+                        try {
+                            const data = cropper.getData(true);
+                            const prevImg = loadedFiles[mainImageIndex].img;
+                            savedNormalizedCrop = {
+                                x: data.x / prevImg.naturalWidth,
+                                y: data.y / prevImg.naturalHeight,
+                                width: data.width / prevImg.naturalWidth,
+                                height: data.height / prevImg.naturalHeight
+                            };
+                        } catch (e) {
+                            savedNormalizedCrop = null;
+                        }
+                    } else {
+                        savedNormalizedCrop = null;
+                    }
+
+                    mainImageIndex = index;
+                    initCropper(mainImageIndex);
+                    renderThumbnails();
+                });
+                
+                // 1枚目(基準)にはバッジをつける
+                if (index === mainImageIndex) {
+                    const badge = document.createElement('span');
+                    badge.className = 'absolute -top-2 -left-2 bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded border border-white z-10 pointer-events-none';
+                    badge.innerText = '基準';
+                    thumbContainer.appendChild(badge);
+                }
+
+                // 削除ボタン (ホバー時に表示)
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10';
+                deleteBtn.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+                deleteBtn.title = 'この画像をリストから削除';
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // 画像クリックイベントを発火させない
+                    removeFile(index);
+                });
+
+                thumbContainer.appendChild(img);
+                thumbContainer.appendChild(deleteBtn);
+                thumbnailList.appendChild(thumbContainer);
+            });
+
+            fileCountSpan.textContent = loadedFiles.length;
+        }
+
+        // 特定の画像をリストから削除する関数
+        function removeFile(index) {
+            loadedFiles.splice(index, 1);
+            if (loadedFiles.length === 0) {
+                // 全て削除された場合はリセット
+                resetWorkspace();
+            } else {
+                // 基準画像が削除された場合のインデックス調整
+                if (mainImageIndex === index) {
+                    mainImageIndex = 0; // 先頭の画像を新しい基準にする
+                    initCropper(mainImageIndex);
+                } else if (mainImageIndex > index) {
+                    mainImageIndex--; // 削除された分インデックスをずらす
+                }
+                renderThumbnails();
+            }
+        }
+
+        // 全てリセットする関数
+        function resetWorkspace() {
+            // メモリ解放
+            croppedFiles.forEach(f => URL.revokeObjectURL(f.url));
+            croppedFiles = [];
+            loadedFiles = [];
+            savedNormalizedCrop = null;
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            fileInput.value = '';
+            workspace.classList.add('hidden');
+            resultArea.classList.add('hidden');
+            uploadArea.classList.remove('hidden');
+        }
+
+        // --- イベントリスナー: 設定変更 ---
+        aspectRatioSelect.addEventListener('change', (e) => {
+            if (!cropper) return;
+            const val = parseFloat(e.target.value);
+            cropper.setAspectRatio(isNaN(val) ? NaN : val);
+        });
+
+        
+
+        // --- トリミング実行ロジック ---
+        executeBtn.addEventListener('click', async () => {
+            if (!cropper || loadedFiles.length === 0) return;
+            
+            showLoading('一括トリミングを実行中...');
+
+            try {
+                // 前回の結果をクリア
+                croppedFiles.forEach(f => URL.revokeObjectURL(f.url));
+                croppedFiles = [];
+                croppedResultsContainer.innerHTML = '';
+
+                // 基準画像で指定した切り抜きサイズを取得
+                const cropData = cropper.getData(true); 
+                const cropW = cropData.width;
+                const cropH = cropData.height;
+                const origin = document.getElementById('origin-point').value;
+
+                const canvasToBlob = (canvas, type) => {
+                    return new Promise(resolve => canvas.toBlob(resolve, type, 0.9)); 
+                };
+
+                for (let i = 0; i < loadedFiles.length; i++) {
+                    const item = loadedFiles[i];
+                    let blob;
+                    
+                    if (i === mainImageIndex) {
+                        // 基準画像はCropperが作ったCanvasをそのまま使用
+                        const cCanvas = cropper.getCroppedCanvas();
+                        blob = await canvasToBlob(cCanvas, item.type);
+                    } else {
+                        // 他の画像は指定された「支点」と「サイズ」に基づいて独自にCanvasへ描画
+                        const canvas = document.createElement('canvas');
+                        canvas.width = cropW;
+                        canvas.height = cropH;
+                        const ctx = canvas.getContext('2d');
+                        
+                        const imgW = item.img.naturalWidth;
+                        const imgH = item.img.naturalHeight;
+                        
+                        // 描画位置(dx, dy)の計算：支点に合わせて元画像をスライドさせる
+                        let dx = 0, dy = 0;
+                        if (origin === 'center') {
+                            dx = (cropW - imgW) / 2;
+                            dy = (cropH - imgH) / 2;
+                        } else if (origin === 'topleft') {
+                            dx = 0; 
+                            dy = 0;
+                        } else if (origin === 'topright') {
+                            dx = cropW - imgW; 
+                            dy = 0;
+                        } else if (origin === 'bottomleft') {
+                            dx = 0; 
+                            dy = cropH - imgH;
+                        } else if (origin === 'bottomright') {
+                            dx = cropW - imgW; 
+                            dy = cropH - imgH;
+                        }
+                        
+                        // JPEGなどで透過部分が黒くなるのを防ぐため、背景を白で塗りつぶす
+                        if (item.type === 'image/jpeg') {
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(0, 0, cropW, cropH);
+                        }
+                        
+                        // 画像を指定した位置に描画（はみ出た部分は自動的にカットされる）
+                        ctx.drawImage(item.img, dx, dy, imgW, imgH);
+                        
+                        blob = await canvasToBlob(canvas, item.type);
+                    }
+                    
+                    // プレビュー表示用にオブジェクトURLを生成
+                    const blobUrl = URL.createObjectURL(blob);
+                    croppedFiles.push({ name: item.name, blob: blob, url: blobUrl });
+                }
+                
+                // 結果エリアに画像を描画
+                croppedFiles.forEach(file => {
+                    const div = document.createElement('div');
+                    div.className = 'flex flex-col items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded shadow-sm';
+                    
+                    const img = document.createElement('img');
+                    img.src = file.url;
+                    img.className = 'w-full object-contain rounded';
+                    // チェッカーボード背景（透過画像がわかりやすいように）
+                    img.style.backgroundImage = 'repeating-conic-gradient(#f1f5f9 0% 25%, transparent 0% 50%)';
+                    img.style.backgroundSize = '20px 20px';
+                    
+                    const p = document.createElement('p');
+                    p.className = 'text-xs text-slate-500 truncate w-full text-center';
+                    p.title = file.name;
+                    p.textContent = file.name;
+                    
+                    div.appendChild(img);
+                    div.appendChild(p);
+                    croppedResultsContainer.appendChild(div);
+                });
+                
+                resultArea.classList.remove('hidden');
+                
+                // 少し遅延させて結果エリアにスムーズスクロール
+                setTimeout(() => {
+                    resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+                
+            } catch (error) {
+                console.error("処理エラー:", error);
+                showAlert('エラー', '処理中にエラーが発生しました。');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // --- ZIPダウンロードロジック ---
+        downloadZipBtn.addEventListener('click', async () => {
+            if (croppedFiles.length === 0) return;
+            
+            showLoading('ZIPファイルを作成中...');
+
+            try {
+                const zip = new JSZip();
+                const folder = zip.folder("cropped_images");
+                
+                // 生成済みのBlobをZIPに追加
+                croppedFiles.forEach(file => {
+                    folder.file(file.name, file.blob);
+                });
+                
+                // ZIPの生成
+                const zipContent = await zip.generateAsync({type:"blob"});
+                
+                // ダウンロード処理
+                const url = URL.createObjectURL(zipContent);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                // ファイル名にタイムスタンプを付与
+                const date = new Date();
+                const timestamp = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2,'0')}${date.getDate().toString().padStart(2,'0')}_${date.getHours().toString().padStart(2,'0')}${date.getMinutes().toString().padStart(2,'0')}`;
+                a.download = `cropped_images_${timestamp}.zip`;
+                
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+            } catch (error) {
+                console.error("ZIP作成エラー:", error);
+                showAlert('エラー', 'ZIPファイルの作成に失敗しました。');
+            } finally {
+                hideLoading();
+            }
+        });
+    </script>
+</body>
+</html>
