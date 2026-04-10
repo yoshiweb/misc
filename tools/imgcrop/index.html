@@ -171,6 +171,9 @@
         let croppedFiles = []; // { name, blob, url }
         let cropper = null;
         let mainImageIndex = 0; // 現在の基準画像のインデックス
+        // 基準画像を切り替えた際に、前の画像で指定していた切り抜き位置を
+        // 正規化して一時的に保持する（幅/高さに対する割合）。切替後に復元する。
+        let savedNormalizedCrop = null;
 
         // --- DOM要素 ---
         const dropZone = document.getElementById('drop-zone');
@@ -329,6 +332,36 @@
                 viewMode: 1,
                 autoCropArea: 0.8,
                 background: false,
+                ready() {
+                    // もし前の画像での切り抜き位置が保存されていれば、それを新しい画像サイズに合わせて復元する
+                    if (savedNormalizedCrop && loadedFiles[index]) {
+                        try {
+                            const newImg = loadedFiles[index].img;
+                            const newW = newImg.naturalWidth;
+                            const newH = newImg.naturalHeight;
+
+                            let w = savedNormalizedCrop.width * newW;
+                            let h = savedNormalizedCrop.height * newH;
+                            let x = savedNormalizedCrop.x * newW;
+                            let y = savedNormalizedCrop.y * newH;
+
+                            // サイズが大きすぎないように調整
+                            w = Math.min(w, newW);
+                            h = Math.min(h, newH);
+
+                            // 位置を画像内に収める
+                            x = Math.max(0, Math.min(x, newW - w));
+                            y = Math.max(0, Math.min(y, newH - h));
+
+                            // setData で切り抜き位置を復元
+                            cropper.setData({ x, y, width: w, height: h });
+                        } catch (e) {
+                            // 失敗しても何もしない
+                        } finally {
+                            savedNormalizedCrop = null;
+                        }
+                    }
+                }
             });
         }
 
@@ -344,13 +377,31 @@
                 img.className = `w-14 h-14 object-cover rounded-md border-2 transition-colors ${index === mainImageIndex ? 'border-indigo-600 shadow-sm' : 'border-slate-200 hover:border-indigo-400'}`;
                 img.title = item.name + (index === mainImageIndex ? ' (基準)' : '');
                 
-                // クリックで基準画像を切り替え
+                // クリックで基準画像を切り替え（切り抜き位置を保持して復元）
                 img.addEventListener('click', () => {
-                    if (mainImageIndex !== index) {
-                        mainImageIndex = index;
-                        initCropper(mainImageIndex);
-                        renderThumbnails();
+                    if (mainImageIndex === index) return;
+
+                    // 既存のCropperがある場合は現在の切り抜き位置を正規化して保存
+                    if (cropper && loadedFiles[mainImageIndex]) {
+                        try {
+                            const data = cropper.getData(true);
+                            const prevImg = loadedFiles[mainImageIndex].img;
+                            savedNormalizedCrop = {
+                                x: data.x / prevImg.naturalWidth,
+                                y: data.y / prevImg.naturalHeight,
+                                width: data.width / prevImg.naturalWidth,
+                                height: data.height / prevImg.naturalHeight
+                            };
+                        } catch (e) {
+                            savedNormalizedCrop = null;
+                        }
+                    } else {
+                        savedNormalizedCrop = null;
                     }
+
+                    mainImageIndex = index;
+                    initCropper(mainImageIndex);
+                    renderThumbnails();
                 });
                 
                 // 1枚目(基準)にはバッジをつける
@@ -403,6 +454,7 @@
             croppedFiles.forEach(f => URL.revokeObjectURL(f.url));
             croppedFiles = [];
             loadedFiles = [];
+            savedNormalizedCrop = null;
             if (cropper) {
                 cropper.destroy();
                 cropper = null;
