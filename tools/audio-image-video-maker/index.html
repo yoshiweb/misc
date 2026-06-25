@@ -142,7 +142,7 @@
                         <!-- Slideshow Timing -->
                         <div id="slide-duration-container" class="hidden">
                             <label class="block text-slate-400 mb-1.5 font-medium flex justify-between">
-                                <span>1枚あたりの表示時間</span>
+                                <span>画像表示時間の一括設定</span>
                                 <span id="slide-duration-val" class="text-indigo-400 font-bold">5秒</span>
                             </label>
                             <input type="range" id="slide-duration" min="1" max="15" value="5" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
@@ -447,8 +447,16 @@
             drawFrame();
         });
         slideDuration.addEventListener('input', (e) => {
-            config.slideDuration = Number(e.target.value);
-            slideDurationVal.textContent = `${config.slideDuration}秒`;
+            const val = Number(e.target.value);
+            config.slideDuration = val;
+            slideDurationVal.textContent = `${val}秒`;
+            
+            // Apply new duration to all images
+            uploadedImages.forEach(img => {
+                img.duration = val;
+            });
+            renderThumbnails();
+            drawFrame();
         });
         showVignette.addEventListener('change', (e) => {
             config.vignette = e.target.checked;
@@ -493,6 +501,39 @@
             return subs;
         }
 
+        // Update individual image duration
+        window.updateImageDuration = function(index, value) {
+            const sec = parseInt(value, 10) || 5;
+            if (uploadedImages[index]) {
+                uploadedImages[index].duration = sec;
+            }
+            drawFrame();
+        };
+
+        // Render Image Thumbnails with duration setting
+        function renderThumbnails() {
+            imageThumbnails.innerHTML = '';
+            uploadedImages.forEach((img, idx) => {
+                const duration = img.duration || config.slideDuration;
+                const thumb = document.createElement('div');
+                thumb.className = "flex flex-col items-center gap-1 shrink-0 bg-slate-800/40 p-1.5 rounded-lg border border-slate-700/50 flex-none";
+                thumb.innerHTML = `
+                    <div class="relative w-14 h-14 rounded overflow-hidden border border-slate-700 bg-slate-950 group">
+                        <img src="${img.url}" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition cursor-pointer" onclick="removeImage(${idx})">
+                            <i data-lucide="x" class="w-4 h-4 text-rose-400"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-0.5 mt-1 text-[10px]">
+                        <input type="number" min="1" max="180" value="${duration}" class="w-9 bg-slate-950 border border-slate-700 rounded px-1 py-0.5 text-center text-slate-200" onchange="updateImageDuration(${idx}, this.value)">
+                        <span class="text-slate-400">秒</span>
+                    </div>
+                `;
+                imageThumbnails.appendChild(thumb);
+            });
+            lucide.createIcons();
+        }
+
         // Initialize canvas sizing
         updateCanvasSize();
 
@@ -511,7 +552,6 @@
 
             let loadedCount = 0;
             uploadedImages = [];
-            imageThumbnails.innerHTML = '';
 
             fileList.forEach((file, index) => {
                 const reader = new FileReader();
@@ -521,21 +561,10 @@
                         uploadedImages.push({
                             element: img,
                             name: file.name,
-                            url: e.target.result
+                            url: e.target.result,
+                            duration: config.slideDuration
                         });
                         
-                        // Create Thumbnail
-                        const thumb = document.createElement('div');
-                        thumb.className = "relative w-12 h-12 rounded-lg overflow-hidden border border-slate-700 shrink-0 bg-slate-950 flex-none group";
-                        thumb.innerHTML = `
-                            <img src="${e.target.result}" class="w-full h-full object-cover">
-                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition cursor-pointer" onclick="removeImage(${index})">
-                                <i data-lucide="x" class="w-4 h-4 text-rose-400"></i>
-                            </div>
-                        `;
-                        imageThumbnails.appendChild(thumb);
-                        lucide.createIcons();
-
                         loadedCount++;
                         if (loadedCount === fileList.length) {
                             imageCountBadge.textContent = `${uploadedImages.length}枚選択`;
@@ -544,6 +573,7 @@
                             } else {
                                 slideDurationContainer.classList.add('hidden');
                             }
+                            renderThumbnails();
                             checkRequirements();
                             drawFrame();
                         }
@@ -562,20 +592,7 @@
                 slideDurationContainer.classList.add('hidden');
             }
             
-            // Re-render Thumbnails
-            imageThumbnails.innerHTML = '';
-            uploadedImages.forEach((img, idx) => {
-                const thumb = document.createElement('div');
-                thumb.className = "relative w-12 h-12 rounded-lg overflow-hidden border border-slate-700 shrink-0 bg-slate-950 flex-none group";
-                thumb.innerHTML = `
-                    <img src="${img.url}" class="w-full h-full object-cover">
-                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition cursor-pointer" onclick="removeImage(${idx})">
-                        <i data-lucide="x" class="w-4 h-4 text-rose-400"></i>
-                    </div>
-                `;
-                imageThumbnails.appendChild(thumb);
-            });
-            lucide.createIcons();
+            renderThumbnails();
             checkRequirements();
             drawFrame();
         };
@@ -697,8 +714,17 @@
             let currentImage = uploadedImages[0].element;
             if (isPlaying || isRecording) {
                 const time = coreAudio.currentTime;
-                const index = Math.floor(time / config.slideDuration) % uploadedImages.length;
-                currentImage = uploadedImages[index]?.element || uploadedImages[0].element;
+                const totalDuration = uploadedImages.reduce((sum, img) => sum + (img.duration || config.slideDuration), 0);
+                const loopedTime = time % totalDuration;
+
+                let elapsed = 0;
+                for (let i = 0; i < uploadedImages.length; i++) {
+                    elapsed += (uploadedImages[i].duration || config.slideDuration);
+                    if (loopedTime < elapsed) {
+                        currentImage = uploadedImages[i].element;
+                        break;
+                    }
+                }
             }
 
             // Draw Background Image
