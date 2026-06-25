@@ -173,8 +173,13 @@ header h1 {
   padding: 1rem 1.25rem;
   background-color: rgba(15, 23, 42, 0.3);
   border-bottom: 1px solid var(--border-color);
-  cursor: pointer;
+  cursor: grab;
   user-select: none;
+  transition: var(--transition);
+}
+
+.title-bar:active {
+  cursor: grabbing;
 }
 
 .title-bar h2 a {
@@ -286,4 +291,15 @@ header h1 {
 .toast.fade-out {
   opacity: 0;
   transform: translateY(-1rem);
+}
+
+/* Drag and Drop styles */
+.masonry-item.dragging {
+  opacity: 0.4;
+}
+
+.masonry-item.drag-over .rss-feed-column {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+  transform: scale(0.98);
 }

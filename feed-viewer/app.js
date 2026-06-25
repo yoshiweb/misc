@@ -5,6 +5,9 @@
     let cachedRowHeight = 0;
     let cachedRowGap = 0;
 
+    // ドラッグ中の要素を保持
+    let dragSourceEl = null;
+
     /**
      * グリッドの設定値を再取得してキャッシュする
      */
@@ -57,6 +60,22 @@
             console.error("Failed to parse stored RSS URLs", e);
             return [];
         }
+    }
+
+    /**
+     * 現在のフィードカラムの並び順をローカルストレージに保存する
+     */
+    function saveCurrentOrder() {
+        const container = document.getElementById("rss-feed-columns");
+        const items = container.querySelectorAll('.masonry-item');
+        const urls = [];
+        items.forEach(item => {
+            const url = item.getAttribute('data-url');
+            if (url) {
+                urls.push(url);
+            }
+        });
+        localStorage.setItem("rss-urls", JSON.stringify(urls));
     }
 
     /**
@@ -113,6 +132,8 @@
 
         const columnItem = document.createElement("div");
         columnItem.classList.add("masonry-item");
+        columnItem.setAttribute('draggable', 'true');
+        columnItem.setAttribute('data-url', url);
 
         const column = document.createElement("div");
         column.className = "rss-feed-column masonry-content";
@@ -180,13 +201,75 @@
         columnItem.appendChild(column);
         columnsContainer.appendChild(columnItem);
 
-        // タイトルバークリックで開閉 (ダブルクリックからクリックに変更してより直感的に)
+        // タイトルバークリックで開閉
         titleBar.addEventListener('click', function (event) {
             // リンクやボタンをクリックした場合は開閉させない
             if (event.target.tagName.toLowerCase() !== 'a' && !event.target.closest('button')) {
                 itemContents.style.display = itemContents.style.display === 'none' ? '' : 'none';
                 resizeGridItem(columnItem);
             }
+        });
+
+        // ドラッグ＆ドロップイベントリスナーの登録
+        columnItem.addEventListener('dragstart', function (e) {
+            // タイトルバーエリア以外（リンクやボタン等）からのドラッグ開始はキャンセル
+            const isTitleBar = e.target.closest('.title-bar');
+            const isInteractive = e.target.closest('a') || e.target.closest('button');
+            if (!isTitleBar || isInteractive) {
+                e.preventDefault();
+                return;
+            }
+            dragSourceEl = this;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', ''); // Firefox対策
+            this.classList.add('dragging');
+        });
+
+        columnItem.addEventListener('dragover', function (e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        });
+
+        columnItem.addEventListener('dragenter', function () {
+            if (dragSourceEl !== this) {
+                this.classList.add('drag-over');
+            }
+        });
+
+        columnItem.addEventListener('dragleave', function () {
+            this.classList.remove('drag-over');
+        });
+
+        columnItem.addEventListener('drop', function (e) {
+            e.stopPropagation();
+            if (dragSourceEl && dragSourceEl !== this) {
+                const children = Array.from(columnsContainer.children);
+                const fromIndex = children.indexOf(dragSourceEl);
+                const toIndex = children.indexOf(this);
+
+                if (fromIndex < toIndex) {
+                    columnsContainer.insertBefore(dragSourceEl, this.nextSibling);
+                } else {
+                    columnsContainer.insertBefore(dragSourceEl, this);
+                }
+
+                saveCurrentOrder();
+                updateGridCache();
+                resizeAllGridItems();
+            }
+            return false;
+        });
+
+        columnItem.addEventListener('dragend', function () {
+            const items = columnsContainer.querySelectorAll('.masonry-item');
+            items.forEach(item => {
+                item.classList.remove('dragging');
+                item.classList.remove('drag-over');
+            });
+            dragSourceEl = null;
         });
 
         // 並び替え
@@ -256,9 +339,35 @@
         const storedUrls = getStoredUrls();
         if (storedUrls && storedUrls.length > 0) {
             updateGridCache();
+            
             // 並列で全フィードを取得する
-            const promises = storedUrls.map(url => fetchRssFeed(url));
-            await Promise.all(promises);
+            const promises = storedUrls.map(async (url) => {
+                try {
+                    const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    return { url, data, success: data.status === "ok" };
+                } catch (error) {
+                    console.error("Error fetching RSS feed", url, error);
+                    return { url, error, success: false };
+                }
+            });
+            
+            const results = await Promise.all(promises);
+            
+            // 保存された順序を保ってDOMに追加する
+            results.forEach(result => {
+                if (result.success) {
+                    displayFeed(result.url, result.data.feed, result.data.items);
+                } else if (result.error) {
+                    showToast(`Failed to load feed: ${result.error.message || "Unknown error"}`, "error");
+                }
+            });
+            
+            updateGridCache();
+            resizeAllGridItems();
         }
     });
 
