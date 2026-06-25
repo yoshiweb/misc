@@ -141,19 +141,22 @@ header h1 {
 }
 
 /* Style the individual feed items */
-.rss-feed-column h4 {
-  font-size: 0.95rem;
-  font-weight: 400;
-  line-height: 1.4;
+.rss-feed-column .item-contents > div {
   margin-bottom: 0.8rem;
   padding-bottom: 0.8rem;
   border-bottom: 1px solid rgba(51, 65, 85, 0.5);
 }
 
-.rss-feed-column h4:last-child {
+.rss-feed-column .item-contents > div:last-child {
   margin-bottom: 0;
   padding-bottom: 0;
   border-bottom: none;
+}
+
+.rss-feed-column h4 {
+  font-size: 0.95rem;
+  font-weight: 400;
+  line-height: 1.5;
 }
 
 /* Style the feed item link */
