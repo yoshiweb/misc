@@ -59,47 +59,59 @@
     }
 
     /**
-     * ローカルストレージからURLを取得する
+     * ローカルストレージからフィード一覧（URLと開閉状態）を取得する
+     * 互換性担保: 古い「単なる文字列（URL）の配列」が保存されていた場合、
+     * 自動的にオブジェクト配列（{ url, collapsed: false }）に変換して返す。
      */
-    function getStoredUrls() {
+    function getStoredFeeds() {
         try {
-            return JSON.parse(localStorage.getItem("rss-urls")) || [];
+            const data = JSON.parse(localStorage.getItem("rss-urls")) || [];
+            return data.map(item => {
+                if (typeof item === 'string') {
+                    return { url: item, collapsed: false };
+                }
+                return item;
+            });
         } catch (e) {
-            console.error("Failed to parse stored RSS URLs", e);
+            console.error("Failed to parse stored RSS feeds", e);
             return [];
         }
     }
 
     /**
-     * 現在のフィードカラムの並び順をローカルストレージに保存する
+     * 現在のカラムの「並び順」と「折りたたみ状態」をローカルストレージに一括保存する
      */
-    function saveCurrentOrder() {
+    function saveCurrentState() {
         const container = document.getElementById("rss-feed-columns");
         const items = container.querySelectorAll('.masonry-item');
-        const urls = [];
+        const feeds = [];
         items.forEach(item => {
             const url = item.getAttribute('data-url');
+            const itemContents = item.querySelector('.item-contents');
+            // 要素の display 属性から collapsed 判定
+            const collapsed = itemContents ? itemContents.style.display === 'none' : false;
             if (url) {
-                urls.push(url);
+                feeds.push({ url, collapsed });
             }
         });
-        localStorage.setItem("rss-urls", JSON.stringify(urls));
+        localStorage.setItem("rss-urls", JSON.stringify(feeds));
     }
 
     /**
      * URLをローカルストレージに追加し、RSSフィードを取得する
      */
     async function addRssFeed(url) {
-        const storedUrls = getStoredUrls();
-        if (storedUrls.includes(url)) {
+        const storedFeeds = getStoredFeeds();
+        const urls = storedFeeds.map(f => f.url);
+        if (urls.includes(url)) {
             showToast("This RSS Feed is already added.", "info");
             return;
         }
 
-        const success = await fetchRssFeed(url);
+        const success = await fetchRssFeed(url, false); // 追加時は初期展開
         if (success) {
-            storedUrls.push(url);
-            localStorage.setItem("rss-urls", JSON.stringify(storedUrls));
+            storedFeeds.push({ url, collapsed: false });
+            localStorage.setItem("rss-urls", JSON.stringify(storedFeeds));
             showToast("RSS Feed added successfully!", "success");
         }
     }
@@ -107,7 +119,7 @@
     /**
      * URLからRSSフィードを取得し、結果を表示する
      */
-    async function fetchRssFeed(url) {
+    async function fetchRssFeed(url, collapsed = false) {
         if (!url) return false;
         try {
             const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
@@ -117,7 +129,7 @@
             const data = await response.json();
 
             if (data.status === "ok") {
-                displayFeed(url, data.feed, data.items);
+                displayFeed(url, data.feed, data.items, collapsed);
                 updateGridCache();
                 resizeAllGridItems();
                 return true;
@@ -134,7 +146,7 @@
     /**
      * RSSフィードのアイテムをカラムに表示する
      */
-    function displayFeed(url, feed, items) {
+    function displayFeed(url, feed, items, collapsed = false) {
         const columnsContainer = document.getElementById("rss-feed-columns");
         columnsContainer.classList.add("masonry");
 
@@ -190,6 +202,12 @@
         // アイテムコンテンツ
         const itemContents = document.createElement("div");
         itemContents.classList.add("item-contents");
+        
+        // 初期折りたたみ状態の適用
+        if (collapsed) {
+            itemContents.style.display = 'none';
+        }
+        
         column.appendChild(itemContents);
 
         // 各フィードアイテムを追加
@@ -213,23 +231,21 @@
         titleBar.addEventListener('click', function (event) {
             // リンクやボタンをクリックした場合は開閉させない
             if (event.target.tagName.toLowerCase() !== 'a' && !event.target.closest('button')) {
-                itemContents.style.display = itemContents.style.display === 'none' ? '' : 'none';
+                const isCollapsed = itemContents.style.display === 'none';
+                itemContents.style.display = isCollapsed ? '' : 'none';
                 resizeGridItem(columnItem);
-            }
-        });
-
-        titleBar.addEventListener('mousedown', function (e) {
-            // リンクやボタン上でのクリック時はドラッグを無効化
-            const isInteractive = e.target.closest('a') || e.target.closest('button');
-            if (!isInteractive) {
-                isTitleBarGrabbed = true;
+                
+                // 開閉状態を保存
+                saveCurrentState();
             }
         });
 
         // ドラッグ＆ドロップイベントリスナーの登録
         columnItem.addEventListener('dragstart', function (e) {
-            // タイトルバーを掴んでいる場合のみドラッグ開始を許可
-            if (!isTitleBarGrabbed) {
+            // タイトルバーエリア以外（リンクやボタン等）からのドラッグ開始はキャンセル
+            const isTitleBar = e.target.closest('.title-bar');
+            const isInteractive = e.target.closest('a') || e.target.closest('button');
+            if (!isTitleBar || isInteractive) {
                 e.preventDefault();
                 return;
             }
@@ -270,7 +286,7 @@
                     columnsContainer.insertBefore(dragSourceEl, this);
                 }
 
-                saveCurrentOrder();
+                saveCurrentState(); // ドラッグ並び替え時にも最新順序と開閉状態を同期保存
                 updateGridCache();
                 resizeAllGridItems();
             }
@@ -294,14 +310,12 @@
      * URLと対応するカラムを削除する
      */
     function removeRssFeed(url, column) {
-        const storedUrls = getStoredUrls();
-        const index = storedUrls.indexOf(url);
-        if (index > -1) {
-            storedUrls.splice(index, 1);
-            localStorage.setItem("rss-urls", JSON.stringify(storedUrls));
-            column.remove();
-            showToast("RSS Feed removed.", "info");
-        }
+        const storedFeeds = getStoredFeeds();
+        const updated = storedFeeds.filter(f => f.url !== url);
+        localStorage.setItem("rss-urls", JSON.stringify(updated));
+        column.remove();
+        showToast("RSS Feed removed.", "info");
+        
         updateGridCache();
         resizeAllGridItems();
     }
@@ -350,19 +364,20 @@
 
     // ページが読み込まれたときにローカルストレージからURLを取得し、表示する
     document.addEventListener("DOMContentLoaded", async function () {
-        const storedUrls = getStoredUrls();
-        if (storedUrls && storedUrls.length > 0) {
+        const storedFeeds = getStoredFeeds();
+        if (storedFeeds && storedFeeds.length > 0) {
             updateGridCache();
             
             // 並列で全フィードを取得する
-            const promises = storedUrls.map(async (url) => {
+            const promises = storedFeeds.map(async (feedObj) => {
+                const url = feedObj.url;
                 try {
                     const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`);
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     const data = await response.json();
-                    return { url, data, success: data.status === "ok" };
+                    return { url, data, collapsed: feedObj.collapsed, success: data.status === "ok" };
                 } catch (error) {
                     console.error("Error fetching RSS feed", url, error);
                     return { url, error, success: false };
@@ -374,7 +389,7 @@
             // 保存された順序を保ってDOMに追加する
             results.forEach(result => {
                 if (result.success) {
-                    displayFeed(result.url, result.data.feed, result.data.items);
+                    displayFeed(result.url, result.data.feed, result.data.items, result.collapsed);
                 } else if (result.error) {
                     showToast(`Failed to load feed: ${result.error.message || "Unknown error"}`, "error");
                 }
