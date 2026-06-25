@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image & MP3 to Video Converter</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+        }
+        /* スクロールバーのカスタマイズ */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <div class="bg-indigo-600 p-2 rounded-lg text-white">
+                <i data-lucide="video" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight">Audio Image Video Maker</h1>
+                <p class="text-xs text-slate-400">画像とMP3からビジュアライザー付き動画を作成</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-slate-400 bg-slate-800 px-3 py-1.5 rounded-full">
+            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            ブラウザ内完結（サーバー送信なし）
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Column: Settings & Uploads (5 cols) -->
+        <div class="lg:col-span-5 flex flex-col gap-6">
+            
+            <!-- Step 1: Upload Images -->
+            <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 bg-indigo-500/10 text-indigo-400 rounded-full flex items-center justify-center text-xs font-bold border border-indigo-500/30">1</span>
+                        <h2 class="font-semibold text-sm text-slate-200">画像の追加 (複数可)</h2>
+                    </div>
+                    <span id="image-count" class="text-xs text-slate-400 bg-slate-800 px-2 py-0.5 rounded">0枚選択</span>
+                </div>
+
+                <div id="image-dropzone" class="border-2 border-dashed border-slate-700 hover:border-indigo-500 hover:bg-indigo-500/5 rounded-xl p-6 text-center cursor-pointer transition group">
+                    <input type="file" id="image-input" accept="image/*" multiple class="hidden">
+                    <i data-lucide="image" class="w-10 h-10 mx-auto text-slate-500 group-hover:text-indigo-400 transition mb-2"></i>
+                    <p class="text-sm text-slate-300 font-medium">クリックして画像を選択、またはドラッグ＆ドロップ</p>
+                    <p class="text-xs text-slate-500 mt-1">PNG, JPG, WebP（複数選択時はスライドショーになります）</p>
+                </div>
+
+                <!-- Image Preview Thumbnails -->
+                <div id="image-thumbnails" class="flex gap-2 overflow-x-auto mt-4 py-1 empty:hidden">
+                    <!-- Dynamic thumbnails -->
+                </div>
+            </section>
+
+            <!-- Step 2: Upload MP3 -->
+            <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 bg-indigo-500/10 text-indigo-400 rounded-full flex items-center justify-center text-xs font-bold border border-indigo-500/30">2</span>
+                        <h2 class="font-semibold text-sm text-slate-200">音楽ファイルの追加 (MP3)</h2>
+                    </div>
+                </div>
+
+                <div id="audio-dropzone" class="border-2 border-dashed border-slate-700 hover:border-indigo-500 hover:bg-indigo-500/5 rounded-xl p-6 text-center cursor-pointer transition group">
+                    <input type="file" id="audio-input" accept="audio/mp3, audio/*" class="hidden">
+                    <i data-lucide="music" class="w-10 h-10 mx-auto text-slate-500 group-hover:text-indigo-400 transition mb-2"></i>
+                    <p id="audio-status-text" class="text-sm text-slate-300 font-medium">クリックして音声ファイルを選択、またはドラッグ＆ドロップ</p>
+                    <p class="text-xs text-slate-500 mt-1">MP3, WAV, M4A など</p>
+                </div>
+
+                <!-- Audio Metadata View -->
+                <div id="audio-info" class="hidden items-center justify-between bg-slate-800/50 p-3 rounded-lg border border-slate-700 mt-4">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <i data-lucide="disc" class="w-5 h-5 text-indigo-400 shrink-0 animate-spin" style="animation-duration: 3s;"></i>
+                        <div class="overflow-hidden">
+                            <p id="audio-name" class="text-xs font-medium text-slate-200 truncate">music.mp3</p>
+                            <p id="audio-duration" class="text-[10px] text-slate-400">0:00</p>
+                        </div>
+                    </div>
+                    <button id="remove-audio" class="text-slate-400 hover:text-rose-400 transition p-1">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Step 3: Customize Options -->
+            <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex-1 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center gap-2 mb-5">
+                        <span class="w-6 h-6 bg-indigo-500/10 text-indigo-400 rounded-full flex items-center justify-center text-xs font-bold border border-indigo-500/30">3</span>
+                        <h2 class="font-semibold text-sm text-slate-200">動画・ビジュアル設定</h2>
+                    </div>
+
+                    <div class="space-y-4 text-xs">
+                        <!-- Resolution -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-slate-400 mb-1.5 font-medium">動画の解像度</label>
+                                <select id="video-resolution" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500">
+                                    <option value="1280x720" selected>720p 横型 (1280x720) [16:9]</option>
+                                    <option value="1920x1080">1080p 横型 (1920x1080) [16:9]</option>
+                                    <option value="720x1280">720p 縦型 (720x1280) [9:16]</option>
+                                    <option value="1080x1920">1080p 縦型 (1080x1920) [9:16]</option>
+                                    <option value="640x640">スクエア (640x640) [1:1]</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-slate-400 mb-1.5 font-medium">画像の配置方法</label>
+                                <select id="image-fit" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500">
+                                    <option value="cover" selected>全体をカバー（トリミングあり）</option>
+                                    <option value="contain">全体を収める（余白あり）</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Slideshow Timing -->
+                        <div id="slide-duration-container" class="hidden">
+                            <label class="block text-slate-400 mb-1.5 font-medium flex justify-between">
+                                <span>1枚あたりの表示時間</span>
+                                <span id="slide-duration-val" class="text-indigo-400 font-bold">5秒</span>
+                            </label>
+                            <input type="range" id="slide-duration" min="1" max="15" value="5" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                        </div>
+
+                        <!-- Visualizer Style -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-slate-400 mb-1.5 font-medium">ビジュアライザーの種類</label>
+                                <select id="visualizer-style" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500">
+                                    <option value="none" selected>なし（画像のみ）</option>
+                                    <option value="bar">波形（バー）</option>
+                                    <option value="circle">サークル</option>
+                                    <option value="line">ライン波形</option>
+                                    <option value="particles">パーティクル</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-slate-400 mb-1.5 font-medium">テーマカラー</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" id="theme-color" value="#6366f1" class="w-10 h-8 bg-transparent border border-slate-700 rounded cursor-pointer">
+                                    <span id="color-hex" class="text-slate-400 uppercase font-mono">#6366f1</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Overlay details -->
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="show-vignette" checked class="rounded border-slate-700 text-indigo-600 focus:ring-indigo-500 h-4 w-4 bg-slate-800">
+                            <label for="show-vignette" class="text-slate-300 font-medium cursor-pointer">シネマティックシャドウ（外周を暗くする）</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-slate-800/50 text-[11px] text-slate-500 space-y-1">
+                    <p><i data-lucide="info" class="w-3.5 h-3.5 inline mr-1 -mt-0.5"></i>出力はシステム、ブラウザによりWebMに最適化されます。</p>
+                    <p><i data-lucide="info" class="w-3.5 h-3.5 inline mr-1 -mt-0.5"></i>動画生成中はブラウザのタブをアクティブにしたままにして下さい。</p>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Right Column: Canvas Preview & Export (7 cols) -->
+        <div class="lg:col-span-7 flex flex-col gap-6">
+            
+            <!-- Interactive Preview Canvas -->
+            <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="font-semibold text-sm text-slate-200 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                        リアルタイムプレビュー
+                    </h2>
+                    <span id="canvas-resolution-badge" class="text-[10px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded font-mono">1280x720</span>
+                </div>
+
+                <!-- Canvas Wrapper to keep adaptive aspect ratio -->
+                <div class="flex items-center justify-center bg-slate-950 rounded-xl overflow-hidden border border-slate-800 p-2 min-h-[300px] max-h-[60vh]">
+                    <div id="canvas-wrapper" class="relative bg-black shadow-2xl overflow-hidden transition-all duration-300 max-h-full max-w-full flex items-center justify-center" style="aspect-ratio: 16/9; width: 100%;">
+                        <canvas id="preview-canvas" class="w-full h-full object-contain"></canvas>
+                        
+                        <!-- Empty State Prompt -->
+                        <div id="canvas-placeholder" class="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center text-center p-6 z-10">
+                            <div class="bg-slate-900 w-16 h-16 rounded-full flex items-center justify-center mb-3 border border-slate-800 text-slate-400">
+                                <i data-lucide="clapperboard" class="w-8 h-8"></i>
+                            </div>
+                            <h3 class="text-sm font-semibold text-slate-200 mb-1">動画プレビューを生成する準備</h3>
+                            <p class="text-xs text-slate-500 max-w-xs">左のパネルから画像とMP3ファイルをアップロードしてください</p>
+                        </div>
+
+                        <!-- Progress Overlays -->
+                        <div id="rendering-overlay" class="hidden absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center text-center p-6 z-20">
+                            <div class="relative w-20 h-20 mb-4 flex items-center justify-center">
+                                <!-- Circular Progress -->
+                                <svg class="w-full h-full transform -rotate-90">
+                                    <circle cx="40" cy="40" r="34" class="text-slate-800" stroke-width="6" stroke="currentColor" fill="transparent"/>
+                                    <circle id="progress-circle" cx="40" cy="40" r="34" class="text-indigo-500 transition-all duration-100" stroke-width="6" stroke-dasharray="213.6" stroke-dashoffset="213.6" stroke-linecap="round" stroke="currentColor" fill="transparent"/>
+                                </svg>
+                                <span id="progress-percent" class="absolute font-bold text-sm">0%</span>
+                            </div>
+                            <h3 class="text-sm font-semibold text-slate-200 mb-1">動画を書き出し中...</h3>
+                            <p class="text-xs text-slate-400 max-w-xs mb-3">音楽を再生しながら内部キャプチャを行っています。<br>別のタブを開かずにこのままお待ちください。</p>
+                            <button id="cancel-export" class="px-4 py-1.5 bg-rose-600/20 hover:bg-rose-600 text-rose-200 hover:text-white rounded-lg text-xs transition font-medium border border-rose-600/30">
+                                キャンセル
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Controls -->
+                <div class="flex items-center justify-between mt-4">
+                    <div class="flex items-center gap-3">
+                        <button id="play-btn" disabled class="p-2.5 bg-slate-800 hover:bg-indigo-600 text-slate-400 hover:text-white disabled:opacity-50 disabled:bg-slate-800/50 disabled:text-slate-600 rounded-xl transition">
+                            <i data-lucide="play" class="w-5 h-5 fill-current"></i>
+                        </button>
+                        <div class="text-xs text-slate-400 font-mono">
+                            <span id="current-time">0:00</span> / <span id="total-time">0:00</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button id="export-btn" disabled class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/20 transition flex items-center gap-2">
+                            <i data-lucide="download-cloud" class="w-4 h-4"></i>
+                            動画を生成 & 保存
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Exported Video Result Section -->
+            <section id="result-section" class="hidden bg-emerald-950/20 border border-emerald-900/40 rounded-2xl p-5 shadow-xl transition-all duration-300">
+                <div class="flex items-start gap-4">
+                    <div class="bg-emerald-500/10 p-3 rounded-xl text-emerald-400">
+                        <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-bold text-sm text-slate-200">動画が正常に生成されました！</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">以下のプレイヤーから再生確認、またはダウンロードできます。</p>
+                        
+                        <!-- Video Player -->
+                        <div class="mt-4 rounded-lg overflow-hidden border border-emerald-900/50 aspect-video max-h-60 bg-black">
+                            <video id="output-video" controls class="w-full h-full object-contain"></video>
+                        </div>
+
+                        <!-- Action buttons -->
+                        <div class="flex items-center gap-3 mt-4">
+                            <a id="download-video" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold shadow-lg shadow-emerald-600/25 transition flex items-center gap-2">
+                                <i data-lucide="download" class="w-4 h-4"></i>
+                                ビデオを保存 (.webm)
+                            </a>
+                            <p class="text-[10px] text-slate-500">※再生できない場合は、VLCなどのWebM対応プレーヤーをご使用ください。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+    </main>
+
+    <!-- App State/Audio Element (Hidden) -->
+    <audio id="core-audio" class="hidden"></audio>
+
+    <footer class="mt-auto border-t border-slate-800 bg-slate-900/40 py-4 px-6 text-center text-xs text-slate-500">
+        <p>© 2026 Audio Image Video Maker. All Rights Reserved.</p>
+    </footer>
+
+    <!-- App Script -->
+    <script>
+        // Lucide Icons initialization
+        lucide.createIcons();
+
+        // DOM elements
+        const imageInput = document.getElementById('image-input');
+        const imageDropzone = document.getElementById('image-dropzone');
+        const imageThumbnails = document.getElementById('image-thumbnails');
+        const imageCountBadge = document.getElementById('image-count');
+        
+        const audioInput = document.getElementById('audio-input');
+        const audioDropzone = document.getElementById('audio-dropzone');
+        const audioInfo = document.getElementById('audio-info');
+        const audioName = document.getElementById('audio-name');
+        const audioDuration = document.getElementById('audio-duration');
+        const audioStatusText = document.getElementById('audio-status-text');
+        const removeAudioBtn = document.getElementById('remove-audio');
+        
+        const videoResolution = document.getElementById('video-resolution');
+        const imageFit = document.getElementById('image-fit');
+        const slideDurationContainer = document.getElementById('slide-duration-container');
+        const slideDuration = document.getElementById('slide-duration');
+        const slideDurationVal = document.getElementById('slide-duration-val');
+        const visualizerStyle = document.getElementById('visualizer-style');
+        const themeColor = document.getElementById('theme-color');
+        const colorHex = document.getElementById('color-hex');
+        const showVignette = document.getElementById('show-vignette');
+        
+        const canvas = document.getElementById('preview-canvas');
+        const canvasWrapper = document.getElementById('canvas-wrapper');
+        const ctx = canvas.getContext('2d');
+        const canvasPlaceholder = document.getElementById('canvas-placeholder');
+        const canvasResolutionBadge = document.getElementById('canvas-resolution-badge');
+        
+        const playBtn = document.getElementById('play-btn');
+        const exportBtn = document.getElementById('export-btn');
+        const currentTimeText = document.getElementById('current-time');
+        const totalTimeText = document.getElementById('total-time');
+        
+        const renderingOverlay = document.getElementById('rendering-overlay');
+        const progressCircle = document.getElementById('progress-circle');
+        const progressPercent = document.getElementById('progress-percent');
+        const cancelExportBtn = document.getElementById('cancel-export');
+        
+        const resultSection = document.getElementById('result-section');
+        const outputVideo = document.getElementById('output-video');
+        const downloadVideoLink = document.getElementById('download-video');
+
+        const coreAudio = document.getElementById('core-audio');
+
+        // State variables
+        let uploadedImages = []; // Array of Image objects and metadata
+        let uploadedAudio = null; // Audio file metadata/blob
+        let isPlaying = false;
+        let isRecording = false;
+        let animationFrameId = null;
+        let audioCtx = null;
+        let analyser = null;
+        let sourceNode = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let audioDestination = null;
+
+        // Configuration
+        let config = {
+            width: 1280,
+            height: 720,
+            slideDuration: 5, // seconds
+            fit: 'cover',
+            visualizer: 'none', // デフォルト「なし」
+            color: '#6366f1',
+            vignette: true
+        };
+
+        // Initialize Resolution Badge
+        function updateCanvasSize() {
+            const [w, h] = videoResolution.value.split('x').map(Number);
+            config.width = w;
+            config.height = h;
+            canvas.width = w;
+            canvas.height = h;
+
+            // アスペクト比を動的に可変
+            if (canvasWrapper) {
+                canvasWrapper.style.aspectRatio = `${w} / ${h}`;
+            }
+
+            canvasResolutionBadge.textContent = `${w}x${h}`;
+            drawFrame();
+        }
+
+        // Set listeners for settings
+        videoResolution.addEventListener('change', updateCanvasSize);
+        imageFit.addEventListener('change', (e) => {
+            config.fit = e.target.value;
+            drawFrame();
+        });
+        visualizerStyle.addEventListener('change', (e) => {
+            config.visualizer = e.target.value;
+            drawFrame();
+        });
+        themeColor.addEventListener('input', (e) => {
+            config.color = e.target.value;
+            colorHex.textContent = e.target.value;
+            drawFrame();
+        });
+        slideDuration.addEventListener('input', (e) => {
+            config.slideDuration = Number(e.target.value);
+            slideDurationVal.textContent = `${config.slideDuration}秒`;
+        });
+        showVignette.addEventListener('change', (e) => {
+            config.vignette = e.target.checked;
+            drawFrame();
+        });
+
+        // Initialize canvas sizing
+        updateCanvasSize();
+
+        // Helper: Convert seconds to format (m:ss)
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        // Handle Image Upload
+        function handleImages(files) {
+            const fileList = Array.from(files).filter(file => file.type.startsWith('image/'));
+            if (fileList.length === 0) return;
+
+            let loadedCount = 0;
+            uploadedImages = [];
+            imageThumbnails.innerHTML = '';
+
+            fileList.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        uploadedImages.push({
+                            element: img,
+                            name: file.name,
+                            url: e.target.result
+                        });
+                        
+                        // Create Thumbnail
+                        const thumb = document.createElement('div');
+                        thumb.className = "relative w-12 h-12 rounded-lg overflow-hidden border border-slate-700 shrink-0 bg-slate-950 flex-none group";
+                        thumb.innerHTML = `
+                            <img src="${e.target.result}" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition cursor-pointer" onclick="removeImage(${index})">
+                                <i data-lucide="x" class="w-4 h-4 text-rose-400"></i>
+                            </div>
+                        `;
+                        imageThumbnails.appendChild(thumb);
+                        lucide.createIcons();
+
+                        loadedCount++;
+                        if (loadedCount === fileList.length) {
+                            imageCountBadge.textContent = `${uploadedImages.length}枚選択`;
+                            if (uploadedImages.length > 1) {
+                                slideDurationContainer.classList.remove('hidden');
+                            } else {
+                                slideDurationContainer.classList.add('hidden');
+                            }
+                            checkRequirements();
+                            drawFrame();
+                        }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Remove Single Image
+        window.removeImage = function(index) {
+            uploadedImages.splice(index, 1);
+            imageCountBadge.textContent = `${uploadedImages.length}枚選択`;
+            if (uploadedImages.length <= 1) {
+                slideDurationContainer.classList.add('hidden');
+            }
+            
+            // Re-render Thumbnails
+            imageThumbnails.innerHTML = '';
+            uploadedImages.forEach((img, idx) => {
+                const thumb = document.createElement('div');
+                thumb.className = "relative w-12 h-12 rounded-lg overflow-hidden border border-slate-700 shrink-0 bg-slate-950 flex-none group";
+                thumb.innerHTML = `
+                    <img src="${img.url}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition cursor-pointer" onclick="removeImage(${idx})">
+                        <i data-lucide="x" class="w-4 h-4 text-rose-400"></i>
+                    </div>
+                `;
+                imageThumbnails.appendChild(thumb);
+            });
+            lucide.createIcons();
+            checkRequirements();
+            drawFrame();
+        };
+
+        // Image Drag & Drop
+        imageDropzone.addEventListener('click', () => imageInput.click());
+        imageDropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            imageDropzone.classList.add('border-indigo-500', 'bg-indigo-500/5');
+        });
+        imageDropzone.addEventListener('dragleave', () => {
+            imageDropzone.classList.remove('border-indigo-500', 'bg-indigo-500/5');
+        });
+        imageDropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            imageDropzone.classList.remove('border-indigo-500', 'bg-indigo-500/5');
+            handleImages(e.dataTransfer.files);
+        });
+        imageInput.addEventListener('change', (e) => handleImages(e.target.files));
+
+        // Handle Audio Upload
+        function handleAudio(file) {
+            if (!file || !file.type.startsWith('audio/')) return;
+
+            uploadedAudio = file;
+            audioName.textContent = file.name;
+            audioInfo.classList.remove('hidden');
+            audioInfo.classList.add('flex');
+            audioStatusText.textContent = "音声がアップロードされました";
+
+            const fileURL = URL.createObjectURL(file);
+            coreAudio.src = fileURL;
+            coreAudio.load();
+
+            coreAudio.onloadedmetadata = () => {
+                audioDuration.textContent = formatTime(coreAudio.duration);
+                totalTimeText.textContent = formatTime(coreAudio.duration);
+                checkRequirements();
+            };
+        }
+
+        // Remove Audio
+        removeAudioBtn.addEventListener('click', () => {
+            uploadedAudio = null;
+            coreAudio.src = '';
+            audioInfo.classList.add('hidden');
+            audioInfo.classList.remove('flex');
+            audioStatusText.textContent = "クリックして音声ファイルを選択、またはドラッグ＆ドロップ";
+            audioInput.value = '';
+            totalTimeText.textContent = '0:00';
+            currentTimeText.textContent = '0:00';
+            checkRequirements();
+        });
+
+        // Audio Drag & Drop
+        audioDropzone.addEventListener('click', () => audioInput.click());
+        audioDropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            audioDropzone.classList.add('border-indigo-500', 'bg-indigo-500/5');
+        });
+        audioDropzone.addEventListener('dragleave', () => {
+            audioDropzone.classList.remove('border-indigo-500', 'bg-indigo-500/5');
+        });
+        audioDropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            audioDropzone.classList.remove('border-indigo-500', 'bg-indigo-500/5');
+            if (e.dataTransfer.files.length > 0) {
+                handleAudio(e.dataTransfer.files[0]);
+            }
+        });
+        audioInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleAudio(e.target.files[0]);
+            }
+        });
+
+        // Verify requirements to enable play/export
+        function checkRequirements() {
+            const hasImages = uploadedImages.length > 0;
+            const hasAudio = uploadedAudio !== null;
+
+            if (hasImages && hasAudio) {
+                playBtn.removeAttribute('disabled');
+                exportBtn.removeAttribute('disabled');
+                canvasPlaceholder.classList.add('hidden');
+            } else {
+                playBtn.setAttribute('disabled', 'true');
+                exportBtn.setAttribute('disabled', 'true');
+                canvasPlaceholder.classList.remove('hidden');
+                stopVisuals();
+            }
+        }
+
+        // Setup Audio Node Routing
+        function initAudioContext() {
+            if (audioCtx) return;
+
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+
+            sourceNode = audioCtx.createMediaElementSource(coreAudio);
+            sourceNode.connect(analyser);
+            analyser.connect(audioCtx.destination);
+
+            // Create Audio Destination Stream for Recording
+            audioDestination = audioCtx.createMediaStreamDestination();
+            sourceNode.connect(audioDestination);
+        }
+
+        // Frame Renderer Loop
+        function drawFrame() {
+            ctx.fillStyle = '#020617'; // slate-950 base
+            ctx.fillRect(0, 0, config.width, config.height);
+
+            if (uploadedImages.length === 0) return;
+
+            // 1. Draw Image (Based on Slideshow timeline if playing/exporting)
+            let currentImage = uploadedImages[0].element;
+            if (isPlaying || isRecording) {
+                const time = coreAudio.currentTime;
+                const index = Math.floor(time / config.slideDuration) % uploadedImages.length;
+                currentImage = uploadedImages[index]?.element || uploadedImages[0].element;
+            }
+
+            // Draw Background Image
+            if (currentImage) {
+                const iw = currentImage.width;
+                const ih = currentImage.height;
+                const cw = config.width;
+                const ch = config.height;
+
+                let dx, dy, dw, dh;
+
+                if (config.fit === 'cover') {
+                    const aspectCanvas = cw / ch;
+                    const aspectImage = iw / ih;
+
+                    if (aspectImage > aspectCanvas) {
+                        dh = ch;
+                        dw = ch * aspectImage;
+                        dx = (cw - dw) / 2;
+                        dy = 0;
+                    } else {
+                        dw = cw;
+                        dh = cw / aspectImage;
+                        dx = 0;
+                        dy = (ch - dh) / 2;
+                    }
+                } else { // contain
+                    const aspectCanvas = cw / ch;
+                    const aspectImage = iw / ih;
+
+                    if (aspectImage > aspectCanvas) {
+                        dw = cw;
+                        dh = cw / aspectImage;
+                        dx = 0;
+                        dy = (ch - dh) / 2;
+                    } else {
+                        dh = ch;
+                        dw = ch * aspectImage;
+                        dx = (cw - dw) / 2;
+                        dy = 0;
+                    }
+                }
+
+                ctx.drawImage(currentImage, dx, dy, dw, dh);
+            }
+
+            // 2. Cinematic Vignette (Shadow Border)
+            if (config.vignette) {
+                const gradient = ctx.createRadialGradient(
+                    config.width / 2, config.height / 2, Math.min(config.width, config.height) * 0.3,
+                    config.width / 2, config.height / 2, Math.max(config.width, config.height) * 0.7
+                );
+                gradient.addColorStop(0, 'rgba(0,0,0,0)');
+                gradient.addColorStop(1, 'rgba(0,0,0,0.85)');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, config.width, config.height);
+            }
+
+            // 3. Audio Visualizer Layer
+            if (analyser && config.visualizer !== 'none') {
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                analyser.getByteFrequencyData(dataArray);
+
+                ctx.strokeStyle = config.color;
+                ctx.fillStyle = config.color;
+
+                if (config.visualizer === 'bar') {
+                    const barWidth = (config.width / bufferLength) * 1.5;
+                    let barHeight;
+                    let x = 0;
+
+                    for (let i = 0; i < bufferLength; i++) {
+                        barHeight = (dataArray[i] / 255) * (config.height * 0.25);
+
+                        // Draw centered reflection style
+                        ctx.fillStyle = config.color;
+                        ctx.fillRect(
+                            x,
+                            config.height - barHeight - 40,
+                            barWidth - 2,
+                            barHeight
+                        );
+                        
+                        // Subtle transparent reflection down
+                        ctx.fillStyle = config.color + '33'; // transparent hex
+                        ctx.fillRect(
+                            x,
+                            config.height - 40,
+                            barWidth - 2,
+                            barHeight * 0.4
+                        );
+
+                        x += barWidth;
+                    }
+                } else if (config.visualizer === 'line') {
+                    ctx.beginPath();
+                    ctx.lineWidth = 4;
+                    ctx.lineCap = 'round';
+                    const sliceWidth = config.width / bufferLength;
+                    let x = 0;
+
+                    for (let i = 0; i < bufferLength; i++) {
+                        const v = dataArray[i] / 255;
+                        const y = config.height - 100 - (v * (config.height * 0.25));
+
+                        if (i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+
+                        x += sliceWidth;
+                    }
+                    ctx.lineTo(config.width, config.height - 100);
+                    ctx.stroke();
+                } else if (config.visualizer === 'circle') {
+                    const centerX = config.width / 2;
+                    const centerY = config.height / 2;
+                    const baseRadius = Math.min(config.width, config.height) * 0.22;
+                    
+                    // Reactive base radius
+                    let energy = 0;
+                    for (let i = 0; i < 10; i++) energy += dataArray[i];
+                    const activeRadius = baseRadius + (energy / 10 / 255) * 30;
+
+                    ctx.beginPath();
+                    ctx.lineWidth = 3;
+                    const angleStep = (Math.PI * 2) / bufferLength;
+
+                    for (let i = 0; i < bufferLength; i++) {
+                        const amplitude = (dataArray[i] / 255) * 80;
+                        const r = activeRadius + amplitude;
+                        const angle = i * angleStep;
+                        const x = centerX + Math.cos(angle) * r;
+                        const y = centerY + Math.sin(angle) * r;
+
+                        if (i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                } else if (config.visualizer === 'particles') {
+                    // Quick particle burst layout based on high/mid/low energy
+                    const centerX = config.width / 2;
+                    const centerY = config.height / 2;
+                    
+                    for (let i = 0; i < bufferLength; i += 4) {
+                        const magnitude = dataArray[i] / 255;
+                        if (magnitude > 0.3) {
+                            const angle = (i / bufferLength) * Math.PI * 2 + (Date.now() / 1000);
+                            const distance = (Math.min(config.width, config.height) * 0.2) + magnitude * 180;
+                            const px = centerX + Math.cos(angle) * distance;
+                            const py = centerY + Math.sin(angle) * distance;
+                            
+                            ctx.beginPath();
+                            ctx.arc(px, py, magnitude * 8, 0, Math.PI * 2);
+                            ctx.fillStyle = config.color + Math.floor(magnitude * 255).toString(16).padStart(2, '0');
+                            ctx.fill();
+                        }
+                    }
+                }
+            }
+
+            // Sync Timeline numbers while rendering/previewing
+            if (isPlaying || isRecording) {
+                currentTimeText.textContent = formatTime(coreAudio.currentTime);
+            }
+        }
+
+        // Master Animation Loop
+        function animationLoop() {
+            drawFrame();
+            if (isPlaying || isRecording) {
+                animationFrameId = requestAnimationFrame(animationLoop);
+            }
+        }
+
+        function startVisuals() {
+            isPlaying = true;
+            playBtn.innerHTML = '<i data-lucide="pause" class="w-5 h-5 fill-current"></i>';
+            lucide.createIcons();
+            animationLoop();
+        }
+
+        function stopVisuals() {
+            isPlaying = false;
+            playBtn.innerHTML = '<i data-lucide="play" class="w-5 h-5 fill-current"></i>';
+            lucide.createIcons();
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            drawFrame();
+        }
+
+        // Toggle Preview Play / Pause
+        playBtn.addEventListener('click', () => {
+            initAudioContext();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            if (coreAudio.paused) {
+                coreAudio.play();
+                startVisuals();
+            } else {
+                coreAudio.pause();
+                stopVisuals();
+            }
+        });
+
+        // Track standard playback ended
+        coreAudio.addEventListener('ended', () => {
+            stopVisuals();
+            coreAudio.currentTime = 0;
+            currentTimeText.textContent = '0:00';
+        });
+
+        // ----------------------------------------------------
+        // Export Logic (Record Canvas + Audio Output)
+        // ----------------------------------------------------
+        
+        // Find best browser support mimeType
+        function getSupportedMimeType() {
+            const types = [
+                'video/webm;codecs=vp9,opus',
+                'video/webm;codecs=vp8,opus',
+                'video/webm;codecs=h264,opus',
+                'video/webm',
+                'video/mp4' // Safari standard
+            ];
+            for (let type of types) {
+                if (MediaRecorder.isTypeSupported(type)) {
+                    return type;
+                }
+            }
+            return '';
+        }
+
+        exportBtn.addEventListener('click', async () => {
+            if (isRecording) return;
+            
+            // Setup
+            initAudioContext();
+            if (audioCtx.state === 'suspended') {
+                await audioCtx.resume();
+            }
+
+            // Hide output section while processing new render
+            resultSection.classList.add('hidden');
+
+            isRecording = true;
+            recordedChunks = [];
+
+            // Reset media and audio
+            coreAudio.pause();
+            coreAudio.currentTime = 0;
+            currentTimeText.textContent = '0:00';
+
+            // Show UI Overlay
+            renderingOverlay.classList.remove('hidden');
+            setProgress(0);
+
+            // Create canvas and audio streams
+            const canvasStream = canvas.captureStream(30); // Capture at 30fps
+            const combinedStream = new MediaStream();
+
+            // Add video track
+            canvasStream.getVideoTracks().forEach(track => combinedStream.addTrack(track));
+            
+            // Add custom audio stream target track
+            audioDestination.stream.getAudioTracks().forEach(track => combinedStream.addTrack(track));
+
+            const mimeType = getSupportedMimeType();
+            
+            try {
+                mediaRecorder = new MediaRecorder(combinedStream, {
+                    mimeType: mimeType,
+                    videoBitsPerSecond: 5000000 // 5Mbps high quality
+                });
+            } catch (err) {
+                // Fallback inside MediaRecorder
+                mediaRecorder = new MediaRecorder(combinedStream);
+            }
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                isRecording = false;
+                renderingOverlay.classList.add('hidden');
+
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const videoURL = URL.createObjectURL(blob);
+                
+                // Set Up Player and Download Trigger
+                outputVideo.src = videoURL;
+                downloadVideoLink.href = videoURL;
+                downloadVideoLink.download = `${uploadedAudio.name.split('.').slice(0, -1).join('.') || 'output_video'}.webm`;
+                
+                resultSection.classList.remove('hidden');
+                
+                // Cleanup animation
+                stopVisuals();
+            };
+
+            // Capture monitoring update loop
+            const progressTracker = setInterval(() => {
+                if (!isRecording) {
+                    clearInterval(progressTracker);
+                    return;
+                }
+
+                const progress = coreAudio.currentTime / coreAudio.duration;
+                setProgress(isNaN(progress) ? 0 : progress * 100);
+
+                // Stop check when track finishes
+                if (coreAudio.currentTime >= coreAudio.duration || coreAudio.paused) {
+                    clearInterval(progressTracker);
+                    mediaRecorder.stop();
+                    coreAudio.pause();
+                }
+            }, 100);
+
+            // Execute capture
+            mediaRecorder.start();
+            coreAudio.play();
+            startVisuals();
+        });
+
+        // Set Export Circular Progress Status
+        function setProgress(percent) {
+            const circle = document.getElementById('progress-circle');
+            const circumference = 2 * Math.PI * 34; // Radius is 34
+            const offset = circumference - (percent / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+            progressPercent.textContent = `${Math.round(percent)}%`;
+        }
+
+        // Cancel Active Export
+        cancelExportBtn.addEventListener('click', () => {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                coreAudio.pause();
+                coreAudio.currentTime = 0;
+                isRecording = false;
+                renderingOverlay.classList.add('hidden');
+                stopVisuals();
+            }
+        });
+
+    </script>
+</body>
+</html>
