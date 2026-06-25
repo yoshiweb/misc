@@ -8,6 +8,14 @@
     // ドラッグ中の要素を保持
     let dragSourceEl = null;
 
+    // ドラッグ開始判定用のグローバルステート
+    let isTitleBarGrabbed = false;
+
+    // マウスアップでフラグをリセット（グローバルで1つだけ登録）
+    window.addEventListener('mouseup', () => {
+        isTitleBarGrabbed = false;
+    });
+
     /**
      * グリッドの設定値を再取得してキャッシュする
      */
@@ -210,12 +218,18 @@
             }
         });
 
+        titleBar.addEventListener('mousedown', function (e) {
+            // リンクやボタン上でのクリック時はドラッグを無効化
+            const isInteractive = e.target.closest('a') || e.target.closest('button');
+            if (!isInteractive) {
+                isTitleBarGrabbed = true;
+            }
+        });
+
         // ドラッグ＆ドロップイベントリスナーの登録
         columnItem.addEventListener('dragstart', function (e) {
-            // タイトルバーエリア以外（リンクやボタン等）からのドラッグ開始はキャンセル
-            const isTitleBar = e.target.closest('.title-bar');
-            const isInteractive = e.target.closest('a') || e.target.closest('button');
-            if (!isTitleBar || isInteractive) {
+            // タイトルバーを掴んでいる場合のみドラッグ開始を許可
+            if (!isTitleBarGrabbed) {
                 e.preventDefault();
                 return;
             }
