@@ -1,10 +1,6 @@
 (async () => {
     'use strict';
 
-    // グリッドレイアウト計測キャッシュ
-    let cachedRowHeight = 0;
-    let cachedRowGap = 0;
-
     // ドラッグ中の要素を保持
     let dragSourceEl = null;
 
@@ -15,18 +11,6 @@
     window.addEventListener('mouseup', () => {
         isTitleBarGrabbed = false;
     });
-
-    /**
-     * グリッドの設定値を再取得してキャッシュする
-     */
-    function updateGridCache() {
-        const grid = document.querySelector('.masonry');
-        if (grid) {
-            const computedStyle = window.getComputedStyle(grid);
-            cachedRowHeight = parseInt(computedStyle.getPropertyValue('grid-auto-rows')) || 0;
-            cachedRowGap = parseInt(computedStyle.getPropertyValue('grid-row-gap')) || 0;
-        }
-    }
 
     /**
      * トースト通知を表示する
@@ -60,7 +44,7 @@
 
     /**
      * ローカルストレージからフィード一覧（URLと開閉状態）を取得する
-     * 互換性担保: 古い「単なる文字列（URL）の配列」が保存されていた場合、
+     * 互換性担保: 古い「単なる文字列（URL）の配列」が保存されていた場合,
      * 自動的にオブジェクト配列（{ url, collapsed: false }）に変換して返す。
      */
     function getStoredFeeds() {
@@ -98,7 +82,7 @@
     }
 
     /**
-     * URLをローカルストレージに追加し、RSSフィードを取得する
+     * URLをローカルストレージに追加し, RSSフィードを取得する
      */
     async function addRssFeed(url) {
         const storedFeeds = getStoredFeeds();
@@ -117,7 +101,7 @@
     }
 
     /**
-     * URLからRSSフィードを取得し、結果を表示する
+     * URLからRSSフィードを取得し, 結果を表示する
      */
     async function fetchRssFeed(url, collapsed = false) {
         if (!url) return false;
@@ -130,8 +114,6 @@
 
             if (data.status === "ok") {
                 displayFeed(url, data.feed, data.items, collapsed);
-                updateGridCache();
-                resizeAllGridItems();
                 return true;
             } else {
                 throw new Error(data.message || "Invalid RSS feed response");
@@ -233,7 +215,6 @@
             if (event.target.tagName.toLowerCase() !== 'a' && !event.target.closest('button')) {
                 const isCollapsed = itemContents.style.display === 'none';
                 itemContents.style.display = isCollapsed ? '' : 'none';
-                resizeGridItem(columnItem);
                 
                 // 開閉状態を保存
                 saveCurrentState();
@@ -287,8 +268,6 @@
                 }
 
                 saveCurrentState(); // ドラッグ並び替え時にも最新順序と開閉状態を同期保存
-                updateGridCache();
-                resizeAllGridItems();
             }
             return false;
         });
@@ -301,9 +280,6 @@
             });
             dragSourceEl = null;
         });
-
-        // 並び替え
-        resizeGridItem(columnItem);
     }
 
     /**
@@ -315,37 +291,6 @@
         localStorage.setItem("rss-urls", JSON.stringify(updated));
         column.remove();
         showToast("RSS Feed removed.", "info");
-        
-        updateGridCache();
-        resizeAllGridItems();
-    }
-
-    /**
-     * グリッドアイテムの grid-row-end プロパティを更新（設定）する
-     */
-    function resizeGridItem(item) {
-        if (cachedRowHeight === 0) {
-            updateGridCache();
-        }
-
-        const content = item.querySelector('.masonry-content');
-        if (!content) return;
-
-        // grid-row-end の span に指定する値を算出
-        const rowSpan = Math.ceil((content.getBoundingClientRect().height + cachedRowGap) / (cachedRowHeight + cachedRowGap));
-
-        // グリッドアイテムの grid-row-end プロパティを更新（設定）
-        item.style.gridRowEnd = `span ${rowSpan}`;
-    }
-
-    /**
-     * 全てのアイテムの grid-row-end プロパティを更新する
-     */
-    function resizeAllGridItems() {
-        const allItems = document.getElementsByClassName('masonry-item');
-        for (let i = 0; i < allItems.length; i++) {
-            resizeGridItem(allItems[i]);
-        }
     }
 
     // 新しいRSSフィードを追加するフォームイベントリスナーを設定
@@ -362,12 +307,10 @@
         });
     }
 
-    // ページが読み込まれたときにローカルストレージからURLを取得し、表示する
+    // ページが読み込まれたときにローカルストレージからURLを取得し, 表示する
     document.addEventListener("DOMContentLoaded", async function () {
         const storedFeeds = getStoredFeeds();
         if (storedFeeds && storedFeeds.length > 0) {
-            updateGridCache();
-            
             // 並列で全フィードを取得する
             const promises = storedFeeds.map(async (feedObj) => {
                 const url = feedObj.url;
@@ -394,22 +337,7 @@
                     showToast(`Failed to load feed: ${result.error.message || "Unknown error"}`, "error");
                 }
             });
-            
-            updateGridCache();
-            resizeAllGridItems();
         }
-    });
-
-    // リサイズ時に全てのアイテムの grid-row-end プロパティを更新
-    let timer = false;
-    window.addEventListener('resize', () => {
-        if (timer !== false) {
-            clearTimeout(timer);
-        }
-        timer = setTimeout(function () {
-            updateGridCache();
-            resizeAllGridItems();
-        }, 200);
     });
 
 })();
