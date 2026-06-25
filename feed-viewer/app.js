@@ -221,12 +221,18 @@
             }
         });
 
+        // タイトルバー上でのマウスダウンでドラッグ判定フラグを有効化
+        titleBar.addEventListener('mousedown', function (e) {
+            const isInteractive = e.target.closest('a') || e.target.closest('button');
+            if (!isInteractive) {
+                isTitleBarGrabbed = true;
+            }
+        });
+
         // ドラッグ＆ドロップイベントリスナーの登録
         columnItem.addEventListener('dragstart', function (e) {
-            // タイトルバーエリア以外（リンクやボタン等）からのドラッグ開始はキャンセル
-            const isTitleBar = e.target.closest('.title-bar');
-            const isInteractive = e.target.closest('a') || e.target.closest('button');
-            if (!isTitleBar || isInteractive) {
+            // タイトルバーを掴んでいる場合のみドラッグ開始を許可
+            if (!isTitleBarGrabbed) {
                 e.preventDefault();
                 return;
             }
