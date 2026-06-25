@@ -183,6 +183,46 @@
                 </div>
             </section>
 
+            <!-- Step 4: Subtitles / Telop -->
+            <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="w-6 h-6 bg-indigo-500/10 text-indigo-400 rounded-full flex items-center justify-center text-xs font-bold border border-indigo-500/30">4</span>
+                    <h2 class="font-semibold text-sm text-slate-200">テロップ（字幕）設定</h2>
+                </div>
+
+                <div class="space-y-4 text-xs">
+                    <div>
+                        <label class="block text-slate-400 mb-1.5 font-medium flex justify-between">
+                            <span>タイムスタンプとテキスト（自動切替）</span>
+                            <span class="text-[10px] text-slate-500">入力例: 0:00 タイトル / 0:05 歌詞</span>
+                        </label>
+                        <textarea id="subtitles-input" rows="4" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-[11px]" placeholder="0:00 サンプルタイトル&#10;0:05 ここから歌が始まります&#10;0:15 次の歌詞が入ります"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-slate-400 mb-1.5 font-medium">表示位置</label>
+                            <select id="subtitle-position" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-slate-200 focus:outline-none focus:border-indigo-500">
+                                <option value="bottom" selected>下部</option>
+                                <option value="center">中央</option>
+                                <option value="top">上部</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 mb-1.5 font-medium">サイズ (px)</label>
+                            <input type="number" id="subtitle-size" min="12" max="150" value="48" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-slate-200 focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 mb-1.5 font-medium">文字色</label>
+                            <div class="flex items-center gap-1 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5">
+                                <input type="color" id="subtitle-color" value="#ffffff" class="w-7 h-6 bg-transparent border-0 cursor-pointer">
+                                <span id="subtitle-color-hex" class="text-[9px] text-slate-400 font-mono uppercase">#ffffff</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
         </div>
 
         <!-- Right Column: Canvas Preview & Export (7 cols) -->
@@ -323,6 +363,12 @@
         const ctx = canvas.getContext('2d');
         const canvasPlaceholder = document.getElementById('canvas-placeholder');
         const canvasResolutionBadge = document.getElementById('canvas-resolution-badge');
+
+        const subtitlesInput = document.getElementById('subtitles-input');
+        const subtitlePosition = document.getElementById('subtitle-position');
+        const subtitleSize = document.getElementById('subtitle-size');
+        const subtitleColor = document.getElementById('subtitle-color');
+        const subtitleColorHex = document.getElementById('subtitle-color-hex');
         
         const playBtn = document.getElementById('play-btn');
         const exportBtn = document.getElementById('export-btn');
@@ -361,7 +407,11 @@
             fit: 'cover',
             visualizer: 'none', // デフォルト「なし」
             color: '#6366f1',
-            vignette: true
+            vignette: true,
+            subtitles: [],
+            subtitlePosition: 'bottom',
+            subtitleSize: 48,
+            subtitleColor: '#ffffff'
         };
 
         // Initialize Resolution Badge
@@ -404,6 +454,44 @@
             config.vignette = e.target.checked;
             drawFrame();
         });
+
+        subtitlesInput.addEventListener('input', (e) => {
+            config.subtitles = parseSubtitles(e.target.value);
+            drawFrame();
+        });
+        subtitlePosition.addEventListener('change', (e) => {
+            config.subtitlePosition = e.target.value;
+            drawFrame();
+        });
+        subtitleSize.addEventListener('input', (e) => {
+            config.subtitleSize = Number(e.target.value) || 48;
+            drawFrame();
+        });
+        subtitleColor.addEventListener('input', (e) => {
+            config.subtitleColor = e.target.value;
+            subtitleColorHex.textContent = e.target.value;
+            drawFrame();
+        });
+
+        // Parse format "m:ss text" into [{time: seconds, text: text}]
+        function parseSubtitles(text) {
+            const lines = text.split('\n');
+            const subs = [];
+            for (let line of lines) {
+                line = line.trim();
+                if (!line) continue;
+                const match = line.match(/^(\d+):(\d+)(?:\s+(.*))?$/);
+                if (match) {
+                    const min = parseInt(match[1], 10);
+                    const sec = parseInt(match[2], 10);
+                    const time = min * 60 + sec;
+                    const textContent = match[3] || "";
+                    subs.push({ time, text: textContent });
+                }
+            }
+            subs.sort((a, b) => a.time - b.time);
+            return subs;
+        }
 
         // Initialize canvas sizing
         updateCanvasSize();
@@ -776,6 +864,43 @@
                         }
                     }
                 }
+            }
+
+            // 4. Subtitles Overlay Layer
+            let activeText = "";
+            if (config.subtitles && config.subtitles.length > 0) {
+                const time = coreAudio.currentTime;
+                for (let i = config.subtitles.length - 1; i >= 0; i--) {
+                    if (time >= config.subtitles[i].time) {
+                        activeText = config.subtitles[i].text;
+                        break;
+                    }
+                }
+            }
+
+            if (activeText) {
+                ctx.save();
+                const fontSize = config.subtitleSize;
+                ctx.font = `bold ${fontSize}px sans-serif`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+
+                let py = config.height * 0.85;
+                if (config.subtitlePosition === 'top') {
+                    py = config.height * 0.15;
+                } else if (config.subtitlePosition === 'center') {
+                    py = config.height * 0.5;
+                }
+                const px = config.width / 2;
+
+                // Black stroke for readability
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = Math.max(4, fontSize * 0.15);
+                ctx.strokeText(activeText, px, py);
+
+                ctx.fillStyle = config.subtitleColor;
+                ctx.fillText(activeText, px, py);
+                ctx.restore();
             }
 
             // Sync Timeline numbers while rendering/previewing
