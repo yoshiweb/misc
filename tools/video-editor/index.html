@@ -450,6 +450,20 @@
             });
         }
 
+        function syncProjectDuration(nextDuration) {
+            const safeDuration = Math.max(5, Math.min(300, Number(nextDuration) || 5));
+            AppState.duration = safeDuration;
+            DOM.settingDuration.value = safeDuration;
+
+            if (AppState.currentTime > AppState.duration) {
+                AppState.currentTime = AppState.duration;
+            }
+
+            renderRuler();
+            updatePlayheadUI();
+            renderFrame();
+        }
+
         /**
          * 構成設定UIのイベントハンドリング
          */
@@ -477,22 +491,7 @@
 
             // 動画長の変更処理
             DOM.settingDuration.addEventListener('change', (e) => {
-                let newDuration = parseInt(e.target.value);
-                if (isNaN(newDuration) || newDuration < 5) newDuration = 5;
-                if (newDuration > 300) newDuration = 300; // 上限5分
-                
-                e.target.value = newDuration; // UI側の数値を補正値に合わせる
-                AppState.duration = newDuration;
-                
-                // 再生位置が新しい終端を超えていたら調整
-                if (AppState.currentTime > AppState.duration) {
-                    AppState.currentTime = AppState.duration;
-                    updatePlayheadUI();
-                    renderFrame();
-                }
-                
-                // ルーラーを再描画してタイムラインの長さを合わせる
-                renderRuler();
+                syncProjectDuration(e.target.value);
             });
 
             // ビジュアル設定
@@ -604,7 +603,8 @@
                     }
 
                     if (isAudio) {
-                        asset.duration = await getAudioDuration(dataUrl);
+                        const resolvedDuration = await getAudioDuration(dataUrl);
+                        asset.duration = Number.isFinite(resolvedDuration) && resolvedDuration > 0 ? resolvedDuration : 5;
                         asset.audioObj = new Audio(dataUrl);
                         
                         ensureAudioContext();
@@ -613,6 +613,25 @@
                     }
 
                     AppState.assets.push(asset);
+
+                    if (asset.type === 'audio') {
+                        const existingClip = AppState.tracks.audio.find(clip => clip.assetId === asset.id);
+                        if (!existingClip) {
+                            AppState.tracks.audio.push({
+                                id: 'clip_' + Date.now() + '_auto',
+                                assetId: asset.id,
+                                start: 0,
+                                duration: asset.duration
+                            });
+                        }
+
+                        if (asset.duration > AppState.duration) {
+                            syncProjectDuration(asset.duration);
+                        }
+                        renderTimeline();
+                        renderFrame();
+                    }
+
                     renderAssetListItem(asset);
                     
                 } catch (error) {
@@ -766,7 +785,23 @@
 
             const rect = e.currentTarget.getBoundingClientRect();
             const offsetX = e.clientX - rect.left + DOM.timelineContainer.scrollLeft;
-            const startTime = Math.max(0, Math.min(offsetX / AppState.pixelsPerSecond, AppState.duration));
+            let startTime = 0;
+
+            if (trackType === 'audio') {
+                startTime = 0;
+            } else {
+                const existingVisualClips = AppState.tracks.visual;
+                if (existingVisualClips.length > 0) {
+                    const lastClip = existingVisualClips[existingVisualClips.length - 1];
+                    startTime = lastClip.start + lastClip.duration;
+                } else {
+                    startTime = 0;
+                }
+
+                if (startTime > AppState.duration) {
+                    syncProjectDuration(startTime);
+                }
+            }
 
             AppState.tracks[trackType].push({
                 id: 'clip_' + Date.now(),
@@ -774,6 +809,10 @@
                 start: startTime,
                 duration: asset.duration
             });
+
+            if (trackType === 'audio' && asset.duration > AppState.duration) {
+                syncProjectDuration(asset.duration);
+            }
 
             renderTimeline();
             renderFrame();
