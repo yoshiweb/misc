@@ -1,77 +1,77 @@
 ---
 name: addictive-mobile-game-analysis
-description: Analyze why simple hyper-casual and minimalist mobile games are addictive. Trigger when the user asks about mobile game retention, addictive game loops, hyper-casual mechanics, one-tap or simple puzzle game design, or the psychology behind repeat play.
+description: 単純なハイパーカジュアル／ミニマルなモバイルゲームがなぜ中毒性を生むのかを分析します。ユーザーがリテンション、反復プレイを誘発するゲームループ、ワンタップ／シンプルパズルの設計、行動心理学に基づくゲーム体験について尋ねたときにトリガーします。
 ---
 
 # Addictive Mobile Game Analysis
 
-This skill explains the psychology and design structure behind addictive, simple mobile games. It is meant for prompts that ask why hyper-casual games hook players, what makes a one-tap or minimal puzzle game repeatable, or how game design and behavioral psychology combine to create strong replay loops.
+このスキルは、単純で中毒性の高いモバイルゲームの心理学とデザイン構造を解説します。ハイパーカジュアルゲームがプレイヤーを引きつける理由、ワンタップやミニマルなパズルが繰り返し遊ばれる理由、ゲームデザインと行動心理学がどのように強いリプレイループを作るかを説明します。
 
-## When to use this skill
+## このスキルを使うタイミング
 
-- The user asks why a mobile game is addictive or compelling.
-- The user wants to analyze hyper-casual game mechanics, one-tap loops, merge games, endless runners, or minimal puzzles.
-- The user asks about retention, replay motivation, dopamine-driven gameplay, or low-friction mobile game design.
-- The user asks for design patterns that make simple games feel hard to put down.
+- ユーザーがモバイルゲームの中毒性や魅力について尋ねるとき
+- ハイパーカジュアルのゲームメカニクス、ワンタップループ、マージ系、エンドレスランナー、ミニマルパズルの分析を求めるとき
+- リテンション、再プレイの動機付け、ドーパミン駆動のゲーム体験、低摩擦のモバイルゲーム設計について訊かれたとき
+- 単純なゲームを手放せなくするデザインパターンを知りたいとき
 
-## What this skill must do
+## このスキルが行うべきこと
 
-- Identify the key psychological triggers in the game design.
-- Explain how the game’s core loop is minimized and why that supports repeat play.
-- Connect mechanics to concepts like operant conditioning, variable rewards, Zeigarnik effect, near-miss, flow, juiciness, and low friction.
-- Describe the balance between challenge and skill using the D(t) ≈ S(t) idea.
-- If relevant, mention responsible design concerns about over-retention or exploitative mechanics.
+- ゲームデザインにおける主要な心理的トリガーを特定する
+- コアループがどのように最小化され、それが再プレイを促すのかを説明する
+- オペラント条件付け、可変報酬、ツァイガルニク効果、ニアミス、フロー、ジューシーさ、低摩擦といった概念にメカニクスを結びつける
+- 難易度とスキルのバランスを D(t) ≈ S(t) の考え方で説明する
+- 必要に応じて、過剰なリテンションや搾取的な設計に対する責任あるデザイン上の懸念にも触れる
 
-## Analysis framework
+## 分析の枠組み
 
-Always organize the response with clear sections:
+回答は次のような明確なセクションで構成する:
 
-1. Summary
-   - One or two sentences about the main addictive force.
-2. Psychological triggers
-   - Operant conditioning / variable ratio rewards
-   - Zeigarnik effect / unfinished task motivation
-   - Near-miss effect
-   - Flow balance (difficulty vs skill)
-   - Low friction and fast restart
-3. Core loop and structure
-   - Action
-   - Feedback
-   - Challenge
-   - Investment
-4. Mechanics examples
-   - Hyper-casual runner
-   - Merge or match systems
-   - Physics-based minimal puzzle
-   - Endlessly replayable short-session loop
-5. Responsible design note
-   - When retention becomes manipulation
-   - How to keep addictive qualities ethical
+1. 要約
+   - 中毒性の主要因を1〜2文でまとめる
+2. 心理的トリガー
+   - オペラント条件付け / 可変比報酬
+   - ツァイガルニク効果 / 未完了状態の動機付け
+   - ニアミス効果
+   - フローのバランス（難易度とスキル）
+   - 低摩擦と短時間での再開
+3. コアループと構造
+   - アクション
+   - フィードバック
+   - チャレンジ
+   - 投資
+4. 代表的なメカニクス例
+   - ハイパーカジュアルランナー
+   - マージ／マッチ系
+   - 物理ベースのミニマルパズル
+   - 何度でも短時間で再プレイできるループ
+5. 責任あるデザインの注意点
+   - リテンションが操作的になる境界
+   - 中毒性を倫理的に保つ方法
 
-## Detailed guidance
+## 詳細な指針
 
-- Always tie each design element to a specific psychological principle.
-- Use concrete game archetypes rather than vague abstractions whenever possible.
-- Emphasize how short sessions, instant feedback, and clear progress markers reinforce repeat play.
-- Explain the role of sensory juiciness (visuals, sound, particles) in amplifying reward.
-- Explain why “almost winning” can feel more motivating than a clean loss.
-- Describe how a minimal core loop lowers cognitive cost and makes retrying effortless.
+- 各デザイン要素を特定の心理学的原理に結びつける
+- 可能なら具体的なゲームのアーキタイプを使い、抽象論に終始しない
+- 短いセッション、即時フィードバック、明確な進行表示がどう再プレイを強化するかを強調する
+- 視覚・音・パーティクルなどの感覚的ジューシーさが報酬を増幅する役割を説明する
+- 「もう少しで勝てそうだった」体験がなぜクリーンな敗北よりも動機を高めるのかを説明する
+- 最小限のコアループが認知負荷を下げ、再トライを容易にする仕組みを示す
 
-## Responsible framing
+## 責任ある言及
 
-If the prompt is clearly about making a game more addictive, add a short note about ethical balance:
+ユーザーがゲームをより中毒性にしたい意図を明確に示している場合、以下のような倫理バランスを短く追加する:
 
-- Simple games are easier to launch and replay, but designers should avoid deliberately causing compulsive behavior.
-- Strong retention is healthiest when it comes from satisfying challenge and meaningful progression, not only from exploitative reward pacing.
+- シンプルなゲームは立ち上げや再生が容易だが、作り手は強制的な依存行動を意図しないよう注意する
+- 強いリテンションは、満足できるチャレンジと意味のある進行から生まれるのが望ましく、単なる搾取的報酬ペーシングだけに依存してはいけない
 
-## Example output structure
+## 出力の例構造
 
-Use headings and bullets. A strong response should look like:
+見出しと箇条書きを使う。優れた回答は以下のような構成を持つ:
 
-- Summary
-- Why this works
-- Core loop
-- Mechanics that drive repeat play
-- Responsible design note
+- 要約
+- なぜこれが効くのか
+- コアループ
+- 再プレイを促すメカニクス
+- 責任あるデザインへの注意
 
-Always make the answer practical, grounded, and actionable for designers analyzing or building simple mobile games.
+常に実践的で、現実的に、シンプルなモバイルゲームを分析または設計する人が使える形で回答する。
