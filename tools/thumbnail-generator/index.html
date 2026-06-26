@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>プレミアム・サムネイルジェネレーター</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Noto Sans JP) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Mochi+Pop+One&family=RocknRoll+One&display=swap" rel="stylesheet">
+    <!-- Font Awesome (Icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f3f4f6;
+        }
+        /* キャンバスのアスペクト比を固定して表示するためのラッパー */
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%; /* 16:9 Aspect Ratio */
+        }
+        .canvas-container canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-gray-800 pb-12">
+
+    <!-- ヘッダー -->
+    <header class="bg-gradient-to-r from-slate-900 to-indigo-950 text-white shadow-md py-4 px-6 mb-8">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-white text-slate-900 p-2 rounded-lg shadow-inner">
+                    <i class="fa-solid fa-palette text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-black tracking-wider">THUMBNAIL EXPRESS</h1>
+                    <p class="text-xs text-indigo-100">ブログ用アイキャッチ画像（16:9）ジェネレーター</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 text-xs bg-white bg-opacity-10 px-3 py-1.5 rounded-full">
+                <i class="fa-solid fa-lightbulb text-yellow-300"></i>
+                <span>フラットデザインとコントラスト配色の組み合わせが目を引く秘訣です！</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- 左側：設定コントロールパネル (5/12) -->
+        <section class="lg:col-span-5 space-y-6">
+            
+            <!-- タブメニュー（テキスト/デザイン/画像） -->
+            <div class="bg-white rounded-xl shadow-sm p-2 flex gap-1 border border-gray-100">
+                <button onclick="switchTab('text-tab')" id="btn-text-tab" class="tab-btn flex-1 py-2.5 px-3 rounded-lg text-sm font-bold text-center bg-indigo-50 text-indigo-600 transition">
+                    <i class="fa-solid fa-font mr-1.5"></i>テキスト入力
+                </button>
+                <button onclick="switchTab('design-tab')" id="btn-design-tab" class="tab-btn flex-1 py-2.5 px-3 rounded-lg text-sm font-medium text-center text-gray-600 hover:bg-gray-50 transition">
+                    <i class="fa-solid fa-sliders mr-1.5"></i>デザイン調整
+                </button>
+                <button onclick="switchTab('decor-tab')" id="btn-decor-tab" class="tab-btn flex-1 py-2.5 px-3 rounded-lg text-sm font-medium text-center text-gray-600 hover:bg-gray-50 transition">
+                    <i class="fa-solid fa-image mr-1.5"></i>背景・挿絵
+                </button>
+            </div>
+
+            <!-- パネル1: テキスト入力 -->
+            <div id="panel-text-tab" class="panel-content bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+                <h2 class="text-lg font-bold border-b pb-2 text-gray-700 flex items-center justify-between">
+                    <span><i class="fa-regular fa-keyboard text-indigo-500 mr-2"></i>テキスト設定</span>
+                    <span class="text-xs font-normal text-gray-400">リアルタイムに描画されます</span>
+                </h2>
+
+                <!-- メインタイトル -->
+                <div class="space-y-1">
+                    <div class="flex justify-between items-center">
+                        <label for="input-title" class="text-sm font-bold text-gray-700">メインタイトル</label>
+                        <span id="char-count-title" class="text-xs text-gray-400">0文字</span>
+                    </div>
+                    <textarea id="input-title" rows="3" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none text-sm" placeholder="ブログのアイキャッチはテンプレート化すべき？2ヶ月で150個作成して気づいたこと"></textarea>
+                </div>
+
+                <!-- サブタイトル -->
+                <div class="space-y-1">
+                    <label for="input-subtitle" class="text-sm font-bold text-gray-700">サブタイトル / キャッチコピー</label>
+                    <input type="text" id="input-subtitle" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none text-sm" placeholder="デザイン性と時短を両立するヒント">
+                </div>
+
+                <!-- カテゴリー＆日付 -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label for="input-category" class="text-sm font-bold text-gray-700">カテゴリー</label>
+                        <input type="text" id="input-category" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none text-sm" placeholder="Canva無料版">
+                    </div>
+                    <div class="space-y-1">
+                        <label for="input-date" class="text-sm font-bold text-gray-700">日付・タグ</label>
+                        <input type="text" id="input-date" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none text-sm" placeholder="2026.06.05">
+                    </div>
+                </div>
+
+                <!-- 著者情報 -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label for="input-author" class="text-sm font-bold text-gray-700">著者名</label>
+                        <input type="text" id="input-author" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none text-sm" placeholder="ルーク">
+                    </div>
+                    <div class="space-y-1">
+                        <label for="select-author-avatar" class="text-sm font-bold text-gray-700">アバター</label>
+                        <select id="select-author-avatar" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none text-sm">
+                            <option value="none" selected>非表示</option>
+                            <option value="luke">ルーク (男の子風)</option>
+                            <option value="mika">ミカ (女の子風)</option>
+                            <option value="custom">カスタム画像</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- パネル2: デザイン調整 -->
+            <div id="panel-design-tab" class="panel-content hidden bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
+                <div>
+                    <h2 class="text-lg font-bold border-b pb-2 text-gray-700 mb-4"><i class="fa-solid fa-swatchbook text-indigo-500 mr-2"></i>カラー＆スタイル</h2>
+                    
+                    <!-- プリセット配色パレット -->
+                    <label class="text-sm font-bold text-gray-700 block mb-2">おすすめ配色テーマ（コントラスト重視）</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <!-- ポップ・マリーゴールド -->
+                        <button onclick="setPalette('#fffbeb', '#0f172a', '#f59e0b')" class="p-2.5 border rounded-lg text-left hover:border-indigo-400 transition flex flex-col gap-1.5">
+                            <div class="flex gap-1 w-full h-4 rounded overflow-hidden">
+                                <span class="flex-1 bg-[#fffbeb] border border-gray-100"></span>
+                                <span class="flex-1 bg-[#0f172a]"></span>
+                                <span class="flex-1 bg-[#f59e0b]"></span>
+                            </div>
+                            <span class="text-xs font-black text-gray-700">ポップ・マリーゴールド</span>
+                        </button>
+                        <!-- エモーショナル・ネオン -->
+                        <button onclick="setPalette('#0f172a', '#ffffff', '#ec4899')" class="p-2.5 border rounded-lg text-left hover:border-indigo-400 transition flex flex-col gap-1.5">
+                            <div class="flex gap-1 w-full h-4 rounded overflow-hidden">
+                                <span class="flex-1 bg-[#0f172a]"></span>
+                                <span class="flex-1 bg-[#ffffff]"></span>
+                                <span class="flex-1 bg-[#ec4899]"></span>
+                            </div>
+                            <span class="text-xs font-black text-gray-700">エモーショナル・ネオン</span>
+                        </button>
+                        <!-- ピスタチオ・チェリー -->
+                        <button onclick="setPalette('#f0fdf4', '#1e1b4b', '#f43f5e')" class="p-2.5 border rounded-lg text-left hover:border-indigo-400 transition flex flex-col gap-1.5">
+                            <div class="flex gap-1 w-full h-4 rounded overflow-hidden">
+                                <span class="flex-1 bg-[#f0fdf4] border border-gray-100"></span>
+                                <span class="flex-1 bg-[#1e1b4b]"></span>
+                                <span class="flex-1 bg-[#f43f5e]"></span>
+                            </div>
+                            <span class="text-xs font-black text-gray-700">ピスタチオ・チェリー</span>
+                        </button>
+                        <!-- レトロ・マスタード -->
+                        <button onclick="setPalette('#fef08a', '#451a03', '#e11d48')" class="p-2.5 border rounded-lg text-left hover:border-indigo-400 transition flex flex-col gap-1.5">
+                            <div class="flex gap-1 w-full h-4 rounded overflow-hidden">
+                                <span class="flex-1 bg-[#fef08a] border border-gray-100"></span>
+                                <span class="flex-1 bg-[#451a03]"></span>
+                                <span class="flex-1 bg-[#e11d48]"></span>
+                            </div>
+                            <span class="text-xs font-black text-gray-700">レトロ・マスタード</span>
+                        </button>
+                        <!-- スタイリッシュ・オレンジ -->
+                        <button onclick="setPalette('#fff7ed', '#1c1917', '#ea580c')" class="p-2.5 border rounded-lg text-left hover:border-indigo-400 transition flex flex-col gap-1.5">
+                            <div class="flex gap-1 w-full h-4 rounded overflow-hidden">
+                                <span class="flex-1 bg-[#fff7ed] border border-gray-100"></span>
+                                <span class="flex-1 bg-[#1c1917]"></span>
+                                <span class="flex-1 bg-[#ea580c]"></span>
+                            </div>
+                            <span class="text-xs font-black text-gray-700">スタイリッシュ・オレンジ</span>
+                        </button>
+                        <!-- ニューヨーク・アッシュ -->
+                        <button onclick="setPalette('#f8fafc', '#0f172a', '#3b82f6')" class="p-2.5 border rounded-lg text-left hover:border-indigo-400 transition flex flex-col gap-1.5">
+                            <div class="flex gap-1 w-full h-4 rounded overflow-hidden">
+                                <span class="flex-1 bg-[#f8fafc] border border-gray-100"></span>
+                                <span class="flex-1 bg-[#0f172a]"></span>
+                                <span class="flex-1 bg-[#3b82f6]"></span>
+                            </div>
+                            <span class="text-xs font-black text-gray-700">ニューヨーク・アッシュ</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- カスタムカラー選択 -->
+                <div class="space-y-3 pt-3 border-t">
+                    <label class="text-sm font-bold text-gray-700 block">カスタム詳細配色</label>
+                    <div class="grid grid-cols-2 gap-3 text-xs">
+                        <div class="flex items-center gap-2">
+                            <input type="color" id="color-primary" value="#fffbeb" class="w-8 h-8 rounded cursor-pointer border">
+                            <label for="color-primary">背景ベース色</label>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="color" id="color-text-main" value="#0f172a" class="w-8 h-8 rounded cursor-pointer border">
+                            <label for="color-text-main">主タイトル文字色</label>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="color" id="color-accent" value="#f59e0b" class="w-8 h-8 rounded cursor-pointer border">
+                            <label for="color-accent">アクセント色</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 反転・反転設定 -->
+                <div class="space-y-3 pt-3 border-t">
+                    <label class="text-sm font-bold text-gray-700 block">レイアウトアレンジ (反転アクション)</label>
+                    <div class="flex gap-2">
+                        <button id="btn-mirror-h" class="flex-1 py-2 px-3 border border-indigo-200 text-indigo-600 hover:bg-indigo-50 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-arrows-left-right"></i>
+                            左右レイアウトを反転
+                        </button>
+                    </div>
+                </div>
+
+                <!-- フォント指定 -->
+                <div class="space-y-3 pt-3 border-t">
+                    <label for="select-font" class="text-sm font-bold text-gray-700 block">フォントスタイル</label>
+                    <select id="select-font" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 focus:outline-none text-sm">
+                        <option value="'Noto Sans JP', sans-serif" selected>基本ゴシック (Noto Sans JP)</option>
+                        <option value="'Mochi Pop One', sans-serif">ポップ・太丸ゴシック</option>
+                        <option value="'RocknRoll One', sans-serif">力強いデザイン書体 (ロックンロール)</option>
+                        <option value="serif">クラシック明朝体 (システムフォント)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- パネル3: 背景・挿絵 -->
+            <div id="panel-decor-tab" class="panel-content hidden bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+                <h2 class="text-lg font-bold border-b pb-2 text-gray-700"><i class="fa-regular fa-image text-indigo-500 mr-2"></i>背景・挿絵の追加</h2>
+                
+                <!-- 背景画像の選択 -->
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-gray-700 block">背景の設定</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="setBackgroundType('solid')" id="btn-bg-solid" class="py-2 border-2 border-indigo-500 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold transition">
+                            <i class="fa-solid fa-fill-drip mr-1"></i>ソリッド単色
+                        </button>
+                        <button onclick="setBackgroundType('image')" id="btn-bg-image" class="py-2 border border-gray-200 hover:border-indigo-400 text-gray-700 rounded-lg text-xs font-bold transition">
+                            <i class="fa-solid fa-camera mr-1"></i>カスタム背景画像
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ファイルアップロード -->
+                <div id="upload-bg-section" class="hidden space-y-2 p-3 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                    <span class="text-xs font-bold text-gray-500 block">画像をアップロード (推奨 16:9)</span>
+                    <input type="file" id="input-bg-file" accept="image/*" class="text-xs w-full">
+                </div>
+
+                <!-- 挿絵イラストの選択 -->
+                <div class="space-y-2 pt-3 border-t">
+                    <label class="text-sm font-bold text-gray-700 block">挿絵・グラフィックス</label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button onclick="setIllustration('none')" class="p-1 border rounded hover:border-indigo-500 transition text-center">
+                            <span class="text-xs block text-gray-400">なし</span>
+                        </button>
+                        <button onclick="setIllustration('blog')" class="p-1 border rounded hover:border-indigo-500 transition text-center">
+                            <i class="fa-solid fa-laptop text-xl text-slate-600"></i>
+                            <span class="text-[10px] block text-gray-500">PC・ブログ</span>
+                        </button>
+                        <button onclick="setIllustration('idea')" class="p-1 border rounded hover:border-indigo-500 transition text-center">
+                            <i class="fa-regular fa-lightbulb text-xl text-amber-500"></i>
+                            <span class="text-[10px] block text-gray-500">アイデア</span>
+                        </button>
+                        <button onclick="setIllustration('growth')" class="p-1 border rounded hover:border-indigo-500 transition text-center">
+                            <i class="fa-solid fa-chart-line text-xl text-emerald-500"></i>
+                            <span class="text-[10px] block text-gray-500">成長・データ</span>
+                        </button>
+                        <button onclick="setIllustration('book')" class="p-1 border rounded hover:border-indigo-500 transition text-center">
+                            <i class="fa-solid fa-book-open text-xl text-indigo-500"></i>
+                            <span class="text-[10px] block text-gray-500">本・学習</span>
+                        </button>
+                        <button onclick="setIllustration('chat')" class="p-1 border rounded hover:border-indigo-500 transition text-center">
+                            <i class="fa-regular fa-comments text-xl text-teal-500"></i>
+                            <span class="text-[10px] block text-gray-500">対話・AI</span>
+                        </button>
+                        <button onclick="setIllustration('calendar')" class="p-1 border rounded hover:border-indigo-500 transition text-center">
+                            <i class="fa-regular fa-calendar-check text-xl text-rose-500"></i>
+                            <span class="text-[10px] block text-gray-500">時間・管理</span>
+                        </button>
+                        <button onclick="setIllustration('key')" class="p-1 border rounded hover:border-indigo-500 transition text-center">
+                            <i class="fa-solid fa-key text-xl text-yellow-600"></i>
+                            <span class="text-[10px] block text-gray-500">鍵・安全</span>
+                        </button>
+                    </div>
+                    
+                    <div class="p-3 bg-gray-50 rounded-lg border border-dashed border-gray-300 mt-2">
+                        <span class="text-xs font-bold text-gray-500 block">またはカスタム挿絵画像をアップロード</span>
+                        <input type="file" id="input-illustration-file" accept="image/*" class="text-xs w-full mt-1">
+                    </div>
+                </div>
+
+                <!-- 著者アバターのカスタマイズ -->
+                <div id="custom-avatar-section" class="hidden space-y-2 pt-3 border-t">
+                    <label class="text-sm font-bold text-gray-700 block">カスタム著者アバター</label>
+                    <input type="file" id="input-avatar-file" accept="image/*" class="text-xs w-full">
+                </div>
+            </div>
+
+        </section>
+
+        <!-- 右側：プレビュー ＆ テンプレート選択 (7/12) -->
+        <section class="lg:col-span-7 space-y-6">
+            
+            <!-- キャンバスプレビュー -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 md:p-6">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full">
+                        <i class="fa-solid fa-tv mr-1"></i>プレビュー領域 (16:9)
+                    </span>
+                    <span class="text-xs text-gray-400">実寸: 1200 × 675 px</span>
+                </div>
+                
+                <!-- キャンバスコンテナ -->
+                <div class="canvas-container">
+                    <canvas id="thumbnail-canvas" width="1200" height="675"></canvas>
+                </div>
+
+                <!-- ボタン群 -->
+                <div class="flex flex-wrap gap-3 mt-6 justify-between">
+                    <div class="flex gap-2">
+                        <button id="btn-random" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-bold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-shuffle"></i>
+                            ランダム生成
+                        </button>
+                    </div>
+                    
+                    <button id="btn-download" class="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg text-sm font-bold shadow-sm hover:shadow-md transition flex items-center gap-2">
+                        <i class="fa-solid fa-download"></i>
+                        超美麗ダウンロード (PNG)
+                    </button>
+                </div>
+            </div>
+
+            <!-- テンプレートセレクター（ここで切り替える） -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-sm font-bold text-gray-500 tracking-wider mb-4 uppercase flex items-center gap-1.5">
+                    <i class="fa-regular fa-folder-open text-indigo-500"></i>
+                    ベーステンプレートを選択
+                </h3>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                    <!-- テンプレ1 -->
+                    <button onclick="selectTemplate('t1')" id="btn-temp-t1" class="template-selector-btn p-1.5 border-2 border-indigo-500 bg-indigo-50 bg-opacity-30 rounded-xl text-center hover:border-indigo-400 transition group">
+                        <div class="aspect-video w-full rounded-lg bg-indigo-600 flex items-center justify-center text-white mb-2">
+                            <span class="text-[10px] font-black group-hover:scale-105 transition">MINIMAL</span>
+                        </div>
+                        <span class="text-xs font-bold text-gray-700 block">1. ミニマル</span>
+                    </button>
+                    <!-- テンプレ2 -->
+                    <button onclick="selectTemplate('t2')" id="btn-temp-t2" class="template-selector-btn p-1.5 border border-gray-200 rounded-xl text-center hover:border-indigo-400 transition group">
+                        <div class="aspect-video w-full rounded-lg bg-indigo-500 flex items-center justify-between p-1.5 text-white mb-2">
+                            <span class="text-[8px] font-bold text-left leading-tight w-1/2">TEXT AREA</span>
+                            <div class="w-1/3 h-full bg-indigo-900 bg-opacity-40 rounded flex items-center justify-center"><i class="fa-solid fa-laptop text-[10px]"></i></div>
+                        </div>
+                        <span class="text-xs font-bold text-gray-700 block">2. 左右分割</span>
+                    </button>
+                    <!-- テンプレ3 -->
+                    <button onclick="selectTemplate('t3')" id="btn-temp-t3" class="template-selector-btn p-1.5 border border-gray-200 rounded-xl text-center hover:border-indigo-400 transition group">
+                        <div class="aspect-video w-full rounded-lg bg-purple-600 flex flex-col justify-between p-2 text-white mb-2">
+                            <span class="bg-yellow-400 text-purple-900 rounded-[3px] text-[6px] px-1 py-0.5 w-max font-bold">CATEGORY</span>
+                            <span class="text-[8px] font-black leading-tight text-left">POP BOLD</span>
+                        </div>
+                        <span class="text-xs font-bold text-gray-700 block">3. バッジ装飾</span>
+                    </button>
+                    <!-- テンプレ4 -->
+                    <button onclick="selectTemplate('t4')" id="btn-temp-t4" class="template-selector-btn p-1.5 border border-gray-200 rounded-xl text-center hover:border-indigo-400 transition group">
+                        <div class="aspect-video w-full rounded-lg bg-orange-500 flex items-center justify-center text-white mb-2">
+                            <span class="text-[9px] font-black tracking-widest">SOLID</span>
+                        </div>
+                        <span class="text-xs font-bold text-gray-700 block">4. ソリッドスラッシュ</span>
+                    </button>
+                    <!-- テンプレ5 -->
+                    <button onclick="selectTemplate('t5')" id="btn-temp-t5" class="template-selector-btn p-1.5 border border-gray-200 rounded-xl text-center hover:border-indigo-400 transition group">
+                        <div class="aspect-video w-full rounded-lg bg-emerald-700 border-2 border-dashed border-emerald-500 flex flex-col justify-center items-center text-white mb-2">
+                            <div class="bg-white w-[85%] h-5/6 rounded flex items-center justify-center"><span class="text-[8px] text-emerald-800 font-bold">CARD TYPE</span></div>
+                        </div>
+                        <span class="text-xs font-bold text-gray-700 block">5. モダンカード</span>
+                    </button>
+                </div>
+
+                <!-- ノウハウ豆知識 -->
+                <div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-r-xl mt-6">
+                    <h4 class="text-sm font-bold text-indigo-800 mb-1 flex items-center gap-1.5">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        テンプレート運用のコツ
+                    </h4>
+                    <p class="text-xs text-indigo-700 leading-relaxed">
+                        「統一感」が読者のエゴにならないようにするために、カテゴリーごとにテーマカラーを割り当てるか、イラストのレイアウトを左右反転させて使い分けましょう。これで読み手の目印になります！
+                    </p>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- モーダルダイアログ (エラー時などの緊急通知用) -->
+    <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl transform scale-95 transition-transform duration-300">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 text-red-600 mb-4">
+                    <i id="modal-icon" class="fa-solid fa-triangle-exclamation text-xl"></i>
+                </div>
+                <h3 id="modal-title" class="text-lg font-bold text-gray-900">エラー</h3>
+                <p id="modal-message" class="text-sm text-gray-500 mt-2">コンテンツの処理中に問題が発生しました。</p>
+                <div class="mt-6">
+                    <button onclick="closeModal()" class="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-sm transition">
+                        閉じる
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript ロジック -->
+    <script>
+        // --- 状態管理 (State) ---
+        let state = {
+            currentTemplate: 't1',
+            title: 'ブログのアイキャッチはテンプレート化すべき？2ヶ月で150個作成して気づいたこと',
+            subtitle: 'デザイン性と時短を両立するヒント',
+            category: 'Canva無料版',
+            date: '2026.06.05',
+            author: 'ミカ',
+            avatarType: 'none', // デフォルトは非表示
+            fontFamily: "'Noto Sans JP', sans-serif",
+            
+            // コントラストがハッキリして映える配色（初期値: ポップ・マリーゴールド）
+            primaryColor: '#fffbeb',
+            textMainColor: '#0f172a',
+            accentColor: '#f59e0b',
+
+            // 反転オプション
+            mirrorH: false,
+
+            // 背景・挿絵
+            backgroundType: 'solid', // solid or image
+            illustrationType: 'blog', // none, blog, idea, growth, book, chat, calendar, key, custom
+            
+            // アップロードされた画像バッファ
+            bgImage: null,
+            illustrationImage: null,
+            avatarImage: null
+        };
+
+        // サンプルタイトルのプール（ランダム生成用）
+        const randomTitles = [
+            {
+                title: '初心者必見！失敗しないブログの始め方徹底解説ガイド',
+                subtitle: 'ゼロから月3万稼ぐロードマップ',
+                category: 'WordPress',
+                date: 'RECOMMEND'
+            },
+            {
+                title: 'Canva無料版だけで作る！プロ見えアイキャッチ画像デザイン技法',
+                subtitle: 'ノンデザイナーでも5分で完成',
+                category: 'Canvaデザイン',
+                date: '時短テクニック'
+            },
+            {
+                title: '【時短効率化】記事作成が3倍速くなる！AIライティング超活用術',
+                subtitle: 'もうネタに困らない極意を公開',
+                category: 'AIツール',
+                date: 'NEW POST'
+            },
+            {
+                title: '読まれるブログには理由がある！クリック率を爆上げする心理学',
+                subtitle: '読者の心を掴むキャッチコピーの魔法',
+                category: 'マーケティング',
+                date: 'アクセスUP'
+            },
+            {
+                title: '2ヶ月で150枚作って気づいた！テンプレート化の罠と最適解',
+                subtitle: '統一感のエゴから抜け出すデザイン設計',
+                category: 'デザインのヒント',
+                date: '実体験コラム'
+            }
+        ];
+
+        // --- DOM要素取得 ---
+        const canvas = document.getElementById('thumbnail-canvas');
+        const ctx = canvas.getContext('2d');
+        const inputTitle = document.getElementById('input-title');
+        const inputSubtitle = document.getElementById('input-subtitle');
+        const inputCategory = document.getElementById('input-category');
+        const inputDate = document.getElementById('input-date');
+        const inputAuthor = document.getElementById('input-author');
+        const selectAvatar = document.getElementById('select-author-avatar');
+        const selectFont = document.getElementById('select-font');
+        
+        const colorPrimary = document.getElementById('color-primary');
+        const colorTextMain = document.getElementById('color-text-main');
+        const colorAccent = document.getElementById('color-accent');
+
+        // --- アバタープリセット作成 (SVGをDataURLに変換) ---
+        const avatars = {
+            mika: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="48" fill="#fce7f3" stroke="#db2777" stroke-width="4"/>
+                    <!-- 髪 -->
+                    <path d="M15,50 Q10,20 50,15 Q90,20 85,50 Q85,80 50,85 Q15,80 15,50 Z" fill="#b91c1c"/>
+                    <circle cx="50" cy="45" r="30" fill="#fbcfe8"/>
+                    <!-- 前髪 -->
+                    <path d="M20,40 Q50,25 80,40 Q65,45 50,40 Q35,45 20,40 Z" fill="#b91c1c"/>
+                    <!-- 目 -->
+                    <circle cx="38" cy="45" r="4" fill="#111827"/>
+                    <circle cx="62" cy="45" r="4" fill="#111827"/>
+                    <!-- 頬 -->
+                    <circle cx="34" cy="52" r="5" fill="#f43f5e" opacity="0.5"/>
+                    <circle cx="66" cy="52" r="5" fill="#f43f5e" opacity="0.5"/>
+                    <!-- 口 -->
+                    <path d="M45,55 Q50,60 55,55" stroke="#111827" stroke-width="3" fill="none" stroke-linecap="round"/>
+                   </svg>`,
+            luke: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="48" fill="#e0e7ff" stroke="#4f46e5" stroke-width="4"/>
+                    <!-- 髪 -->
+                    <path d="M20,45 Q20,10 50,10 Q80,10 80,45 Q70,55 50,55 Q30,55 20,45 Z" fill="#1e3a8a"/>
+                    <circle cx="50" cy="50" r="30" fill="#f3f4f6"/>
+                    <!-- 前髪つんつん -->
+                    <path d="M20,40 L35,30 L45,35 L55,28 L65,35 L80,40 Q50,30 20,40 Z" fill="#1e3a8a"/>
+                    <!-- 目 -->
+                    <circle cx="38" cy="48" r="4" fill="#111827"/>
+                    <circle cx="62" cy="48" r="4" fill="#111827"/>
+                    <!-- 頬 -->
+                    <circle cx="34" cy="54" r="4" fill="#f97316" opacity="0.4"/>
+                    <circle cx="66" cy="54" r="4" fill="#f97316" opacity="0.4"/>
+                    <!-- 口 -->
+                    <path d="M44,57 Q50,62 56,57" stroke="#111827" stroke-width="3" fill="none" stroke-linecap="round"/>
+                   </svg>`
+        };
+
+        const avatarImages = {};
+        
+        // SVG文字列をImageオブジェクトにプリロード
+        function initAvatars() {
+            Object.keys(avatars).forEach(key => {
+                const img = new Image();
+                img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(avatars[key]);
+                avatarImages[key] = img;
+                img.onload = draw;
+            });
+        }
+
+        // --- 初期設定 ---
+        window.addEventListener('DOMContentLoaded', () => {
+            initAvatars();
+            
+            // フォームの初期値設定
+            inputTitle.value = state.title;
+            inputSubtitle.value = state.subtitle;
+            inputCategory.value = state.category;
+            inputDate.value = state.date;
+            inputAuthor.value = state.author;
+            
+            // 初期カラーピッカーの設定
+            colorPrimary.value = state.primaryColor;
+            colorTextMain.value = state.textMainColor;
+            colorAccent.value = state.accentColor;
+            
+            // イベントリスナーの接続
+            inputTitle.addEventListener('input', (e) => {
+                state.title = e.target.value;
+                document.getElementById('char-count-title').innerText = `${e.target.value.length}文字`;
+                draw();
+            });
+            inputSubtitle.addEventListener('input', (e) => { state.subtitle = e.target.value; draw(); });
+            inputCategory.addEventListener('input', (e) => { state.category = e.target.value; draw(); });
+            inputDate.addEventListener('input', (e) => { state.date = e.target.value; draw(); });
+            inputAuthor.addEventListener('input', (e) => { state.author = e.target.value; draw(); });
+            
+            selectAvatar.addEventListener('change', (e) => {
+                state.avatarType = e.target.value;
+                const section = document.getElementById('custom-avatar-section');
+                if (e.target.value === 'custom') {
+                    section.classList.remove('hidden');
+                } else {
+                    section.classList.add('hidden');
+                }
+                draw();
+            });
+
+            selectFont.addEventListener('change', (e) => {
+                state.fontFamily = e.target.value;
+                draw();
+            });
+
+            // カラーイベント
+            colorPrimary.addEventListener('input', (e) => { state.primaryColor = e.target.value; draw(); });
+            colorTextMain.addEventListener('input', (e) => { state.textMainColor = e.target.value; draw(); });
+            colorAccent.addEventListener('input', (e) => { state.accentColor = e.target.value; draw(); });
+
+            // 反転アクション
+            document.getElementById('btn-mirror-h').addEventListener('click', () => {
+                state.mirrorH = !state.mirrorH;
+                draw();
+            });
+
+            // ファイルアップロードのバインド
+            document.getElementById('input-bg-file').addEventListener('change', handleBgUpload);
+            document.getElementById('input-illustration-file').addEventListener('change', handleIllustrationUpload);
+            document.getElementById('input-avatar-file').addEventListener('change', handleAvatarUpload);
+
+            // アクションボタン
+            document.getElementById('btn-random').addEventListener('click', applyRandomPreset);
+            document.getElementById('btn-download').addEventListener('click', downloadCanvas);
+
+            // 文字数を初回カウント
+            document.getElementById('char-count-title').innerText = `${state.title.length}文字`;
+
+            // Webフォントロード完了後に再描画させる
+            document.fonts.ready.then(() => {
+                draw();
+            });
+            
+            // 初回描画
+            draw();
+        });
+
+        // --- タブ切り替え ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.panel-content').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`panel-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-50', 'text-indigo-600', 'font-bold');
+                btn.classList.add('text-gray-600', 'hover:bg-gray-50');
+            });
+            const activeBtn = document.getElementById(`btn-${tabId}`);
+            activeBtn.classList.add('bg-indigo-50', 'text-indigo-600', 'font-bold');
+            activeBtn.classList.remove('text-gray-600', 'hover:bg-gray-50');
+        }
+
+        // --- テンプレートセレクター ---
+        function selectTemplate(tempId) {
+            state.currentTemplate = tempId;
+            document.querySelectorAll('.template-selector-btn').forEach(btn => {
+                btn.classList.remove('border-indigo-500', 'bg-indigo-50', 'bg-opacity-30');
+                btn.classList.add('border-gray-200');
+            });
+            const activeBtn = document.getElementById(`btn-temp-${tempId}`);
+            activeBtn.classList.remove('border-gray-200');
+            activeBtn.classList.add('border-indigo-500', 'bg-indigo-50', 'bg-opacity-30');
+            draw();
+        }
+
+        // --- 配色テーマ適用 ---
+        function setPalette(primary, text, accent) {
+            state.primaryColor = primary;
+            state.textMainColor = text;
+            state.accentColor = accent;
+
+            colorPrimary.value = primary;
+            colorTextMain.value = text;
+            colorAccent.value = accent;
+
+            draw();
+        }
+
+        // --- 背景画像タイプの設定 ---
+        function setBackgroundType(type) {
+            state.backgroundType = type;
+            const btnSolid = document.getElementById('btn-bg-solid');
+            const btnImg = document.getElementById('btn-bg-image');
+            const uploadSection = document.getElementById('upload-bg-section');
+
+            if (type === 'solid') {
+                btnSolid.className = "py-2 border-2 border-indigo-500 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold transition";
+                btnImg.className = "py-2 border border-gray-200 hover:border-indigo-400 text-gray-700 rounded-lg text-xs font-bold transition";
+                uploadSection.classList.add('hidden');
+            } else {
+                btnImg.className = "py-2 border-2 border-indigo-500 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold transition";
+                btnSolid.className = "py-2 border border-gray-200 hover:border-indigo-400 text-gray-700 rounded-lg text-xs font-bold transition";
+                uploadSection.classList.remove('hidden');
+            }
+            draw();
+        }
+
+        // --- 挿絵イラストの変更 ---
+        function setIllustration(type) {
+            state.illustrationType = type;
+            state.illustrationImage = null; // カスタムアップロードをリセット
+            draw();
+        }
+
+        // --- 画像アップロードハンドラ ---
+        function handleBgUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        state.bgImage = img;
+                        draw();
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // --- 挿絵イラスト画像アップロード ---
+        function handleIllustrationUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        state.illustrationImage = img;
+                        state.illustrationType = 'custom';
+                        draw();
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // --- 著者アバター画像アップロード ---
+        function handleAvatarUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        state.avatarImage = img;
+                        draw();
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // --- ランダム生成 ---
+        function applyRandomPreset() {
+            const randomIndex = Math.floor(Math.random() * randomTitles.length);
+            const preset = randomTitles[randomIndex];
+
+            state.title = preset.title;
+            state.subtitle = preset.subtitle;
+            state.category = preset.category;
+            state.date = preset.date;
+
+            inputTitle.value = preset.title;
+            inputSubtitle.value = preset.subtitle;
+            inputCategory.value = preset.category;
+            inputDate.value = preset.date;
+
+            document.getElementById('char-count-title').innerText = `${preset.title.length}文字`;
+
+            // テンプレートもランダムに変更
+            const templates = ['t1', 't2', 't3', 't4', 't5'];
+            const randomTemp = templates[Math.floor(Math.random() * templates.length)];
+            selectTemplate(randomTemp);
+
+            // コントラストの高いハッキリ配色からランダム
+            const colors = [
+                {p:'#fffbeb', t:'#0f172a', a:'#f59e0b'}, // マリーゴールド
+                {p:'#0f172a', t:'#ffffff', a:'#ec4899'}, // ネオンピンク
+                {p:'#f0fdf4', t:'#1e1b4b', a:'#f43f5e'}, // ピスタチオ・チェリー
+                {p:'#fef08a', t:'#451a03', a:'#e11d48'}, // マスタード・チョコ
+                {p:'#fff7ed', t:'#1c1917', a:'#ea580c'}  // スタイリッシュオレンジ
+            ];
+            const randCol = colors[Math.floor(Math.random() * colors.length)];
+            setPalette(randCol.p, randCol.t, randCol.a);
+
+            // レイアウトの反転もランダムで
+            state.mirrorH = Math.random() > 0.5;
+
+            // イラストの種類もランダムに変更
+            const illustrations = ['blog', 'idea', 'growth', 'book', 'chat', 'calendar', 'key'];
+            state.illustrationType = illustrations[Math.floor(Math.random() * illustrations.length)];
+
+            draw();
+        }
+
+        // --- メッセージモーダル表示 (システムエラー用) ---
+        function showNotification(message, title = "おしらせ") {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerText = message;
+            document.getElementById('modal-icon').className = "fa-solid fa-triangle-exclamation text-xl";
+            
+            const modal = document.getElementById('modal-container');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.add('opacity-100');
+                modal.querySelector('div').classList.remove('scale-95');
+                modal.querySelector('div').classList.add('scale-100');
+            }, 50);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal-container');
+            modal.classList.remove('opacity-100');
+            modal.querySelector('div').classList.add('scale-95');
+            modal.querySelector('div').classList.remove('scale-100');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // --- キャンバスダウンロード ---
+        function downloadCanvas() {
+            try {
+                const link = document.createElement('a');
+                link.download = `thumbnail_${Date.now()}.png`;
+                
+                // 安全なデータ取得
+                link.href = canvas.toDataURL('image/png');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (err) {
+                console.error(err);
+                showNotification('画像のダウンロードに失敗しました。ローカル画像のセキュリティ制約の可能性があります。', 'エラー');
+            }
+        }
+
+
+        // ==========================================
+        //         CANVAS DRAWING LOGIC (描画)
+        // ==========================================
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+
+            // 1. 背景を描画
+            drawBackground();
+
+            // 2. フラットさを阻害しないレベルの極めて薄い装飾用ドット（必要な場合のみ）
+            drawDecorativePattern();
+
+            // 3. 各テンプレートに応じたレイアウトの描画
+            switch (state.currentTemplate) {
+                case 't1':
+                    drawTemplateMinimal();
+                    break;
+                case 't2':
+                    drawTemplateSplit();
+                    break;
+                case 't3':
+                    drawTemplateBadge();
+                    break;
+                case 't4':
+                    drawTemplateGradientPop();
+                    break;
+                case 't5':
+                    drawTemplateRetroCard();
+                    break;
+            }
+
+            // 4. メタ情報（著者、アバター、日付、カテゴリバッジなど）を描画
+            drawMetaAndAuthor();
+
+            ctx.restore();
+        }
+
+        // 背景描画（グラデーションを完全撤廃しソリッドに）
+        function drawBackground() {
+            const w = canvas.width;
+            const h = canvas.height;
+
+            if (state.backgroundType === 'image' && state.bgImage) {
+                const img = state.bgImage;
+                const imgRatio = img.width / img.height;
+                const canvasRatio = w / h;
+                let dx = 0, dy = 0, dw = w, dh = h;
+
+                if (imgRatio > canvasRatio) {
+                    dw = h * imgRatio;
+                    dx = (w - dw) / 2;
+                } else {
+                    dh = w / imgRatio;
+                    dy = (h - dh) / 2;
+                }
+                ctx.drawImage(img, dx, dy, dw, dh);
+                
+                // 文字視認性確保のためのソリッドマスク
+                ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+                ctx.fillRect(0, 0, w, h);
+            } else {
+                // ソリッドな単色塗り（フラットでスマート）
+                ctx.fillStyle = state.primaryColor;
+                ctx.fillRect(0, 0, w, h);
+            }
+        }
+
+        // 装飾用ドットパターン
+        function drawDecorativePattern() {
+            ctx.save();
+            ctx.globalAlpha = 0.05;
+            ctx.fillStyle = state.textMainColor;
+
+            // ドットパターン
+            const step = 40;
+            for (let x = 20; x < canvas.width; x += step) {
+                for (let y = 20; y < canvas.height; y += step) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            ctx.restore();
+        }
+
+        // --- 自動折り返し＆超特大サイズテキスト描画（シャドウなし・超ハッキリ） ---
+        function drawWrappedText(text, x, y, maxWidth, lineHeight, maxLines = 3, startFontSize = 74) {
+            ctx.save();
+            ctx.fillStyle = state.textMainColor;
+            
+            // 文字列の長さに応じたフォントサイズの動的調整
+            let fontSize = startFontSize;
+            if (text.length > 40) {
+                fontSize = Math.floor(startFontSize * 0.72);
+            } else if (text.length > 25) {
+                fontSize = Math.floor(startFontSize * 0.88);
+            }
+
+            ctx.font = `900 ${fontSize}px ${state.fontFamily}`;
+            
+            // 自動文字折り返しのロジック
+            let words = text.split('');
+            let lines = [];
+            let currentLine = '';
+
+            for (let n = 0; n < words.length; n++) {
+                let testLine = currentLine + words[n];
+                let metrics = ctx.measureText(testLine);
+                let testWidth = metrics.width;
+                if (testWidth > maxWidth && n > 0) {
+                    lines.push(currentLine);
+                    currentLine = words[n];
+                } else {
+                    currentLine = testLine;
+                }
+            }
+            lines.push(currentLine);
+
+            const actualLines = lines.slice(0, maxLines);
+            
+            // フラットデザイン（高いコントラストで読ませる）
+            actualLines.forEach((line, index) => {
+                const drawY = y + (index * lineHeight * (fontSize / startFontSize));
+                ctx.fillText(line, x, drawY);
+            });
+
+            ctx.restore();
+            return actualLines.length * lineHeight * (fontSize / startFontSize);
+        }
+
+        // --- 挿絵イラストのフラット描画 ---
+        function drawIllustration(x, y, size) {
+            ctx.save();
+            
+            if (state.illustrationType === 'custom' && state.illustrationImage) {
+                const img = state.illustrationImage;
+                ctx.drawImage(img, x - size/2, y - size/2, size, size);
+            } else if (state.illustrationType === 'blog') {
+                // フラットなパソコン・モニターデザイン（影・グラデなし）
+                ctx.fillStyle = state.textMainColor;
+                // スタンド/台座
+                ctx.fillRect(x - size*0.12, y + size*0.18, size*0.24, size*0.1);
+                ctx.fillRect(x - size*0.25, y + size*0.26, size*0.5, size*0.04);
+
+                // モニター外枠
+                drawRoundedRect(x - size/2, y - size/2, size, size * 0.68, 6, true, false);
+                
+                // 画面インナー
+                ctx.fillStyle = '#ffffff';
+                if (state.primaryColor === '#ffffff' || state.primaryColor === '#f8fafc') {
+                    ctx.fillStyle = '#f1f5f9';
+                }
+                drawRoundedRect(x - size/2 + 8, y - size/2 + 8, size - 16, size * 0.68 - 16, 4, true, false);
+                
+                // 画面内の幾何学オブジェクト（グラフなど）
+                ctx.fillStyle = state.accentColor;
+                ctx.fillRect(x - size/2 + 25, y - 10, 45, 60);
+
+                ctx.fillStyle = state.textMainColor;
+                ctx.fillRect(x - size/2 + 85, y + 10, 45, 40);
+
+            } else if (state.illustrationType === 'idea') {
+                // ひらめき電球
+                ctx.fillStyle = state.accentColor;
+                
+                // 電球
+                ctx.beginPath();
+                ctx.arc(x, y - 20, size * 0.32, 0.5 * Math.PI, 2.5 * Math.PI);
+                ctx.lineTo(x - size*0.1, y + size*0.12);
+                ctx.lineTo(x + size*0.1, y + size*0.12);
+                ctx.closePath();
+                ctx.fill();
+
+                // ソケット
+                ctx.fillStyle = state.textMainColor;
+                ctx.fillRect(x - size*0.12, y + size*0.12, size*0.24, size*0.08);
+                ctx.fillRect(x - size*0.08, y + size*0.2, size*0.16, size*0.06);
+
+                // ひらめき光線
+                ctx.strokeStyle = state.accentColor;
+                ctx.lineWidth = 7;
+                ctx.lineCap = 'round';
+                for (let a = 0; a < 360; a += 60) {
+                    let rad = a * Math.PI / 180;
+                    ctx.beginPath();
+                    ctx.moveTo(x + Math.cos(rad)*(size*0.42), y - 20 + Math.sin(rad)*(size*0.42));
+                    ctx.lineTo(x + Math.cos(rad)*(size*0.58), y - 20 + Math.sin(rad)*(size*0.58));
+                    ctx.stroke();
+                }
+            } else if (state.illustrationType === 'growth') {
+                // 成長グラフ
+                ctx.strokeStyle = state.accentColor;
+                ctx.lineWidth = 14;
+                ctx.lineCap = 'square';
+                ctx.lineJoin = 'miter';
+
+                ctx.beginPath();
+                ctx.moveTo(x - size/2, y + size/3);
+                ctx.lineTo(x - size/6, y + size/8);
+                ctx.lineTo(x + size/6, y - size/12);
+                ctx.lineTo(x + size/2 - 10, y - size/2.5 + 10);
+                ctx.stroke();
+
+                // 先端の矢印
+                ctx.fillStyle = state.accentColor;
+                ctx.beginPath();
+                ctx.moveTo(x + size/2, y - size/2.5);
+                ctx.lineTo(x + size/3, y - size/2.5);
+                ctx.lineTo(x + size/2, y - size/5);
+                ctx.closePath();
+                ctx.fill();
+
+            } else if (state.illustrationType === 'book') {
+                // 本・学習 (新規追加)
+                ctx.save();
+                // 左ページ
+                ctx.fillStyle = state.accentColor;
+                drawRoundedRect(x - size*0.44, y - size*0.25, size*0.41, size*0.5, 6, true, false);
+                // 右ページ
+                drawRoundedRect(x + size*0.03, y - size*0.25, size*0.41, size*0.5, 6, true, false);
+                
+                // 背表紙/センターライン（フラットに重ねてメリハリを出す）
+                ctx.fillStyle = state.textMainColor;
+                ctx.fillRect(x - size*0.02, y - size*0.25, size*0.04, size*0.54);
+
+                // ページの罫線（主タイトル色を利用、明暗に合わせて不透明度調整）
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+                if (state.primaryColor === '#0f172a' || state.textMainColor === '#ffffff') {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+                }
+                // 左ページのダミー行
+                ctx.fillRect(x - size*0.36, y - size*0.14, size*0.25, 4);
+                ctx.fillRect(x - size*0.36, y - size*0.04, size*0.25, 4);
+                ctx.fillRect(x - size*0.36, y + size*0.06, size*0.25, 4);
+                // 右ページのダミー行
+                ctx.fillRect(x + size*0.11, y - size*0.14, size*0.25, 4);
+                ctx.fillRect(x + size*0.11, y - size*0.04, size*0.25, 4);
+                ctx.fillRect(x + size*0.11, y + size*0.06, size*0.25, 4);
+                ctx.restore();
+
+            } else if (state.illustrationType === 'chat') {
+                // 対話・AI・チャット (新規追加)
+                ctx.save();
+                // 吹き出し1 (メインテキスト色ベース)
+                ctx.fillStyle = state.textMainColor;
+                drawRoundedRect(x - size*0.32, y - size*0.28, size*0.5, size*0.36, 12, true, false);
+                // 吹き出し1のしっぽ
+                ctx.beginPath();
+                ctx.moveTo(x - size*0.18, y + size*0.08);
+                ctx.lineTo(x - size*0.24, y + size*0.18);
+                ctx.lineTo(x - size*0.08, y + size*0.08);
+                ctx.closePath();
+                ctx.fill();
+
+                // 吹き出し2 (アクセント色ベース)
+                ctx.fillStyle = state.accentColor;
+                drawRoundedRect(x - size*0.06, y - size*0.1, size*0.42, size*0.3, 10, true, false);
+                // 吹き出し2のしっぽ
+                ctx.beginPath();
+                ctx.moveTo(x + size*0.12, y + size*0.2);
+                ctx.lineTo(x + size*0.18, y + size*0.28);
+                ctx.lineTo(x + size*0.22, y + size*0.2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+
+            } else if (state.illustrationType === 'calendar') {
+                // カレンダー・スケジュール (新規追加)
+                ctx.save();
+                // 台紙 (アクセント色)
+                ctx.fillStyle = state.accentColor;
+                drawRoundedRect(x - size*0.32, y - size*0.3, size*0.64, size*0.64, 10, true, false);
+                
+                // ヘッダー部（ヘッダーと台紙でツートンにするセパレーション）
+                ctx.fillStyle = state.textMainColor;
+                drawRoundedRect(x - size*0.32, y - size*0.3, size*0.64, size*0.16, 10, true, false);
+                ctx.fillRect(x - size*0.32, y - size*0.2, size*0.64, size*0.06); // 角丸の埋め合わせ
+
+                // 吊り下げ穴の金具を表現
+                ctx.fillStyle = state.primaryColor;
+                ctx.beginPath();
+                ctx.arc(x - size*0.16, y - size*0.2, 5, 0, Math.PI*2);
+                ctx.arc(x + size*0.16, y - size*0.2, 5, 0, Math.PI*2);
+                ctx.fill();
+
+                // 大きなフラットチェックマーク
+                ctx.strokeStyle = state.textMainColor;
+                ctx.lineWidth = 10;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.beginPath();
+                ctx.moveTo(x - size*0.1, y + size*0.05);
+                ctx.lineTo(x, y + size*0.15);
+                ctx.lineTo(x + size*0.16, y - size*0.07);
+                ctx.stroke();
+                ctx.restore();
+
+            } else if (state.illustrationType === 'key') {
+                // 鍵・信頼・セキュリティ (新規追加)
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(-Math.PI / 4); // 斜め45度に傾ける
+
+                // 鍵の頭部 (リング)
+                ctx.strokeStyle = state.accentColor;
+                ctx.lineWidth = 14;
+                ctx.beginPath();
+                ctx.arc(0, -size*0.18, size*0.2, 0, Math.PI*2);
+                ctx.stroke();
+
+                // 鍵の胴体
+                ctx.fillStyle = state.accentColor;
+                ctx.fillRect(-6, -size*0.02, 12, size*0.44);
+
+                // 鍵のギザギザ歯
+                ctx.fillRect(0, size*0.2, size*0.14, 10);
+                ctx.fillRect(0, size*0.32, size*0.12, 10);
+                ctx.restore();
+            }
+
+            ctx.restore();
+        }
+
+        // ===================================================
+        // テンプレートパターン描画 (一回り大きいフォントサイズ ＆ フラット)
+        // ===================================================
+
+        // テンプレート1: ミニマル (文字メイン)
+        function drawTemplateMinimal() {
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // 外枠フレーム（グラデなし・太め）
+            ctx.save();
+            ctx.strokeStyle = state.accentColor;
+            ctx.lineWidth = 10;
+            ctx.strokeRect(40, 40, w - 80, h - 80);
+            ctx.restore();
+
+            // サブタイトル
+            ctx.save();
+            ctx.fillStyle = state.accentColor;
+            ctx.font = `900 32px ${state.fontFamily}`;
+            let subX = state.mirrorH ? w - 120 : 120;
+            ctx.textAlign = state.mirrorH ? 'right' : 'left';
+            ctx.fillText(state.subtitle.toUpperCase(), subX, 160);
+            ctx.restore();
+
+            // メインタイトル (フラットに大きく)
+            let titleX = 120;
+            let titleWidth = w - 240;
+            ctx.textAlign = 'left';
+            drawWrappedText(state.title, titleX, 245, titleWidth, 90, 3, 74);
+        }
+
+        // テンプレート2: 左右分割 (王道フラットスタイル)
+        function drawTemplateSplit() {
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.save();
+            const splitX = w * 0.52;
+            
+            // 左右分割エリア
+            let leftArea, rightArea;
+            if (!state.mirrorH) {
+                leftArea = { x: 0, w: splitX };
+                rightArea = { x: splitX, w: w - splitX };
+            } else {
+                leftArea = { x: w - splitX, w: splitX };
+                rightArea = { x: 0, w: w - splitX };
+            }
+
+            // フラットな色塗りによるエリア分割（10%の明度差）
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            if (state.primaryColor === '#0f172a') {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+            }
+            ctx.fillRect(rightArea.x, 0, rightArea.w, h);
+
+            // 分割ライン（極太のフラットアクセントライン）
+            ctx.strokeStyle = state.accentColor;
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            if (!state.mirrorH) {
+                ctx.moveTo(splitX, 0);
+                ctx.lineTo(splitX, h);
+            } else {
+                ctx.moveTo(w - splitX, 0);
+                ctx.lineTo(w - splitX, h);
+            }
+            ctx.stroke();
+
+            // テキスト描画 (広めのマージン)
+            let txtX = !state.mirrorH ? 80 : w - splitX + 80;
+            let txtWidth = splitX - 140;
+
+            // サブタイトル (一回り大きい28px)
+            ctx.fillStyle = state.accentColor;
+            ctx.font = `900 28px ${state.fontFamily}`;
+            ctx.fillText(state.subtitle, txtX, 160);
+
+            // メインタイトル
+            drawWrappedText(state.title, txtX, 240, txtWidth, 85, 3, 66);
+
+            // イラスト
+            let illuX = !state.mirrorH ? w - (w - splitX)/2 : (w - splitX)/2;
+            drawIllustration(illuX, h/2 - 10, 240);
+
+            ctx.restore();
+        }
+
+        // テンプレート3: バッジ装飾 (ポップ・キュート)
+        function drawTemplateBadge() {
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.save();
+            
+            // 背景に探りやすいソリッドな丸いシェイプ
+            ctx.fillStyle = 'rgba(0,0,0,0.03)';
+            if (state.primaryColor === '#0f172a') {
+                ctx.fillStyle = 'rgba(255,255,255,0.04)';
+            }
+            ctx.beginPath();
+            let dotX = state.mirrorH ? 260 : w - 260;
+            ctx.arc(dotX, h/2, 230, 0, Math.PI*2);
+            ctx.fill();
+
+            // 大きめのフラット帯
+            ctx.fillStyle = state.accentColor;
+            let barX = state.mirrorH ? w - 420 : 80;
+            drawRoundedRect(barX, 100, 340, 60, 0, true, false);
+
+            // 境界を引き締める濃色文字
+            ctx.fillStyle = (state.primaryColor === '#0f172a') ? '#000000' : '#ffffff';
+            if (state.accentColor === '#f59e0b') {
+                ctx.fillStyle = '#0f172a'; // マリーゴールドならネイビーで
+            }
+            ctx.font = `900 24px ${state.fontFamily}`;
+            ctx.textAlign = 'center';
+            ctx.fillText(state.subtitle, barX + 170, 138);
+
+            // メインタイトル (一回り大きな68px)
+            let txtX = 80;
+            let txtWidth = w - 480;
+            if (state.mirrorH) {
+                txtX = 400;
+            }
+            ctx.textAlign = 'left';
+            drawWrappedText(state.title, txtX, 235, txtWidth, 85, 3, 68);
+
+            // 挿絵
+            let illuX = state.mirrorH ? 200 : w - 200;
+            drawIllustration(illuX, h/2 + 20, 220);
+
+            ctx.restore();
+        }
+
+        // テンプレート4: ソリッドスラッシュ
+        function drawTemplateGradientPop() {
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.save();
+
+            // 対角線的なアクセントカラーの大きな極太ソリッドスラッシュ
+            ctx.fillStyle = state.accentColor;
+            ctx.beginPath();
+            if (!state.mirrorH) {
+                ctx.moveTo(w * 0.66, 0);
+                ctx.lineTo(w, 0);
+                ctx.lineTo(w, h);
+                ctx.lineTo(w * 0.46, h);
+            } else {
+                ctx.moveTo(0, 0);
+                ctx.lineTo(w * 0.34, 0);
+                ctx.lineTo(w * 0.54, h);
+                ctx.lineTo(0, h);
+            }
+            ctx.closePath();
+            ctx.fill();
+
+            // メインテキストエリア
+            let txtX = !state.mirrorH ? 100 : w * 0.46;
+            let txtWidth = w * 0.5;
+
+            // サブタイトル (一回り大きな30px)
+            ctx.fillStyle = state.accentColor;
+            ctx.font = `900 30px ${state.fontFamily}`;
+            ctx.fillText(state.subtitle, txtX, 150);
+
+            // タイトル (一回り大きな68px)
+            drawWrappedText(state.title, txtX, 230, txtWidth, 85, 3, 68);
+
+            // 挿絵
+            let illuX = !state.mirrorH ? w - 160 : 160;
+            drawIllustration(illuX, h/2 + 10, 200);
+
+            ctx.restore();
+        }
+
+        // テンプレート5: モダンカード (プロ向け)
+        function drawTemplateRetroCard() {
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.save();
+
+            // 中央のフラットなベースカード
+            const cardMargin = 45;
+            ctx.fillStyle = '#ffffff';
+            if (state.primaryColor === '#ffffff' || state.primaryColor === '#f8fafc') {
+                ctx.fillStyle = '#f1f5f9';
+            }
+            // 影は一切つけず、代わりに極太の境界線
+            ctx.strokeStyle = state.textMainColor;
+            ctx.lineWidth = 10;
+            drawRoundedRect(cardMargin, cardMargin, w - cardMargin*2, h - cardMargin*2, 0, true, true);
+
+            // カード内の色つき見出しリボン
+            ctx.fillStyle = state.accentColor;
+            let ribbonX = state.mirrorH ? w - 420 : cardMargin + 40;
+            drawRoundedRect(ribbonX, cardMargin + 35, 340, 55, 0, true, false);
+            
+            // サブタイトル文字色（最適コントラスト）
+            ctx.fillStyle = state.primaryColor === '#fffbeb' ? '#0f172a' : '#ffffff';
+            if (state.accentColor === '#f59e0b' || state.accentColor === '#fef08a') {
+                ctx.fillStyle = '#0f172a';
+            }
+            ctx.font = `900 24px ${state.fontFamily}`;
+            ctx.textAlign = 'center';
+            ctx.fillText(state.subtitle, ribbonX + 170, cardMargin + 71);
+
+            // メインタイトル (文字サイズ一回り大きな62px)
+            let txtX = cardMargin + 40;
+            let txtWidth = w - cardMargin*2 - 420;
+            if (state.mirrorH) {
+                txtX = 400;
+            }
+            
+            ctx.textAlign = 'left';
+            state.textMainColor = '#0f172a'; // カード内は視認性抜群のインディゴダーク
+            drawWrappedText(state.title, txtX, 220, txtWidth, 80, 3, 62);
+            state.textMainColor = colorTextMain.value; // もとに戻す
+
+            // イラスト
+            let illuX = state.mirrorH ? 210 : w - 210;
+            drawIllustration(illuX, h/2 + 20, 200);
+
+            ctx.restore();
+        }
+
+        // ===================================================
+        // 4. メタ情報＆著者情報の共通描画処理
+        // ===================================================
+        function drawMetaAndAuthor() {
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.save();
+
+            // A. カテゴリタグバッジの描画
+            if (state.category) {
+                ctx.save();
+                ctx.font = `900 24px ${state.fontFamily}`;
+                let catWidth = ctx.measureText(state.category).width + 36;
+                
+                let catX = 80;
+                let catY = h - 110;
+                if (state.currentTemplate === 't5') {
+                    catX = 85;
+                    catY = h - 120;
+                }
+                
+                // ソリッドな極太ボーダー付きカテゴリバッジ
+                ctx.fillStyle = state.accentColor;
+                ctx.strokeStyle = state.textMainColor;
+                ctx.lineWidth = 5;
+                drawRoundedRect(catX, catY, catWidth, 48, 0, true, true);
+                
+                // テキスト
+                ctx.fillStyle = (state.accentColor === '#f59e0b' || state.accentColor === '#fef08a') ? '#0f172a' : '#ffffff';
+                ctx.textAlign = 'center';
+                ctx.fillText(state.category, catX + catWidth/2, catY + 33);
+                ctx.restore();
+            }
+
+            // B. 日付タグ (カテゴリの右に配置、太く大きく)
+            if (state.date) {
+                ctx.save();
+                ctx.fillStyle = state.textMainColor;
+                if (state.currentTemplate === 't5') ctx.fillStyle = '#1e293b';
+                ctx.font = `900 22px ${state.fontFamily}`;
+                
+                let dateX = 110 + (state.category ? ctx.measureText(state.category).width + 36 : 0);
+                let dateY = h - 80;
+                if (state.currentTemplate === 't5') dateY = h - 90;
+
+                ctx.fillText(state.date, dateX, dateY);
+                ctx.restore();
+            }
+
+            // C. 著者アバター＆名前描画 (初期値は非表示)
+            if (state.avatarType !== 'none') {
+                ctx.save();
+                let avX = w - 280;
+                let avY = h - 120;
+
+                if (state.currentTemplate === 't5') {
+                    avX = w - 290;
+                    avY = h - 130;
+                }
+
+                // 著者エリア全体の背景をフラットな濃い枠で
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                if (state.currentTemplate === 't5') ctx.fillStyle = 'rgba(15, 23, 42, 0.05)';
+                drawRoundedRect(avX, avY, 200, 60, 30, true, false);
+
+                let avatarImg = null;
+                if (state.avatarType === 'custom' && state.avatarImage) {
+                    avatarImg = state.avatarImage;
+                } else if (avatarImages[state.avatarType]) {
+                    avatarImg = avatarImages[state.avatarType];
+                }
+
+                if (avatarImg) {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(avX + 30, avY + 30, 25, 0, Math.PI*2);
+                    ctx.clip();
+                    ctx.drawImage(avatarImg, avX + 5, avY + 5, 50, 50);
+                    ctx.restore();
+                }
+
+                ctx.fillStyle = state.textMainColor;
+                if (state.currentTemplate === 't5') ctx.fillStyle = '#1e293b';
+                ctx.font = `bold 14px ${state.fontFamily}`;
+                ctx.textAlign = 'left';
+                ctx.fillText('WRITER', avX + 70, avY + 24);
+                
+                ctx.font = `900 20px ${state.fontFamily}`;
+                ctx.fillText(state.author || 'NO NAME', avX + 70, avY + 46);
+
+                ctx.restore();
+            }
+
+            ctx.restore();
+        }
+
+        // --- 便利描画サブ関数: 角丸四角形 ---
+        function drawRoundedRect(x, y, width, height, radius, fill, stroke) {
+            ctx.save();
+            ctx.beginPath();
+            if (radius === 0) {
+                ctx.rect(x, y, width, height);
+            } else {
+                ctx.moveTo(x + radius, y);
+                ctx.lineTo(x + width - radius, y);
+                ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+                ctx.lineTo(x + width, y + height - radius);
+                ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                ctx.lineTo(x + radius, y + height);
+                ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+                ctx.lineTo(x, y + radius);
+                ctx.quadraticCurveTo(x, y, x + radius, y);
+            }
+            ctx.closePath();
+            if (fill) ctx.fill();
+            if (stroke) ctx.stroke();
+            ctx.restore();
+        }
+    </script>
+</body>
+</html>
