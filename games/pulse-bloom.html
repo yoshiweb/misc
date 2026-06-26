@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pulse Bloom - Hyper Casual</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #06070d;
+            --panel: rgba(255,255,255,0.08);
+            --text: #f5f7ff;
+            --accent: #7c8cff;
+            --accent2: #4ce0c8;
+            --danger: #ff6b7a;
+        }
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: var(--bg);
+            color: var(--text);
+            font-family: "Inter", "Segoe UI", sans-serif;
+            touch-action: none;
+        }
+        body { position: relative; }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top, #182345 0%, var(--bg) 55%, #03040a 100%);
+        }
+        #hud {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 1rem;
+        }
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+        }
+        .chip {
+            background: var(--panel);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 999px;
+            padding: 0.6rem 0.85rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        .chip strong { display: block; font-size: 0.75rem; opacity: 0.7; }
+        .overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.25rem;
+            background: rgba(2,3,10,0.55);
+            backdrop-filter: blur(8px);
+        }
+        .card {
+            width: min(100%, 26rem);
+            padding: 1.4rem;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 1.2rem;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .title {
+            margin: 0 0 0.5rem;
+            font-size: clamp(1.6rem, 4vw, 2.2rem);
+            font-weight: 900;
+            letter-spacing: -0.03em;
+        }
+        .subtitle {
+            margin: 0 0 1rem;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.78);
+        }
+        .btn {
+            width: 100%;
+            border: none;
+            border-radius: 999px;
+            padding: 0.95rem 1rem;
+            font-size: 1rem;
+            font-weight: 800;
+            color: white;
+            cursor: pointer;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            box-shadow: 0 12px 24px rgba(76, 224, 200, 0.25);
+        }
+        .btn.secondary {
+            margin-top: 0.75rem;
+            background: rgba(255,255,255,0.12);
+            box-shadow: none;
+        }
+        .hidden { display: none; }
+        .hint {
+            margin-top: 0.75rem;
+            font-size: 0.82rem;
+            opacity: 0.72;
+        }
+    </style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud">
+    <div class="topbar">
+        <div class="chip" id="scoreChip">Score<br><strong>0</strong></div>
+        <div class="chip" id="levelChip">Level<br><strong>1</strong></div>
+        <div class="chip" id="energyChip">Energy<br><strong>100</strong></div>
+    </div>
+    <div></div>
+</div>
+<div id="startOverlay" class="overlay">
+    <div class="card">
+        <h1 class="title">Pulse Bloom</h1>
+        <p class="subtitle">画面をタップして波を出す。<br>光る球を吸収してレベルを上げよう。<br>赤い球は避けるとエネルギーが減る。</p>
+        <button class="btn" id="startBtn">START</button>
+        <div class="hint">短い一手で再開しやすい、ワンタップ型のループです。</div>
+    </div>
+</div>
+<div id="overOverlay" class="overlay hidden">
+    <div class="card">
+        <h2 class="title">Bloom End</h2>
+        <p id="finalText" class="subtitle">最後のスコアを表示します。</p>
+        <button class="btn" id="restartBtn">RETRY</button>
+        <button class="btn secondary" id="homeBtn">HOME</button>
+    </div>
+</div>
+<script>
+(() => {
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const startOverlay = document.getElementById('startOverlay');
+    const overOverlay = document.getElementById('overOverlay');
+    const scoreChip = document.getElementById('scoreChip');
+    const levelChip = document.getElementById('levelChip');
+    const energyChip = document.getElementById('energyChip');
+    const finalText = document.getElementById('finalText');
+
+    const state = {
+        mode: 'menu',
+        score: 0,
+        level: 1,
+        energy: 100,
+        best: 0,
+        time: 0,
+        spawnTimer: 0,
+        pulseTime: 0,
+        pulses: [],
+        orbs: [],
+        particles: [],
+        pointer: { x: 0, y: 0 },
+        width: 0,
+        height: 0
+    };
+
+    function resize() {
+        const ratio = window.devicePixelRatio || 1;
+        state.width = window.innerWidth;
+        state.height = window.innerHeight;
+        canvas.width = Math.floor(state.width * ratio);
+        canvas.height = Math.floor(state.height * ratio);
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function resetGame() {
+        state.score = 0;
+        state.level = 1;
+        state.energy = 100;
+        state.time = 0;
+        state.spawnTimer = 0;
+        state.pulseTime = 0;
+        state.pulses = [];
+        state.orbs = [];
+        state.particles = [];
+        updateHud();
+    }
+
+    function updateHud() {
+        scoreChip.innerHTML = `Score<br><strong>${state.score}</strong>`;
+        levelChip.innerHTML = `Level<br><strong>${state.level}</strong>`;
+        energyChip.innerHTML = `Energy<br><strong>${Math.max(0, Math.round(state.energy))}</strong>`;
+    }
+
+    function startGame() {
+        resetGame();
+        state.mode = 'play';
+        startOverlay.classList.add('hidden');
+        overOverlay.classList.add('hidden');
+    }
+
+    function endGame() {
+        state.mode = 'over';
+        state.best = Math.max(state.best, state.score);
+        finalText.innerText = `Score: ${state.score} / Best: ${state.best}`;
+        overOverlay.classList.remove('hidden');
+    }
+
+    function spawnOrb() {
+        const kindRoll = Math.random();
+        let color = '#7c8cff';
+        let radius = 12 + Math.random() * 6;
+        let points = 1;
+        let speed = 1.4 + Math.random() * 1.2;
+        let danger = false;
+
+        if (kindRoll < 0.75) {
+            color = '#7c8cff';
+            points = 1;
+        } else if (kindRoll < 0.92) {
+            color = '#4ce0c8';
+            radius = 15 + Math.random() * 5;
+            points = 2;
+            speed = 1.1 + Math.random() * 0.8;
+        } else {
+            color = '#ff6b7a';
+            radius = 11 + Math.random() * 4;
+            points = -1;
+            speed = 1.5 + Math.random() * 1.1;
+            danger = true;
+        }
+
+        const edge = Math.floor(Math.random() * 4);
+        let x = 0, y = 0;
+        if (edge === 0) { x = Math.random() * state.width; y = -radius; }
+        else if (edge === 1) { x = state.width + radius; y = Math.random() * state.height; }
+        else if (edge === 2) { x = Math.random() * state.width; y = state.height + radius; }
+        else { x = -radius; y = Math.random() * state.height; }
+
+        const tx = state.width * 0.5 + (Math.random() - 0.5) * state.width * 0.2;
+        const ty = state.height * 0.5 + (Math.random() - 0.5) * state.height * 0.2;
+        const angle = Math.atan2(ty - y, tx - x);
+
+        state.orbs.push({
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            radius,
+            color,
+            points,
+            danger,
+            pulse: 0,
+            twinkle: Math.random() * Math.PI * 2
+        });
+    }
+
+    function emitPulse(x, y) {
+        if (state.mode !== 'play') return;
+        state.pulses.push({ x, y, radius: 6, maxRadius: 90 + Math.random() * 20, life: 1 });
+        state.pointer.x = x;
+        state.pointer.y = y;
+    }
+
+    function update(delta) {
+        state.time += delta;
+        if (state.mode !== 'play') {
+            updateParticles(delta);
+            return;
+        }
+
+        state.spawnTimer += delta;
+        const spawnRate = Math.max(0.28, 0.7 - state.level * 0.04);
+        if (state.spawnTimer > spawnRate) {
+            state.spawnTimer = 0;
+            spawnOrb();
+        }
+
+        state.orbs.forEach((orb) => {
+            orb.x += orb.vx * delta * 60;
+            orb.y += orb.vy * delta * 60;
+            orb.twinkle += delta * 3;
+
+            const targetX = state.width * 0.5;
+            const targetY = state.height * 0.5;
+            const dx = targetX - orb.x;
+            const dy = targetY - orb.y;
+            const dist = Math.hypot(dx, dy) || 1;
+            orb.x += (dx / dist) * 0.05 * delta * 60;
+            orb.y += (dy / dist) * 0.05 * delta * 60;
+        });
+
+        state.pulses = state.pulses.filter((pulse) => {
+            pulse.radius += delta * 260;
+            pulse.life -= delta * 2.2;
+            return pulse.life > 0;
+        });
+
+        for (let i = state.orbs.length - 1; i >= 0; i--) {
+            const orb = state.orbs[i];
+            const isHit = state.pulses.some((pulse) => {
+                const d = Math.hypot(orb.x - pulse.x, orb.y - pulse.y);
+                return d < orb.radius + pulse.radius;
+            });
+            if (isHit) {
+                if (orb.danger) {
+                    state.energy -= 14;
+                    spawnBurst(orb.x, orb.y, '#ff6b7a');
+                } else {
+                    state.score += orb.points;
+                    state.energy = Math.min(100, state.energy + 2 + orb.points);
+                    spawnBurst(orb.x, orb.y, orb.color);
+                }
+                state.orbs.splice(i, 1);
+                continue;
+            }
+
+            const centerDist = Math.hypot(orb.x - state.width * 0.5, orb.y - state.height * 0.5);
+            if (centerDist > Math.max(state.width, state.height) * 0.75) {
+                state.orbs.splice(i, 1);
+            }
+        }
+
+        state.level = 1 + Math.floor(state.score / 12);
+        state.energy -= delta * 0.9;
+        updateHud();
+
+        if (state.energy <= 0) {
+            endGame();
+        }
+
+        updateParticles(delta);
+    }
+
+    function spawnBurst(x, y, color) {
+        for (let i = 0; i < 10; i++) {
+            state.particles.push({
+                x, y,
+                vx: (Math.random() - 0.5) * 2.5,
+                vy: (Math.random() - 0.5) * 2.5,
+                radius: 1 + Math.random() * 2,
+                color,
+                life: 0.8 + Math.random() * 0.4,
+            });
+        }
+    }
+
+    function updateParticles(delta) {
+        state.particles = state.particles.filter((p) => {
+            p.x += p.vx * delta * 60;
+            p.y += p.vy * delta * 60;
+            p.life -= delta;
+            p.vx *= 0.96;
+            p.vy *= 0.96;
+            return p.life > 0;
+        });
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, state.width, state.height);
+
+        if (state.mode !== 'play') {
+            drawBackdrop();
+            drawCenterGlow();
+            drawParticles();
+            drawOrbs();
+            return;
+        }
+
+        drawBackdrop();
+        drawCenterGlow();
+        drawPulses();
+        drawOrbs();
+        drawParticles();
+    }
+
+    function drawBackdrop() {
+        const grad = ctx.createRadialGradient(state.width * 0.5, state.height * 0.5, 20, state.width * 0.5, state.height * 0.5, Math.max(state.width, state.height) * 0.6);
+        grad.addColorStop(0, 'rgba(110,130,255,0.08)');
+        grad.addColorStop(1, 'rgba(2,3,10,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, state.width, state.height);
+    }
+
+    function drawCenterGlow() {
+        const glow = ctx.createRadialGradient(state.width * 0.5, state.height * 0.5, 0, state.width * 0.5, state.height * 0.5, 80);
+        glow.addColorStop(0, 'rgba(124,140,255,0.2)');
+        glow.addColorStop(1, 'rgba(124,140,255,0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(state.width * 0.5, state.height * 0.5, 80, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    function drawOrbs() {
+        state.orbs.forEach((orb) => {
+            const pulse = 0.9 + Math.sin(orb.twinkle) * 0.1;
+            ctx.save();
+            ctx.globalAlpha = 0.95;
+            ctx.fillStyle = orb.color;
+            ctx.beginPath();
+            ctx.arc(orb.x, orb.y, orb.radius * pulse, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        });
+    }
+
+    function drawPulses() {
+        state.pulses.forEach((pulse) => {
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, pulse.life * 0.55);
+            ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(pulse.x, pulse.y, pulse.radius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        });
+    }
+
+    function drawParticles() {
+        state.particles.forEach((p) => {
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, p.life);
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        });
+    }
+
+    let last = performance.now();
+    function loop(now) {
+        const delta = Math.min(0.03, (now - last) / 1000);
+        last = now;
+        update(delta);
+        draw();
+        requestAnimationFrame(loop);
+    }
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('pointerdown', (event) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        emitPulse(x, y);
+    });
+
+    document.getElementById('startBtn').addEventListener('click', startGame);
+    document.getElementById('restartBtn').addEventListener('click', startGame);
+    document.getElementById('homeBtn').addEventListener('click', () => {
+        state.mode = 'menu';
+        overOverlay.classList.add('hidden');
+        startOverlay.classList.remove('hidden');
+    });
+
+    resize();
+    updateHud();
+    loop(performance.now());
+})();
+</script>
+</body>
+</html>
