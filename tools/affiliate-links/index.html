@@ -133,23 +133,23 @@
                     <div>
                         <div class="flex items-center justify-between mb-1">
                             <label for="btnYahoo" class="text-xs font-bold text-slate-700 flex items-center gap-1.5 cursor-pointer select-none">
-                                <input type="checkbox" id="btnYahoo" checked onchange="toggleKwInput('yahooKw', this.checked); updateAll();" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                <input type="checkbox" id="btnYahoo" onchange="toggleKwInput('yahooKw', this.checked); updateAll();" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
                                 <i class="fa-solid fa-store text-red-600"></i> Yahoo!ショッピング
                             </label>
                             <span class="text-[10px] text-slate-400 font-medium">ボタン表示</span>
                         </div>
-                        <input type="text" id="yahooKw" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition" oninput="updateAll()">
+                        <input type="text" id="yahooKw" disabled class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition bg-slate-100 text-slate-400" oninput="updateAll()">
                     </div>
 
                     <div>
                         <div class="flex items-center justify-between mb-1">
                             <label for="btnMercari" class="text-xs font-bold text-slate-700 flex items-center gap-1.5 cursor-pointer select-none">
-                                <input type="checkbox" id="btnMercari" checked onchange="toggleKwInput('mercariKw', this.checked); updateAll();" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                <input type="checkbox" id="btnMercari" onchange="toggleKwInput('mercariKw', this.checked); updateAll();" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
                                 <i class="fa-solid fa-box text-cyan-500"></i> メルカリ
                             </label>
                             <span class="text-[10px] text-slate-400 font-medium">ボタン表示</span>
                         </div>
-                        <input type="text" id="mercariKw" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition" oninput="updateAll()">
+                        <input type="text" id="mercariKw" disabled class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition bg-slate-100 text-slate-400" oninput="updateAll()">
                     </div>
                 </div>
             </div>
