@@ -248,9 +248,9 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">楽天 アプリID (Rakuten Web Service API用 / 任意)</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">楽天 アプリID (18桁数字 / 商品検索API用)</label>
                     <input type="text" id="rakutenAppId" placeholder="例: 1012345678901234567" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                    <p class="text-[11px] text-slate-400 mt-1">ご自身の楽天アプリIDを設定すると確実に公式商品画像・情報をAPIで取得できます。</p>
+                    <p class="text-[11px] text-slate-500 mt-1">※アフィリエイトIDとは異なり、Rakuten Developersで取得できる18桁の数字(applicationId)です。</p>
                 </div>
 
                 <div>
@@ -405,7 +405,7 @@
         async function executeRakutenApiSearch() {
             const query = document.getElementById('rakutenSearchQuery').value.trim();
             const resultsContainer = document.getElementById('rakutenSearchResults');
-            let appId = document.getElementById('rakutenAppId').value.trim();
+            let appId = (document.getElementById('rakutenAppId').value || localStorage.getItem('aff_rakutenAppId') || '').trim();
 
             if (!query) {
                 showToast('検索キーワードを入力してください', true);
@@ -413,7 +413,18 @@
             }
 
             if (!appId) {
-                appId = '1012117352317509702'; // Demo Application ID
+                resultsContainer.innerHTML = `
+                    <div class="text-center py-8 text-amber-600 text-xs space-y-2 bg-amber-50 rounded-xl p-4 border border-amber-200">
+                        <i class="fa-solid fa-triangle-exclamation text-2xl text-amber-500 mb-1"></i>
+                        <p class="font-bold text-slate-800 text-sm">楽天アプリIDが設定されていません</p>
+                        <p class="text-slate-600 leading-relaxed">
+                            楽天公式APIでの検索には18桁の「楽天アプリID (applicationId)」が必要です。<br>
+                            「アフィリエイトID設定」から、18桁のアプリIDをご設定の上お試しください。
+                        </p>
+                        <p class="text-slate-400 text-[11px]">※報酬受取用の「アフィリエイトID」とは異なるAPI専用の18桁の数値IDです。</p>
+                    </div>
+                `;
+                return;
             }
 
             resultsContainer.innerHTML = `
@@ -429,7 +440,11 @@
                 const data = await response.json();
 
                 if (data.error) {
-                    throw new Error(data.error_description || 'APIエラーが発生しました');
+                    let errMsg = data.error_description || data.error || 'APIエラーが発生しました';
+                    if (errMsg.includes('applicationId') || errMsg.includes('appId')) {
+                        errMsg = `設定された「楽天アプリID」が無効です (${errMsg})。18桁の正しいアプリIDが入力されているか確認してください。`;
+                    }
+                    throw new Error(errMsg);
                 }
 
                 if (!data.Items || data.Items.length === 0) {
