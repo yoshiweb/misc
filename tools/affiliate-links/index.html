@@ -406,6 +406,7 @@
             const query = document.getElementById('rakutenSearchQuery').value.trim();
             const resultsContainer = document.getElementById('rakutenSearchResults');
             let appId = (document.getElementById('rakutenAppId').value || localStorage.getItem('aff_rakutenAppId') || '').trim();
+            let affId = (document.getElementById('rakutenAffId').value || localStorage.getItem('aff_rakutenAffId') || '').trim();
 
             if (!query) {
                 showToast('検索キーワードを入力してください', true);
@@ -427,6 +428,25 @@
                 return;
             }
 
+            // Detect if user entered an affiliate ID (e.g. UUID style with hyphens) into rakutenAppId
+            if (appId.includes('-') || !/^\d+$/.test(appId)) {
+                resultsContainer.innerHTML = `
+                    <div class="text-center py-8 text-rose-600 text-xs space-y-2 bg-rose-50 rounded-xl p-4 border border-rose-200">
+                        <i class="fa-solid fa-triangle-exclamation text-2xl text-rose-500 mb-1"></i>
+                        <p class="font-bold text-slate-800 text-sm">アフィリエイトIDが「アプリID」欄に入力されています</p>
+                        <p class="text-slate-600 leading-relaxed">
+                            入力されている「<code class="bg-white px-1.5 py-0.5 rounded border border-rose-200 text-rose-700 font-mono">${escapeHtml(appId.length > 20 ? appId.slice(0, 20) + '...' : appId)}</code>」は<strong>アフィリエイトID</strong>です。<br>
+                            検索APIに必要な「アプリID (applicationId)」は <strong>18桁の数字のみ</strong> のIDです。
+                        </p>
+                        <div class="bg-white p-3 rounded-lg border border-rose-200 text-left text-slate-700 text-[11px] space-y-1 my-2">
+                            <p>・<strong>アフィリエイトID</strong> (例: <code class="text-slate-500 font-mono">ab98828d-56b0...</code>) ➔ 上の「アフィリエイト アカウントID」欄へ</p>
+                            <p>・<strong>アプリID</strong> (例: <code class="text-slate-500 font-mono">1012345678901234567</code>) ➔ 下の「アプリID」欄へ</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
             resultsContainer.innerHTML = `
                 <div class="text-center py-12 text-slate-500 text-xs flex flex-col items-center justify-center gap-2">
                     <i class="fa-solid fa-spinner fa-spin text-2xl text-red-600"></i>
@@ -435,7 +455,10 @@
             `;
 
             try {
-                const endpoint = `https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706?format=json&keyword=${encodeURIComponent(query)}&applicationId=${appId}&hits=10&formatVersion=2`;
+                let endpoint = `https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706?format=json&keyword=${encodeURIComponent(query)}&applicationId=${appId}&hits=10&formatVersion=2`;
+                if (affId) {
+                    endpoint += `&affiliateId=${encodeURIComponent(affId)}`;
+                }
                 const response = await fetch(endpoint);
                 const data = await response.json();
 
