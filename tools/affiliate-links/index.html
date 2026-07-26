@@ -174,6 +174,27 @@
                     </div>
                 </div>
 
+                <div class="pt-3 border-t border-slate-100 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" id="showPrBadge" checked onchange="togglePrOptions(); updateAll();" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                            <span class="text-xs font-bold text-slate-700">PR表記を表示する (ステマ規制対策)</span>
+                        </label>
+                        <span class="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">景品表示法対応</span>
+                    </div>
+                    <div id="prOptionsWrapper" class="flex gap-2">
+                        <select id="prTextSelect" onchange="onPrSelectChange()" class="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 outline-none">
+                            <option value="[PR] アフィリエイト広告を利用しています">[PR] アフィリエイト広告を利用しています</option>
+                            <option value="[PR] 当サイトはアフィリエイト広告を含みます">[PR] 当サイトはアフィリエイト広告を含みます</option>
+                            <option value="PR">PR</option>
+                            <option value="プロモーション">プロモーション</option>
+                            <option value="アフィリエイト広告">アフィリエイト広告</option>
+                            <option value="custom">カスタム入力...</option>
+                        </select>
+                        <input type="text" id="customPrText" placeholder="例: [PR] 広告" class="hidden w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 outline-none" oninput="updateAll()">
+                    </div>
+                </div>
+
                 <div class="pt-2 border-t border-slate-100">
                     <label class="flex items-center space-x-2 cursor-pointer">
                         <input type="checkbox" id="inlineCssToggle" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4" checked onchange="updateAll()">
@@ -672,6 +693,18 @@
                 buttonsHtml += `\n        <a href="${escapeHtml(urls.mercariUrl)}" target="_blank" rel="noopener noreferrer" class="mlink-btn mlink-mercari">メルカリ</a>`;
             }
 
+            // PR Badge checks
+            const showPr = document.getElementById('showPrBadge') ? document.getElementById('showPrBadge').checked : true;
+            let prText = '';
+            if (showPr) {
+                const selectVal = document.getElementById('prTextSelect') ? document.getElementById('prTextSelect').value : '[PR] アフィリエイト広告を利用しています';
+                if (selectVal === 'custom') {
+                    prText = document.getElementById('customPrText').value.trim() || '[PR] 広告';
+                } else {
+                    prText = selectVal;
+                }
+            }
+
             // Theme Specific CSS
             let css = '';
             if (isInlineCss) {
@@ -684,6 +717,7 @@
 .mlink-img { flex-shrink: 0; text-align: center; width: 100%; max-width: 140px; margin: 0 auto; }
 .mlink-img img { max-width: 100%; height: auto; border-radius: 8px; object-fit: contain; max-height: 140px; }
 .mlink-info { flex: 1; min-width: 0; }
+.mlink-pr { font-size: 10px; color: #64748b; margin-bottom: 4px; display: inline-block; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-weight: 600; line-height: 1.2; }
 .mlink-title { font-size: 15px; font-weight: bold; color: #1e293b; margin: 0 0 6px 0; line-height: 1.4; text-align: left; }
 .mlink-sub { font-size: 12px; color: #64748b; margin: 0 0 12px 0; text-align: left; }
 .mlink-btns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
@@ -704,6 +738,7 @@
 .mlink-img { flex-shrink: 0; text-align: center; width: 100%; max-width: 130px; margin: 0 auto; }
 .mlink-img img { max-width: 100%; height: auto; border-radius: 12px; object-fit: contain; max-height: 130px; }
 .mlink-info { flex: 1; min-width: 0; }
+.mlink-pr { font-size: 10px; color: #475569; margin-bottom: 6px; display: inline-block; background: #f8fafc; border: 1px solid #e2e8f0; padding: 2px 8px; border-radius: 10px; font-weight: 700; line-height: 1.2; }
 .mlink-title { font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0; line-height: 1.4; text-align: left; }
 .mlink-sub { font-size: 12px; color: #64748b; margin: 0 0 14px 0; text-align: left; }
 .mlink-btns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
@@ -723,6 +758,7 @@
 .mlink-img { flex-shrink: 0; text-align: center; width: 100%; max-width: 120px; margin: 0 auto; }
 .mlink-img img { max-width: 100%; height: auto; border: 1px solid #ccc; background: #fff; padding: 4px; }
 .mlink-info { flex: 1; min-width: 0; }
+.mlink-pr { font-size: 10px; color: #666666; margin-bottom: 4px; display: inline-block; font-weight: bold; line-height: 1.2; }
 .mlink-title { font-size: 14px; font-weight: bold; color: #222222; margin: 0 0 4px 0; line-height: 1.3; text-align: left; }
 .mlink-sub { font-size: 11px; color: #666666; margin: 0 0 10px 0; text-align: left; }
 .mlink-btns { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -742,15 +778,36 @@
       <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(title)}" onerror="this.src='${placeholderImg}'">
     </div>
     <div class="mlink-info">
-      <div class="mlink-title">${escapeHtml(title)}</div>
+      ${prText ? `<div class="mlink-pr">${escapeHtml(prText)}</div>\n      ` : ''}<div class="mlink-title">${escapeHtml(title)}</div>
       ${sub ? `<div class="mlink-sub">${escapeHtml(sub)}</div>` : ''}
       <div class="mlink-btns">${buttonsHtml}
       </div>
     </div>
   </div>
 </div>`;
-
             return html;
+        }
+
+        function togglePrOptions() {
+            const showPr = document.getElementById('showPrBadge').checked;
+            const wrapper = document.getElementById('prOptionsWrapper');
+            if (showPr) {
+                wrapper.classList.remove('opacity-40', 'pointer-events-none');
+            } else {
+                wrapper.classList.add('opacity-40', 'pointer-events-none');
+            }
+        }
+
+        function onPrSelectChange() {
+            const selectVal = document.getElementById('prTextSelect').value;
+            const customInput = document.getElementById('customPrText');
+            if (selectVal === 'custom') {
+                customInput.classList.remove('hidden');
+                customInput.focus();
+            } else {
+                customInput.classList.add('hidden');
+            }
+            updateAll();
         }
 
         function updateAll() {
