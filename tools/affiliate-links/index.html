@@ -243,14 +243,25 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">楽天 アフィリエイト アカウントID / アソシエイトID</label>
-                    <input type="text" id="rakutenAffId" placeholder="例: 12345678.abcde123" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">楽天 アフィリエイト ID</label>
+                    <input type="text" id="rakutenAffId" placeholder="例: 0a659c4f.afcf3049.0a659c50.7d029f67" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">楽天 アプリID (18桁数字 / 商品検索API用)</label>
-                    <input type="text" id="rakutenAppId" placeholder="例: 1012345678901234567" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                    <p class="text-[11px] text-slate-500 mt-1">※アフィリエイトIDとは異なり、Rakuten Developersで取得できる18桁の数字(applicationId)です。</p>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">楽天 アプリケーションID (applicationId)</label>
+                    <input type="text" id="rakutenAppId" placeholder="例: ab98828d-56b0-45f5-8e0e-5318a6c728ab" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <p class="text-[11px] text-slate-500 mt-1">※Rakuten Developers画面の「アプリケーションID」を貼り付けてください。</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">楽天 アクセスキー (accessKey)</label>
+                    <div class="relative">
+                        <input type="password" id="rakutenAccessKey" placeholder="Rakuten Developers画面の「アクセスキー」" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none pr-10">
+                        <button type="button" onclick="toggleAccessKeyVisibility()" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">
+                            <i id="accessKeyEyeIcon" class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-1">※Rakuten Developers画面の「アクセスキー」の👁（目）アイコンを押してコピーした値を設定してください。</p>
                 </div>
 
                 <div>
@@ -364,18 +375,34 @@
             modal.classList.toggle('hidden');
         }
 
+        function toggleAccessKeyVisibility() {
+            const input = document.getElementById('rakutenAccessKey');
+            const icon = document.getElementById('accessKeyEyeIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
         function saveSettings() {
             const amazonTag = document.getElementById('amazonTag').value.trim();
             const rakutenAffId = document.getElementById('rakutenAffId').value.trim();
             const rakutenAppId = document.getElementById('rakutenAppId').value.trim();
+            const rakutenAccessKey = document.getElementById('rakutenAccessKey').value.trim();
             const yahooAffId = document.getElementById('yahooAffId').value.trim();
 
             localStorage.setItem('aff_amazonTag', amazonTag);
             localStorage.setItem('aff_rakutenAffId', rakutenAffId);
             localStorage.setItem('aff_rakutenAppId', rakutenAppId);
+            localStorage.setItem('aff_rakutenAccessKey', rakutenAccessKey);
             localStorage.setItem('aff_yahooAffId', yahooAffId);
 
-            showToast('アフィリエイトID・アプリIDを保存しました');
+            showToast('アフィリエイトID・アプリキーを保存しました');
             toggleSettingsModal();
             updateAll();
         }
@@ -384,6 +411,7 @@
             document.getElementById('amazonTag').value = localStorage.getItem('aff_amazonTag') || '';
             document.getElementById('rakutenAffId').value = localStorage.getItem('aff_rakutenAffId') || '';
             document.getElementById('rakutenAppId').value = localStorage.getItem('aff_rakutenAppId') || '';
+            document.getElementById('rakutenAccessKey').value = localStorage.getItem('aff_rakutenAccessKey') || '';
             document.getElementById('yahooAffId').value = localStorage.getItem('aff_yahooAffId') || '';
         }
 
@@ -406,6 +434,7 @@
             const query = document.getElementById('rakutenSearchQuery').value.trim();
             const resultsContainer = document.getElementById('rakutenSearchResults');
             let appId = (document.getElementById('rakutenAppId').value || localStorage.getItem('aff_rakutenAppId') || '').trim();
+            let accessKey = (document.getElementById('rakutenAccessKey').value || localStorage.getItem('aff_rakutenAccessKey') || '').trim();
             let affId = (document.getElementById('rakutenAffId').value || localStorage.getItem('aff_rakutenAffId') || '').trim();
 
             if (!query) {
@@ -417,31 +446,10 @@
                 resultsContainer.innerHTML = `
                     <div class="text-center py-8 text-amber-600 text-xs space-y-2 bg-amber-50 rounded-xl p-4 border border-amber-200">
                         <i class="fa-solid fa-triangle-exclamation text-2xl text-amber-500 mb-1"></i>
-                        <p class="font-bold text-slate-800 text-sm">楽天アプリIDが設定されていません</p>
+                        <p class="font-bold text-slate-800 text-sm">楽天「アプリケーションID」が設定されていません</p>
                         <p class="text-slate-600 leading-relaxed">
-                            楽天公式APIでの検索には18桁の「楽天アプリID (applicationId)」が必要です。<br>
-                            「アフィリエイトID設定」から、18桁のアプリIDをご設定の上お試しください。
+                            「アフィリエイトID設定」画面にて、Rakuten Developersで取得した「アプリケーションID」を設定の上お試しください。
                         </p>
-                        <p class="text-slate-400 text-[11px]">※報酬受取用の「アフィリエイトID」とは異なるAPI専用の18桁の数値IDです。</p>
-                    </div>
-                `;
-                return;
-            }
-
-            // Detect if user entered an affiliate ID (e.g. UUID style with hyphens) into rakutenAppId
-            if (appId.includes('-') || !/^\d+$/.test(appId)) {
-                resultsContainer.innerHTML = `
-                    <div class="text-center py-8 text-rose-600 text-xs space-y-2 bg-rose-50 rounded-xl p-4 border border-rose-200">
-                        <i class="fa-solid fa-triangle-exclamation text-2xl text-rose-500 mb-1"></i>
-                        <p class="font-bold text-slate-800 text-sm">アフィリエイトIDが「アプリID」欄に入力されています</p>
-                        <p class="text-slate-600 leading-relaxed">
-                            入力されている「<code class="bg-white px-1.5 py-0.5 rounded border border-rose-200 text-rose-700 font-mono">${escapeHtml(appId.length > 20 ? appId.slice(0, 20) + '...' : appId)}</code>」は<strong>アフィリエイトID</strong>です。<br>
-                            検索APIに必要な「アプリID (applicationId)」は <strong>18桁の数字のみ</strong> のIDです。
-                        </p>
-                        <div class="bg-white p-3 rounded-lg border border-rose-200 text-left text-slate-700 text-[11px] space-y-1 my-2">
-                            <p>・<strong>アフィリエイトID</strong> (例: <code class="text-slate-500 font-mono">ab98828d-56b0...</code>) ➔ 上の「アフィリエイト アカウントID」欄へ</p>
-                            <p>・<strong>アプリID</strong> (例: <code class="text-slate-500 font-mono">1012345678901234567</code>) ➔ 下の「アプリID」欄へ</p>
-                        </div>
                     </div>
                 `;
                 return;
@@ -455,17 +463,42 @@
             `;
 
             try {
-                let endpoint = `https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706?format=json&keyword=${encodeURIComponent(query)}&applicationId=${appId}&hits=10&formatVersion=2`;
-                if (affId) {
-                    endpoint += `&affiliateId=${encodeURIComponent(affId)}`;
+                // Build parameter query
+                let params = `format=json&keyword=${encodeURIComponent(query)}&applicationId=${encodeURIComponent(appId)}&hits=10&formatVersion=2`;
+                if (accessKey) {
+                    params += `&accessKey=${encodeURIComponent(accessKey)}`;
                 }
-                const response = await fetch(endpoint);
-                const data = await response.json();
+                if (affId) {
+                    params += `&affiliateId=${encodeURIComponent(affId)}`;
+                }
+
+                // Try fetching using legacy endpoint first, then openapi endpoint if needed
+                let endpoint = `https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706?${params}`;
+                let response = await fetch(endpoint);
+                let data = await response.json();
+
+                // If error occurs, attempt openapi endpoint if accessKey is present
+                if (data.error && accessKey) {
+                    const openApiEndpoint = `https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701?${params}`;
+                    try {
+                        const openRes = await fetch(openApiEndpoint);
+                        const openData = await openRes.json();
+                        if (!openData.error && openData.Items) {
+                            data = openData;
+                        }
+                    } catch (e) {
+                        // Keep original error data if secondary fails
+                    }
+                }
 
                 if (data.error) {
                     let errMsg = data.error_description || data.error || 'APIエラーが発生しました';
                     if (errMsg.includes('applicationId') || errMsg.includes('appId')) {
-                        errMsg = `設定された「楽天アプリID」が無効です (${errMsg})。18桁の正しいアプリIDが入力されているか確認してください。`;
+                        if (!accessKey) {
+                            errMsg = `「specify valid applicationId」エラー: 楽天APIの最新認証仕様では「アクセスキー (accessKey)」が必要です。「アフィリエイトID設定」から、Rakuten Developers管理画面の「アクセスキー」（👁アイコンの値）を設定してください。`;
+                        } else {
+                            errMsg = `設定された「アプリケーションID」または「アクセスキー」が無効です (${errMsg})。入力を確認してください。`;
+                        }
                     }
                     throw new Error(errMsg);
                 }
@@ -496,13 +529,13 @@
                         <img src="${highResImg}" alt="${escapeHtml(itemName)}" class="w-16 h-16 object-contain rounded-lg bg-white p-1 border border-slate-200 flex-shrink-0">
                         <div class="flex-1 min-w-0">
                             <h4 class="text-xs font-bold text-slate-800 line-clamp-2 leading-snug">${escapeHtml(itemName)}</h4>
-                            <div class="flex items-center gap-3 mt-1 text-[11px] text-slate-500">
-                                <span class="font-bold text-red-600">¥${price}</span>
-                                <span>${escapeHtml(shopName)}</span>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-xs font-bold text-red-600">¥${price}</span>
+                                <span class="text-[10px] text-slate-400 truncate">${escapeHtml(shopName)}</span>
                             </div>
                         </div>
-                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold flex-shrink-0 transition">
-                            反映
+                        <button class="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition flex-shrink-0">
+                            選択
                         </button>
                     `;
                     resultsContainer.appendChild(itemCard);
@@ -511,10 +544,10 @@
             } catch (err) {
                 console.error(err);
                 resultsContainer.innerHTML = `
-                    <div class="text-center py-8 text-rose-500 text-xs space-y-2">
-                        <p class="font-bold">検索エラーが発生しました</p>
-                        <p class="text-slate-500">${escapeHtml(err.message)}</p>
-                        <p class="text-slate-400">「アフィリエイトID設定」画面でご自身の楽天アプリIDを設定してお試しください。</p>
+                    <div class="text-center py-8 text-rose-500 text-xs space-y-2 bg-rose-50 rounded-xl p-4 border border-rose-200">
+                        <i class="fa-solid fa-circle-exclamation text-2xl text-rose-500 mb-1"></i>
+                        <p class="font-bold text-slate-800 text-sm">楽天API検索エラー</p>
+                        <p class="text-rose-700 leading-relaxed font-mono text-[11px] bg-white p-3 rounded-lg border border-rose-200 text-left">${escapeHtml(err.message)}</p>
                     </div>
                 `;
             }
