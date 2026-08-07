@@ -12,7 +12,10 @@
 - [PNG to WEBP Converter](./tools/png2webp/index.html)
 - [WEBP to PNG Converter](./tools/webp2png/index.html)
 - [Video Editor](./tools/video-editor/index.html)
+- [Thumbnail Generator](./tools/thumbnail-generator/index.html)
+- [Affiliate Links Generator](./tools/affiliate-links/index.html)
 - [node-fusion game](./games/node-fusion.html)
+- [pulse-bloom game](./games/pulse-bloom.html)
 
 ## 特徴
 
