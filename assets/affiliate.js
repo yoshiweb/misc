@@ -21,7 +21,7 @@
          * アソシエイトタグ（例: 'yourtag-22'）。
          * 変更箇所はこの1行のみ。空文字の場合はタグを付与しない。
          */
-        tag: '',
+        tag: 'yoshiwebnet-22',
         siteName: 'misc.yoshiweb.net',
         baseUrl: 'https://www.amazon.co.jp'
     };
