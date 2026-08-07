@@ -29,11 +29,11 @@ Affiliate.registerProducts('pet', {
             priority: 10
         },
         {
-            id: 'dog-toilet',
+            id: 'dog-toilet-tray',
             label: 'トイレ用品',
-            name: 'トイレトレー + ペットシーツ',
-            note: '迎えた初日から必要。シーツは消耗品なので継続的に補充する。',
-            searchKeyword: '犬 トイレトレー ペットシーツ',
+            name: 'トイレトレー',
+            note: '迎えた初日から必要。成長後の体格に合うサイズを選ぶ。',
+            searchKeyword: '犬 トイレトレー',
             asin: null,
             species: ['dog'],
             stages: ['arrival'],
@@ -42,9 +42,9 @@ Affiliate.registerProducts('pet', {
         {
             id: 'cat-litter-box',
             label: 'トイレ用品',
-            name: '猫用トイレ + 猫砂',
-            note: '迎えた初日から必要。猫は砂の好みが分かれるため、少量で試してから決めるとよい。',
-            searchKeyword: '猫用トイレ 猫砂',
+            name: '猫用トイレ本体',
+            note: '迎えた初日から必要。頭数 + 1個あると理想的とされる。',
+            searchKeyword: '猫用トイレ 本体',
             asin: null,
             species: ['cat'],
             stages: ['arrival'],
@@ -92,7 +92,37 @@ Affiliate.registerProducts('pet', {
             asin: null,
             species: ['dog', 'cat'],
             stages: ['arrival', 'growth1', 'growth2', 'growth3', 'adult', 'senior'],
-            priority: 80
+            priority: 80,
+            consumable: true,
+            cycleDays: 60
+        },
+
+        // ---- 消耗品（全期間を通じて継続的に補充するもの） ----
+        {
+            id: 'pet-sheets',
+            label: 'トイレ用品',
+            name: 'ペットシーツ',
+            note: '継続的に補充が必要。体格が大きくなるとサイズと消費量が変わる。',
+            searchKeyword: 'ペットシーツ',
+            asin: null,
+            species: ['dog'],
+            stages: ['arrival', 'growth1', 'growth2', 'growth3', 'adult', 'senior'],
+            priority: 6,
+            consumable: true,
+            cycleDays: 30
+        },
+        {
+            id: 'cat-litter',
+            label: 'トイレ用品',
+            name: '猫砂',
+            note: '継続的に補充が必要。猫は砂の好みが分かれるため、合うものが見つかったら銘柄を変えないほうがよい。',
+            searchKeyword: '猫砂',
+            asin: null,
+            species: ['cat'],
+            stages: ['arrival', 'growth1', 'growth2', 'growth3', 'adult', 'senior'],
+            priority: 6,
+            consumable: true,
+            cycleDays: 30
         },
 
         // ---- フード ----
@@ -105,7 +135,10 @@ Affiliate.registerProducts('pet', {
             asin: null,
             species: ['dog'],
             stages: ['arrival', 'growth1', 'growth2', 'growth3'],
-            priority: 5
+            priority: 5,
+            consumable: true,
+            // フードは給与量と袋のサイズから消費日数を算出するため、既定サイクルを持たない
+            consumableType: 'food'
         },
         {
             id: 'kitten-food',
@@ -116,7 +149,10 @@ Affiliate.registerProducts('pet', {
             asin: null,
             species: ['cat'],
             stages: ['arrival', 'growth1', 'growth2', 'growth3'],
-            priority: 5
+            priority: 5,
+            consumable: true,
+            // フードは給与量と袋のサイズから消費日数を算出するため、既定サイクルを持たない
+            consumableType: 'food'
         },
         {
             id: 'adult-dog-food',
@@ -127,7 +163,10 @@ Affiliate.registerProducts('pet', {
             asin: null,
             species: ['dog'],
             stages: ['growth3', 'adult'],
-            priority: 5
+            priority: 5,
+            consumable: true,
+            // フードは給与量と袋のサイズから消費日数を算出するため、既定サイクルを持たない
+            consumableType: 'food'
         },
         {
             id: 'adult-cat-food',
@@ -138,7 +177,10 @@ Affiliate.registerProducts('pet', {
             asin: null,
             species: ['cat'],
             stages: ['growth3', 'adult'],
-            priority: 5
+            priority: 5,
+            consumable: true,
+            // フードは給与量と袋のサイズから消費日数を算出するため、既定サイクルを持たない
+            consumableType: 'food'
         },
         {
             id: 'senior-dog-food',
@@ -149,7 +191,10 @@ Affiliate.registerProducts('pet', {
             asin: null,
             species: ['dog'],
             stages: ['senior'],
-            priority: 5
+            priority: 5,
+            consumable: true,
+            // フードは給与量と袋のサイズから消費日数を算出するため、既定サイクルを持たない
+            consumableType: 'food'
         },
         {
             id: 'senior-cat-food',
@@ -160,7 +205,10 @@ Affiliate.registerProducts('pet', {
             asin: null,
             species: ['cat'],
             stages: ['senior'],
-            priority: 5
+            priority: 5,
+            consumable: true,
+            // フードは給与量と袋のサイズから消費日数を算出するため、既定サイクルを持たない
+            consumableType: 'food'
         },
 
         // ---- 社会化期 ----
@@ -252,7 +300,9 @@ Affiliate.registerProducts('pet', {
             asin: null,
             species: ['dog', 'cat'],
             stages: ['growth2', 'growth3', 'adult', 'senior'],
-            priority: 32
+            priority: 32,
+            consumable: true,
+            cycleDays: 90
         },
         {
             id: 'nail-clipper',
@@ -274,7 +324,9 @@ Affiliate.registerProducts('pet', {
             asin: null,
             species: ['dog'],
             stages: ['growth1', 'growth2', 'growth3'],
-            priority: 26
+            priority: 26,
+            consumable: true,
+            cycleDays: 30
         },
 
         // ---- 成長後期・成犬成猫期 ----
