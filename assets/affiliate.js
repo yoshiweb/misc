@@ -22,8 +22,14 @@
          * 変更箇所はこの1行のみ。空文字の場合はタグを付与しない。
          */
         tag: 'yoshiwebnet-22',
+        /**
+         * 楽天アフィリエイトID。空文字の場合は楽天リンクを生成しない。
+         */
+        rakutenAffiliateId: '0a659c4f.afcf3049.0a659c50.7d029f67',
         siteName: 'misc.yoshiweb.net',
-        baseUrl: 'https://www.amazon.co.jp'
+        baseUrl: 'https://www.amazon.co.jp',
+        rakutenSearchUrl: 'https://search.rakuten.co.jp/search/mall',
+        rakutenRedirectUrl: 'https://hb.afl.rakuten.co.jp/hgc'
     };
 
     /** カテゴリ名 -> 商品データ のレジストリ */
@@ -65,6 +71,58 @@
         return product.asin ? productUrl(product.asin) : searchUrl(product.searchKeyword);
     }
 
+    /** 楽天アフィリエイトIDが設定済みか */
+    function isRakutenEnabled() {
+        return typeof CONFIG.rakutenAffiliateId === 'string' && CONFIG.rakutenAffiliateId.length > 0;
+    }
+
+    /**
+     * 楽天市場の検索結果へのアフィリエイトリンクを生成する。
+     * アフィリエイトIDが未設定の場合は通常の検索URLを返す。
+     */
+    function rakutenSearchUrl(keyword) {
+        const target = `${CONFIG.rakutenSearchUrl}/${encodeURIComponent(keyword)}/`;
+        if (!isRakutenEnabled()) return target;
+        return `${CONFIG.rakutenRedirectUrl}/${encodeURIComponent(CONFIG.rakutenAffiliateId)}/`
+            + `?pc=${encodeURIComponent(target)}`;
+    }
+
+    /**
+     * 商品に対する各ストアのリンクを返す。
+     * 商品カードと、ツール側で独自にリンクを並べる箇所の両方から使う。
+     */
+    function storeLinks(product) {
+        const links = [{
+            store: 'Amazon',
+            url: linkFor(product),
+            // ASIN未設定の商品は検索結果に飛ぶため、遷移先を正しく伝える
+            label: product.asin ? 'Amazonで見る' : 'Amazonで探す'
+        }];
+
+        if (product.searchKeyword) {
+            links.push({
+                store: '楽天',
+                url: rakutenSearchUrl(product.rakutenKeyword || product.searchKeyword),
+                label: '楽天で探す'
+            });
+        }
+
+        return links;
+    }
+
+    /** ストアリンクのボタン要素を生成する */
+    function storeLinkElement(link) {
+        const el = document.createElement('a');
+        el.href = link.url;
+        el.target = '_blank';
+        el.rel = 'nofollow sponsored noopener';
+        el.className = link.store === 'Amazon'
+            ? 'px-3 py-1.5 text-sm font-bold text-indigo-600 border border-indigo-200 hover:bg-indigo-50 rounded-lg transition-colors whitespace-nowrap'
+            : 'px-3 py-1.5 text-sm font-bold text-rose-600 border border-rose-200 hover:bg-rose-50 rounded-lg transition-colors whitespace-nowrap';
+        el.textContent = link.label;
+        return el;
+    }
+
     /**
      * 商品データを登録する。
      *
@@ -89,13 +147,11 @@
      * 価格は規約上表示できないため、いかなる形でも出力しない。
      */
     function productCard(product) {
-        const link = document.createElement('a');
-        link.href = linkFor(product);
-        link.target = '_blank';
-        link.rel = 'nofollow sponsored noopener';
-        link.className = 'flex items-center justify-between gap-4 p-4 bg-white border border-slate-200 rounded-xl hover:border-indigo-300 hover:shadow-sm transition-all';
+        const card = document.createElement('div');
+        card.className = 'flex flex-wrap items-center justify-between gap-3 p-4 bg-white border border-slate-200 rounded-xl';
 
         const body = document.createElement('div');
+        body.className = 'min-w-0';
 
         if (product.label) {
             const badge = document.createElement('p');
@@ -116,14 +172,13 @@
             body.appendChild(note);
         }
 
-        const action = document.createElement('span');
-        action.className = 'shrink-0 text-sm font-bold text-indigo-600 whitespace-nowrap';
-        // ASIN未設定の商品は検索結果に飛ぶため、遷移先を正しく伝える
-        action.textContent = product.asin ? 'Amazonで見る →' : 'Amazonで探す →';
+        const actions = document.createElement('div');
+        actions.className = 'shrink-0 flex flex-wrap gap-2';
+        storeLinks(product).forEach(link => actions.appendChild(storeLinkElement(link)));
 
-        link.appendChild(body);
-        link.appendChild(action);
-        return link;
+        card.appendChild(body);
+        card.appendChild(actions);
+        return card;
     }
 
     /**
@@ -162,8 +217,14 @@
 
         const text = document.createElement('p');
         text.className = 'text-xs text-slate-400 leading-relaxed';
-        text.textContent = `当サイトはAmazonアソシエイト・プログラムの参加者です。`
+
+        let body = '当サイトはAmazonアソシエイト・プログラムの参加者です。'
             + `Amazonのアソシエイトとして、${CONFIG.siteName} は適格販売により収入を得ています。`;
+        if (isRakutenEnabled()) {
+            body += 'また、楽天アフィリエイトのプログラムにも参加しています。';
+        }
+        text.textContent = body;
+
         el.appendChild(text);
     }
 
@@ -172,6 +233,10 @@
         productUrl,
         searchUrl,
         linkFor,
+        isRakutenEnabled,
+        rakutenSearchUrl,
+        storeLinks,
+        storeLinkElement,
         registerProducts,
         getProducts,
         productCard,

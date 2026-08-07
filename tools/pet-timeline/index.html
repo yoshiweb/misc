@@ -642,13 +642,9 @@
                 });
                 controls.appendChild(todayBtn);
 
-                const link = document.createElement('a');
-                link.href = Affiliate.linkFor(product);
-                link.target = '_blank';
-                link.rel = 'nofollow sponsored noopener';
-                link.className = 'px-3 py-2 text-sm font-bold text-indigo-600 border border-indigo-200 hover:bg-indigo-50 rounded-lg transition-colors';
-                link.textContent = product.asin ? 'Amazonで見る' : 'Amazonで探す';
-                controls.appendChild(link);
+                Affiliate.storeLinks(product).forEach(link => {
+                    controls.appendChild(Affiliate.storeLinkElement(link));
+                });
 
                 row.appendChild(controls);
 
