@@ -131,6 +131,19 @@
                     <span class="block text-xs text-slate-400 mt-1.5">製品のパッケージに記載されています。</span>
                 </label>
             </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-100">
+                <label class="block">
+                    <span class="text-sm font-bold text-slate-600">フード1袋のサイズ (kg)</span>
+                    <input id="pack-size" type="number" value="2" min="0.1" max="30" step="0.1"
+                        class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                    <span class="block text-xs text-slate-400 mt-1.5">給与量から何日で使い切るかを算出します。</span>
+                </label>
+                <p class="sm:col-span-2 self-center text-xs text-slate-400 leading-relaxed">
+                    入力内容と消耗品の購入日はブラウザのローカルストレージに保存され、次回アクセス時に復元されます。<br>
+                    サーバーには送信されません。
+                </p>
+            </div>
         </div>
 
         <!-- 結果エリア -->
@@ -167,8 +180,46 @@
             weight: document.getElementById('weight'),
             neutered: document.getElementById('neutered'),
             foodEnergy: document.getElementById('food-energy'),
+            packSize: document.getElementById('pack-size'),
             result: document.getElementById('result')
         };
+
+        /** ローカルストレージのキー。スキーマを変える場合はバージョンを上げる */
+        const STORAGE_KEY = 'pet-timeline.v1';
+
+        /**
+         * 永続化する状態。
+         * profile は入力欄の値、refills は消耗品ごとの購入日と補充サイクル。
+         * ペット1匹分を想定した単一プロファイル構成。
+         */
+        const store = {
+            profile: {},
+            refills: {}
+        };
+
+        /** ローカルストレージから状態を読み込む */
+        function loadStore() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return;
+                const parsed = JSON.parse(raw);
+                Object.assign(store.profile, parsed.profile || {});
+                Object.assign(store.refills, parsed.refills || {});
+            } catch (e) {
+                // 保存データが壊れていても初期状態で動作を継続する
+                console.warn('[pet-timeline] 保存データを読み込めませんでした', e);
+            }
+        }
+
+        /** ローカルストレージへ状態を書き込む */
+        function saveStore() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+            } catch (e) {
+                // プライベートモードなどで書き込めない場合は保存を諦める
+                console.warn('[pet-timeline] 保存できませんでした', e);
+            }
+        }
 
         /**
          * 主要な犬種とサイズ区分の対応。
@@ -331,6 +382,78 @@
             };
         }
 
+        /** 日付を YYYY-MM-DD 形式にする（date input と localStorage 用） */
+        function toDateString(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        /** 2つの日付の差を日数で返す */
+        function diffDays(from, to) {
+            const a = new Date(from); a.setHours(0, 0, 0, 0);
+            const b = new Date(to); b.setHours(0, 0, 0, 0);
+            return Math.round((b - a) / 86400000);
+        }
+
+        /**
+         * 消耗品ごとの補充状況を算出する。
+         *
+         * フードは1日の給与量と袋のサイズから消費日数を計算するため、
+         * 実際の消費ペースに沿った日数になる。それ以外は既定サイクルを使う。
+         * 利用者が個別にサイクルを編集した場合はその値を優先する。
+         */
+        function buildRefills(species, stageKey, foodGrams, packSizeKg) {
+            const today = toDateString(new Date());
+
+            return Affiliate.getProducts('pet')
+                .filter(p => p.consumable && p.species.includes(species) && p.stages.includes(stageKey))
+                .map(product => {
+                    const saved = store.refills[product.id] || {};
+
+                    // サイクルの決定: 利用者の指定 > フードの実算出 > 既定値
+                    let cycleDays = saved.cycleDays || null;
+                    let computed = false;
+                    if (!cycleDays && product.consumableType === 'food') {
+                        if (foodGrams > 0 && packSizeKg > 0) {
+                            cycleDays = Math.max(1, Math.round((packSizeKg * 1000) / foodGrams));
+                            computed = true;
+                        }
+                    }
+                    if (!cycleDays) cycleDays = product.cycleDays || null;
+
+                    const purchasedAt = saved.purchasedAt || null;
+                    let dueDate = null;
+                    let remainDays = null;
+
+                    if (purchasedAt && cycleDays) {
+                        const due = new Date(purchasedAt);
+                        due.setDate(due.getDate() + cycleDays);
+                        dueDate = toDateString(due);
+                        remainDays = diffDays(today, dueDate);
+                    }
+
+                    return { product, cycleDays, computed, purchasedAt, dueDate, remainDays };
+                })
+                // 補充が近いものを先頭に。未記録のものは末尾へ回す
+                .sort((a, b) => {
+                    if (a.remainDays === null && b.remainDays === null) return a.product.priority - b.product.priority;
+                    if (a.remainDays === null) return 1;
+                    if (b.remainDays === null) return -1;
+                    return a.remainDays - b.remainDays;
+                });
+        }
+
+        /** 残日数から表示のトーンとラベルを決める */
+        function refillStatus(remainDays) {
+            if (remainDays === null) return { tone: 'none', label: '未記録' };
+            if (remainDays < 0) return { tone: 'over', label: `${Math.abs(remainDays)}日超過` };
+            if (remainDays === 0) return { tone: 'over', label: '本日が目安' };
+            if (remainDays <= 5) return { tone: 'soon', label: `あと${remainDays}日` };
+            return { tone: 'ok', label: `あと${remainDays}日` };
+        }
+
         /** 現在のステージに該当する商品を絞り込む */
         function selectProducts(species, stageKey) {
             return Affiliate.getProducts('pet')
@@ -424,6 +547,135 @@
             return section;
         }
 
+        /**
+         * 消耗品の補充状況を描画する。
+         *
+         * 購入日を記録すると次回の補充目安日と残日数が表示され、
+         * 期限が近いものが上に並ぶ。
+         */
+        function renderRefills(refills) {
+            if (refills.length === 0) return null;
+
+            const section = createSection('消耗品の補充', 'repeat');
+
+            const due = refills.filter(r => r.remainDays !== null && r.remainDays <= 0);
+            if (due.length > 0) {
+                const alert = document.createElement('p');
+                alert.className = 'text-sm font-bold text-rose-800 bg-rose-50 border border-rose-200 rounded-xl p-3 mb-4';
+                alert.textContent = `補充の目安を過ぎているものが${due.length}件あります。`;
+                section.appendChild(alert);
+            }
+
+            // 広告であることが明瞭に分かるよう、商品リンクの直前にPR表記を置く
+            Affiliate.renderPrNotice(section);
+
+            const toneStyles = {
+                over: 'text-rose-700 bg-rose-100',
+                soon: 'text-amber-800 bg-amber-100',
+                ok: 'text-emerald-700 bg-emerald-100',
+                none: 'text-slate-500 bg-slate-100'
+            };
+
+            const list = document.createElement('div');
+            list.className = 'space-y-2';
+
+            refills.forEach(entry => {
+                const { product, cycleDays, computed, purchasedAt, dueDate, remainDays } = entry;
+                const status = refillStatus(remainDays);
+
+                const row = document.createElement('div');
+                row.className = 'p-4 bg-white border border-slate-200 rounded-xl';
+
+                // 見出し行: 商品名と残日数バッジ
+                const head = document.createElement('div');
+                head.className = 'flex items-center justify-between gap-3 mb-2';
+
+                const name = document.createElement('p');
+                name.className = 'font-bold text-slate-800';
+                name.textContent = product.name;
+                head.appendChild(name);
+
+                const badge = document.createElement('span');
+                badge.className = `shrink-0 text-xs font-bold px-2 py-1 rounded-full ${toneStyles[status.tone]}`;
+                badge.textContent = status.label;
+                head.appendChild(badge);
+                row.appendChild(head);
+
+                // 操作行: 購入日・サイクル・記録ボタン
+                const controls = document.createElement('div');
+                controls.className = 'flex flex-wrap items-end gap-2';
+
+                const purchaseLabel = document.createElement('label');
+                purchaseLabel.className = 'block';
+                purchaseLabel.innerHTML = '<span class="block text-xs font-bold text-slate-500 mb-1">購入日</span>';
+                const purchaseInput = document.createElement('input');
+                purchaseInput.type = 'date';
+                purchaseInput.value = purchasedAt || '';
+                purchaseInput.className = 'p-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-200';
+                purchaseInput.addEventListener('change', () => {
+                    setRefill(product.id, { purchasedAt: purchaseInput.value || null });
+                });
+                purchaseLabel.appendChild(purchaseInput);
+                controls.appendChild(purchaseLabel);
+
+                const cycleLabel = document.createElement('label');
+                cycleLabel.className = 'block';
+                cycleLabel.innerHTML = '<span class="block text-xs font-bold text-slate-500 mb-1">サイクル(日)</span>';
+                const cycleInput = document.createElement('input');
+                cycleInput.type = 'number';
+                cycleInput.min = '1';
+                cycleInput.value = cycleDays || '';
+                cycleInput.className = 'w-24 p-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-200';
+                cycleInput.addEventListener('change', () => {
+                    const value = Number(cycleInput.value);
+                    setRefill(product.id, { cycleDays: value > 0 ? value : null });
+                });
+                cycleLabel.appendChild(cycleInput);
+                controls.appendChild(cycleLabel);
+
+                const todayBtn = document.createElement('button');
+                todayBtn.type = 'button';
+                todayBtn.className = 'px-3 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors';
+                todayBtn.textContent = '今日補充した';
+                todayBtn.addEventListener('click', () => {
+                    setRefill(product.id, { purchasedAt: toDateString(new Date()) });
+                });
+                controls.appendChild(todayBtn);
+
+                const link = document.createElement('a');
+                link.href = Affiliate.linkFor(product);
+                link.target = '_blank';
+                link.rel = 'nofollow sponsored noopener';
+                link.className = 'px-3 py-2 text-sm font-bold text-indigo-600 border border-indigo-200 hover:bg-indigo-50 rounded-lg transition-colors';
+                link.textContent = product.asin ? 'Amazonで見る' : 'Amazonで探す';
+                controls.appendChild(link);
+
+                row.appendChild(controls);
+
+                // 補足行: 次回目安日と、サイクルの算出根拠
+                const meta = document.createElement('p');
+                meta.className = 'mt-2 text-xs text-slate-400';
+                const parts = [];
+                if (dueDate) parts.push(`次回の目安: ${dueDate}`);
+                if (computed) parts.push('給与量と袋のサイズから算出');
+                else if (!purchasedAt) parts.push('購入日を記録すると補充時期を表示します');
+                meta.textContent = parts.join(' / ');
+                if (meta.textContent) row.appendChild(meta);
+
+                list.appendChild(row);
+            });
+
+            section.appendChild(list);
+            return section;
+        }
+
+        /** 消耗品の記録を更新して保存し、再描画する */
+        function setRefill(productId, patch) {
+            store.refills[productId] = { ...(store.refills[productId] || {}), ...patch };
+            saveStore();
+            update();
+        }
+
         /** タイムラインを描画する */
         function renderTimeline(stages, currentIndex, species) {
             const section = createSection('成長タイムライン', 'list-checks');
@@ -507,7 +759,14 @@
             return section;
         }
 
-        /** 犬種セレクトの選択肢を構築する */
+        /**
+         * 犬種セレクトの選択肢を構築する。
+         *
+         * 選択肢の value には犬種名を使う。サイズ区分を value にすると
+         * 同じ値の選択肢が複数できてしまい、保存した犬種を復元できないため。
+         */
+        const BREED_SIZE = {};
+
         function buildBreedOptions() {
             const unknown = document.createElement('option');
             unknown.value = '';
@@ -518,8 +777,9 @@
                 const group = document.createElement('optgroup');
                 group.label = profile.label;
                 BREEDS[size].forEach(breed => {
+                    BREED_SIZE[breed] = size;
                     const option = document.createElement('option');
-                    option.value = size;
+                    option.value = breed;
                     option.textContent = breed;
                     group.appendChild(option);
                 });
@@ -533,8 +793,8 @@
             elements.dogFields.classList.toggle('hidden', !isDog);
 
             // 犬種を選んだ場合はサイズ区分が自動で決まるため、手動指定欄を隠す
-            const breedSize = elements.breed.value;
-            elements.sizeField.classList.toggle('hidden', breedSize !== '');
+            const breedSize = BREED_SIZE[elements.breed.value] || '';
+            elements.sizeField.classList.toggle('hidden', breedSize === '');
             if (breedSize) elements.size.value = breedSize;
         }
 
@@ -589,16 +849,28 @@
 
             elements.result.appendChild(renderSummary(age, stage, profile, nextStage));
 
+            let food = null;
             if (weight > 0 && foodEnergy > 0) {
-                elements.result.appendChild(renderFood(calcFood({
+                food = calcFood({
                     species,
                     months: age.months,
                     weight,
                     neutered: elements.neutered.value === 'yes',
                     foodEnergy,
                     profile
-                })));
+                });
             }
+
+            // 補充リマインドは再訪時に最初に見る情報なので、給与量より前に置く
+            const refills = renderRefills(buildRefills(
+                species,
+                stage.key,
+                food ? food.grams : 0,
+                Number(elements.packSize.value)
+            ));
+            if (refills) elements.result.appendChild(refills);
+
+            if (food) elements.result.appendChild(renderFood(food));
 
             const products = renderProducts(species, stage);
             if (products) elements.result.appendChild(products);
@@ -608,14 +880,39 @@
             lucide.createIcons();
         }
 
+        /** 永続化する入力欄の一覧（要素キー -> 保存キー） */
+        const PERSISTED_FIELDS = ['species', 'birthday', 'breed', 'size', 'weight', 'neutered', 'foodEnergy', 'packSize'];
+
+        /** 入力欄の値を保存する */
+        function saveProfile() {
+            PERSISTED_FIELDS.forEach(key => {
+                store.profile[key] = elements[key].value;
+            });
+            store.profile.weightEdited = weightEdited;
+            saveStore();
+        }
+
+        /** 保存済みの値を入力欄へ復元する */
+        function restoreProfile() {
+            PERSISTED_FIELDS.forEach(key => {
+                const value = store.profile[key];
+                if (value !== undefined && value !== null && value !== '') elements[key].value = value;
+            });
+            // 体重を手で編集していた場合は、復元後も自動推定で上書きしない
+            weightEdited = store.profile.weightEdited === true;
+        }
+
         buildBreedOptions();
+        loadStore();
+        restoreProfile();
 
         elements.weight.addEventListener('input', () => { weightEdited = true; });
 
         Object.values(elements).forEach(el => {
             if (el === elements.result || el === elements.dogFields || el === elements.sizeField) return;
-            el.addEventListener('input', update);
-            el.addEventListener('change', update);
+            const handler = () => { update(); saveProfile(); };
+            el.addEventListener('input', handler);
+            el.addEventListener('change', handler);
         });
 
         Affiliate.renderDisclosure('#disclosure');
