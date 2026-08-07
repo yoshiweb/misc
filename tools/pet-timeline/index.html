@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ペット成長タイムライン</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        /* タイムラインの縦線 */
+        .timeline-item {
+            position: relative;
+            padding-left: 2rem;
+            padding-bottom: 1.5rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0.4375rem;
+            top: 1.25rem;
+            bottom: 0;
+            width: 2px;
+            background: #e2e8f0;
+        }
+
+        .timeline-item:last-child::before {
+            display: none;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: 0;
+            top: 0.3125rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 9999px;
+            border: 3px solid #cbd5e1;
+            background: #fff;
+        }
+
+        .timeline-dot.is-past {
+            border-color: #94a3b8;
+            background: #94a3b8;
+        }
+
+        .timeline-dot.is-current {
+            border-color: #4f46e5;
+            background: #4f46e5;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.18);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 sm:p-10">
+
+    <header class="text-center w-full max-w-3xl mb-8">
+        <h1 class="text-3xl font-bold text-slate-900 mb-2">ペット成長タイムライン</h1>
+        <p class="text-slate-500">犬・猫の生年月日と犬種から現在の成長段階を判定し、いま必要なグッズとフードの給与量を算出します。</p>
+    </header>
+
+    <main class="w-full max-w-3xl">
+        <!-- 入力エリア -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm mb-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                <label class="block">
+                    <span class="text-sm font-bold text-slate-600">種別</span>
+                    <select id="species" class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                        <option value="dog">犬</option>
+                        <option value="cat">猫</option>
+                    </select>
+                </label>
+                <label class="block">
+                    <span class="text-sm font-bold text-slate-600">生年月日</span>
+                    <input id="birthday" type="date"
+                        class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                    <span class="block text-xs text-slate-400 mt-1.5">正確な誕生日が不明な場合は推定日で構いません。</span>
+                </label>
+            </div>
+
+            <div id="dog-fields" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                <label class="block">
+                    <span class="text-sm font-bold text-slate-600">犬種</span>
+                    <select id="breed" class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"></select>
+                </label>
+                <label id="size-field" class="block">
+                    <span class="text-sm font-bold text-slate-600">サイズ区分</span>
+                    <select id="size" class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                        <option value="toy">超小型犬（〜4kg）</option>
+                        <option value="small">小型犬（4〜10kg）</option>
+                        <option value="medium">中型犬（10〜25kg）</option>
+                        <option value="large">大型犬（25kg〜）</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <label class="block">
+                    <span class="text-sm font-bold text-slate-600">現在の体重 (kg)</span>
+                    <input id="weight" type="number" value="3" min="0.2" max="100" step="0.1"
+                        class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                    <span class="block text-xs text-slate-400 mt-1.5">初期値は月齢からの概算です。実測値を入れると精度が上がります。</span>
+                </label>
+                <label class="block">
+                    <span class="text-sm font-bold text-slate-600">避妊・去勢</span>
+                    <select id="neutered" class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                        <option value="no">未実施</option>
+                        <option value="yes">実施済み</option>
+                    </select>
+                </label>
+                <label class="block">
+                    <span class="text-sm font-bold text-slate-600">フードの熱量 (kcal/100g)</span>
+                    <input id="food-energy" type="number" value="360" min="100" max="600"
+                        class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                    <span class="block text-xs text-slate-400 mt-1.5">製品のパッケージに記載されています。</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- 結果エリア -->
+        <div id="result" class="space-y-6"></div>
+
+        <!-- 免責事項 -->
+        <div class="mt-10 p-5 bg-slate-100 border border-slate-200 rounded-2xl">
+            <h2 class="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
+                <i data-lucide="info" class="w-4 h-4"></i>
+                ご利用にあたって
+            </h2>
+            <ul class="text-xs text-slate-500 leading-relaxed list-disc list-inside space-y-1">
+                <li>成長段階の区切りとフードの給与量は一般的な目安であり、獣医学上の助言ではありません。個体差が大きいため、実際の量は体調や体型を見ながら調整してください。</li>
+                <li>ワクチンの接種スケジュール、避妊・去勢の適齢期、健康診断の頻度、療法食の必要性については、必ずかかりつけの獣医師にご相談ください。</li>
+                <li>紹介しているアイテムは食品・雑貨であり、疾病の治療や予防を目的としたものではありません。</li>
+                <li>犬の登録と狂犬病予防注射は狂犬病予防法で義務付けられています。手続きはお住まいの自治体の案内をご確認ください。</li>
+            </ul>
+            <div id="disclosure" class="mt-3 pt-3 border-t border-slate-200"></div>
+        </div>
+    </main>
+
+    <script src="../../assets/affiliate.js"></script>
+    <script src="../../data/products/pet.js"></script>
+    <script>
+        lucide.createIcons();
+
+        const elements = {
+            species: document.getElementById('species'),
+            birthday: document.getElementById('birthday'),
+            breed: document.getElementById('breed'),
+            size: document.getElementById('size'),
+            sizeField: document.getElementById('size-field'),
+            dogFields: document.getElementById('dog-fields'),
+            weight: document.getElementById('weight'),
+            neutered: document.getElementById('neutered'),
+            foodEnergy: document.getElementById('food-energy'),
+            result: document.getElementById('result')
+        };
+
+        /**
+         * 主要な犬種とサイズ区分の対応。
+         * 網羅ではなく、サイズ判定に足る代表的な犬種を収録している。
+         * 該当しない場合は「わからない・ミックス」を選び、サイズ区分を直接指定する。
+         */
+        const BREEDS = {
+            toy: ['チワワ', 'トイ・プードル', 'ポメラニアン', 'ヨークシャー・テリア', 'マルチーズ', 'パピヨン', 'ミニチュア・ピンシャー', 'イタリアン・グレーハウンド'],
+            small: ['柴犬', 'ミニチュア・ダックスフンド', 'シー・ズー', 'ミニチュア・シュナウザー', 'ジャック・ラッセル・テリア', 'フレンチ・ブルドッグ', 'パグ', 'ビーグル', 'キャバリア・キング・チャールズ・スパニエル', 'ウェルシュ・コーギー・ペンブローク'],
+            medium: ['ボーダー・コリー', 'シェットランド・シープドッグ', 'アメリカン・コッカー・スパニエル', '日本スピッツ', 'ウィペット', '甲斐犬', '紀州犬'],
+            large: ['ゴールデン・レトリーバー', 'ラブラドール・レトリーバー', 'バーニーズ・マウンテン・ドッグ', 'ジャーマン・シェパード・ドッグ', 'シベリアン・ハスキー', 'ドーベルマン', 'グレート・ピレニーズ', '秋田犬', 'ボルゾイ']
+        };
+
+        /** サイズ区分ごとの、成犬になる月齢とシニア期に入る月齢、および成犬時の体重 */
+        const SIZE_PROFILES = {
+            toy:    { label: '超小型犬', adultMonths: 10, seniorMonths: 120, adultWeight: 3 },
+            small:  { label: '小型犬',   adultMonths: 12, seniorMonths: 120, adultWeight: 8 },
+            medium: { label: '中型犬',   adultMonths: 12, seniorMonths: 96,  adultWeight: 18 },
+            large:  { label: '大型犬',   adultMonths: 18, seniorMonths: 84,  adultWeight: 35 }
+        };
+
+        /** 猫のプロファイル（品種によるサイズ差が小さいため一律） */
+        const CAT_PROFILE = { label: '猫', adultMonths: 12, seniorMonths: 132, adultWeight: 4 };
+
+        /** 成長段階の定義。arrival から順に進む */
+        const STAGES = [
+            { key: 'arrival', name: '迎える準備', endMonths: 2 },
+            { key: 'growth1', name: '社会化期',   endMonths: 4 },
+            { key: 'growth2', name: '成長期',     endMonths: 7 },
+            { key: 'growth3', name: '成長後期',   endMonths: null },
+            { key: 'adult',   name: '成犬・成猫期', endMonths: null },
+            { key: 'senior',  name: 'シニア期',   endMonths: null }
+        ];
+
+        /** ステージごとの、商品ではない注意事項（獣医師相談・法令など） */
+        const STAGE_NOTES = {
+            arrival: ['迎えたらまず健康診断を受け、ワクチンの接種スケジュールを獣医師に相談してください。'],
+            growth1: [
+                '散歩を始める時期はワクチンの接種状況によって変わります。獣医師の指示に従ってください。',
+                '犬は生後91日を経過したら、30日以内に自治体への登録と狂犬病予防注射が必要です（狂犬病予防法）。'
+            ],
+            growth2: ['避妊・去勢手術の適齢期は個体によって異なります。実施の判断は獣医師に相談してください。'],
+            growth3: ['成犬・成猫用フードへの切り替え時期は、体格の成長が止まったかどうかで判断します。'],
+            adult: ['年1回程度の健康診断が一般的な目安です。頻度は獣医師に相談してください。'],
+            senior: ['健康診断の頻度を上げることが推奨される時期です。かかりつけの獣医師にご相談ください。']
+        };
+
+        /**
+         * 現在の日齢・月齢を算出する。
+         * 月齢は「同じ日付を過ぎたら1ヶ月」として数え、暦の月の長さの差を吸収する。
+         */
+        function calcAge(birthday) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const birth = new Date(birthday);
+            birth.setHours(0, 0, 0, 0);
+
+            const days = Math.floor((today - birth) / 86400000);
+
+            let months = (today.getFullYear() - birth.getFullYear()) * 12
+                + (today.getMonth() - birth.getMonth());
+            if (today.getDate() < birth.getDate()) months -= 1;
+
+            return { days, months: Math.max(0, months), years: Math.floor(Math.max(0, months) / 12) };
+        }
+
+        /** 種別とサイズ区分からプロファイルを取得する */
+        function getProfile(species, size) {
+            return species === 'cat' ? CAT_PROFILE : SIZE_PROFILES[size];
+        }
+
+        /** 月齢を「○ヶ月」または「○歳」に整形する */
+        function formatMonths(months) {
+            if (months < 24) return `${months}ヶ月`;
+            const years = Math.floor(months / 12);
+            const rest = months % 12;
+            return rest === 0 ? `${years}歳` : `${years}歳${rest}ヶ月`;
+        }
+
+        /**
+         * 月齢から現在の体重を推定する。
+         *
+         * 成犬時の体重に対する到達率を、成犬になる月齢までの進捗から近似する。
+         * あくまで初期値を埋めるための概算であり、実測値の入力を促す前提のもの。
+         */
+        function estimateWeight(months, profile) {
+            const progress = Math.min(1, months / profile.adultMonths);
+            const ratio = Math.min(1, 0.15 + 0.85 * Math.pow(progress, 0.7));
+            return Math.max(0.2, Math.round(profile.adultWeight * ratio * 10) / 10);
+        }
+
+        /**
+         * ステージ境界を月齢で確定させる。
+         * growth3 の終わりは成犬になる月齢、adult の終わりはシニア期に入る月齢。
+         */
+        function resolveStages(profile) {
+            let startMonths = 0;
+            return STAGES.map(stage => {
+                let endMonths = stage.endMonths;
+                if (stage.key === 'growth3') endMonths = profile.adultMonths;
+                if (stage.key === 'adult') endMonths = profile.seniorMonths;
+
+                const resolved = { ...stage, startMonths, endMonths };
+                startMonths = endMonths === null ? startMonths : endMonths;
+                return resolved;
+            });
+        }
+
+        /** ステージの期間を表示用の文字列にする */
+        function formatStageRange(stage) {
+            if (stage.startMonths === 0) return `〜生後${formatMonths(stage.endMonths)}`;
+            if (stage.endMonths === null) return `${formatMonths(stage.startMonths)}〜`;
+            return `${formatMonths(stage.startMonths)}〜${formatMonths(stage.endMonths)}`;
+        }
+
+        /** 月齢から現在のステージのインデックスを求める */
+        function findStageIndex(stages, months) {
+            for (let i = 0; i < stages.length; i++) {
+                if (stages[i].endMonths === null || months < stages[i].endMonths) return i;
+            }
+            return stages.length - 1;
+        }
+
+        /**
+         * 1日の必要エネルギー量と給与量を算出する。
+         *
+         * RER（安静時エネルギー要求量） = 70 × 体重kg ^ 0.75
+         * DER（1日あたりの必要量） = RER × 活動係数
+         * 活動係数は成長段階と避妊去勢の有無で変わる。
+         */
+        function calcFood({ species, months, weight, neutered, foodEnergy, profile }) {
+            const rer = 70 * Math.pow(weight, 0.75);
+
+            let factor;
+            let basis;
+            if (months < 4) {
+                factor = species === 'cat' ? 2.5 : 3.0;
+                basis = '成長期（生後4ヶ月未満）';
+            } else if (months < profile.adultMonths) {
+                factor = 2.0;
+                basis = '成長期（生後4ヶ月〜成犬・成猫期まで）';
+            } else if (months < profile.seniorMonths) {
+                if (species === 'cat') factor = neutered ? 1.2 : 1.4;
+                else factor = neutered ? 1.6 : 1.8;
+                basis = neutered ? '成犬・成猫期（避妊去勢済み）' : '成犬・成猫期（未実施）';
+            } else {
+                factor = species === 'cat' ? 1.1 : 1.4;
+                basis = 'シニア期';
+            }
+
+            const der = rer * factor;
+            const grams = (der / foodEnergy) * 100;
+
+            return {
+                rer: Math.round(rer),
+                der: Math.round(der),
+                factor,
+                basis,
+                grams: Math.round(grams)
+            };
+        }
+
+        /** 現在のステージに該当する商品を絞り込む */
+        function selectProducts(species, stageKey) {
+            return Affiliate.getProducts('pet')
+                .filter(p => p.species.includes(species) && p.stages.includes(stageKey))
+                .sort((a, b) => a.priority - b.priority);
+        }
+
+        /** セクションの外枠を生成する */
+        function createSection(title, iconName) {
+            const section = document.createElement('section');
+            section.className = 'bg-white p-6 rounded-2xl shadow-sm';
+
+            const heading = document.createElement('h2');
+            heading.className = 'flex items-center gap-2 text-lg font-bold text-slate-800 mb-4';
+            heading.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5 text-indigo-600"></i>`;
+            heading.appendChild(document.createTextNode(title));
+            section.appendChild(heading);
+
+            return section;
+        }
+
+        /** 現在の月齢と成長段階の要約を描画する */
+        function renderSummary(age, stage, profile, nextStage) {
+            const section = createSection('現在の成長段階', 'calendar-heart');
+
+            const summary = document.createElement('div');
+            summary.className = 'grid grid-cols-2 sm:grid-cols-4 gap-3';
+
+            const ageText = age.months >= 12
+                ? `${age.years}歳${age.months % 12 > 0 ? age.months % 12 + 'ヶ月' : ''}`
+                : `${age.months}ヶ月`;
+
+            const cells = [
+                { label: '年齢', value: ageText },
+                { label: '日齢', value: `${age.days.toLocaleString()}日` },
+                { label: '区分', value: profile.label },
+                { label: '成長段階', value: stage.name }
+            ];
+
+            cells.forEach(c => {
+                const cell = document.createElement('div');
+                cell.className = 'p-3 bg-slate-50 rounded-xl';
+                cell.innerHTML = `<p class="text-xs font-bold text-slate-500 mb-1">${c.label}</p>`;
+                const value = document.createElement('p');
+                value.className = 'text-lg font-bold text-slate-900';
+                value.textContent = c.value;
+                cell.appendChild(value);
+                summary.appendChild(cell);
+            });
+            section.appendChild(summary);
+
+            // 次のステージまでの残り月数を示し、先回りの準備を促す
+            if (nextStage && stage.endMonths !== null) {
+                const remain = stage.endMonths - age.months;
+                const next = document.createElement('p');
+                next.className = 'mt-4 text-sm text-slate-500';
+                next.textContent = `次の段階「${nextStage.name}」まであと約${Math.max(0, remain)}ヶ月です。`;
+                section.appendChild(next);
+            }
+
+            return section;
+        }
+
+        /** フードの給与量を描画する */
+        function renderFood(food) {
+            const section = createSection('フードの給与量の目安', 'utensils');
+
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-3 gap-3 mb-4';
+            grid.innerHTML = `
+                <div class="p-3 bg-slate-50 rounded-xl">
+                    <p class="text-xs font-bold text-slate-500 mb-1">1日の給与量</p>
+                    <p class="text-xl font-bold text-slate-900">${food.grams}<span class="text-sm font-bold text-slate-400 ml-0.5">g</span></p>
+                </div>
+                <div class="p-3 bg-slate-50 rounded-xl">
+                    <p class="text-xs font-bold text-slate-500 mb-1">必要エネルギー</p>
+                    <p class="text-xl font-bold text-slate-900">${food.der.toLocaleString()}<span class="text-sm font-bold text-slate-400 ml-0.5">kcal</span></p>
+                </div>
+                <div class="p-3 bg-slate-50 rounded-xl">
+                    <p class="text-xs font-bold text-slate-500 mb-1">安静時要求量</p>
+                    <p class="text-xl font-bold text-slate-900">${food.rer.toLocaleString()}<span class="text-sm font-bold text-slate-400 ml-0.5">kcal</span></p>
+                </div>`;
+            section.appendChild(grid);
+
+            const basis = document.createElement('p');
+            basis.className = 'text-xs text-slate-400 leading-relaxed';
+            basis.textContent = `安静時エネルギー要求量（70 × 体重^0.75）に、${food.basis}の係数 ${food.factor} を掛けて算出しています。`
+                + '個体差が大きいため、体型と体調を見ながら調整してください。';
+            section.appendChild(basis);
+
+            return section;
+        }
+
+        /** タイムラインを描画する */
+        function renderTimeline(stages, currentIndex, species) {
+            const section = createSection('成長タイムライン', 'list-checks');
+
+            const list = document.createElement('div');
+
+            stages.forEach((stage, index) => {
+                const item = document.createElement('div');
+                item.className = 'timeline-item';
+
+                const dot = document.createElement('span');
+                dot.className = 'timeline-dot';
+                if (index < currentIndex) dot.classList.add('is-past');
+                if (index === currentIndex) dot.classList.add('is-current');
+                item.appendChild(dot);
+
+                const header = document.createElement('div');
+                header.className = 'flex flex-wrap items-baseline gap-2';
+
+                const name = document.createElement('span');
+                name.className = index === currentIndex
+                    ? 'font-bold text-indigo-700'
+                    : 'font-bold text-slate-700';
+                name.textContent = stage.name;
+                header.appendChild(name);
+
+                const range = document.createElement('span');
+                range.className = 'text-xs text-slate-400';
+                range.textContent = formatStageRange(stage);
+                header.appendChild(range);
+
+                if (index === currentIndex) {
+                    const badge = document.createElement('span');
+                    badge.className = 'text-xs font-bold text-white bg-indigo-600 px-2 py-0.5 rounded-full';
+                    badge.textContent = 'いまここ';
+                    header.appendChild(badge);
+                }
+                item.appendChild(header);
+
+                // その段階で必要になるグッズ名を列挙する
+                const items = selectProducts(species, stage.key).map(p => p.name);
+                if (items.length > 0) {
+                    const goods = document.createElement('p');
+                    goods.className = index === currentIndex
+                        ? 'mt-1.5 text-sm text-slate-600'
+                        : 'mt-1.5 text-sm text-slate-400';
+                    goods.textContent = items.join(' / ');
+                    item.appendChild(goods);
+                }
+
+                // 獣医師相談・法令などの注意事項
+                (STAGE_NOTES[stage.key] || []).forEach(text => {
+                    const note = document.createElement('p');
+                    note.className = 'mt-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5';
+                    note.textContent = text;
+                    item.appendChild(note);
+                });
+
+                list.appendChild(item);
+            });
+
+            section.appendChild(list);
+            return section;
+        }
+
+        /** 現在のステージで必要なグッズを商品カードで描画する */
+        function renderProducts(species, stage) {
+            const products = selectProducts(species, stage.key);
+            if (products.length === 0) return null;
+
+            const section = createSection(`いま必要なグッズ（${stage.name}）`, 'shopping-bag');
+
+            // 広告であることが明瞭に分かるよう、商品リンクの直前にPR表記を置く
+            Affiliate.renderPrNotice(section);
+
+            const list = document.createElement('div');
+            list.className = 'space-y-2';
+            products.forEach(p => list.appendChild(Affiliate.productCard(p)));
+            section.appendChild(list);
+
+            return section;
+        }
+
+        /** 犬種セレクトの選択肢を構築する */
+        function buildBreedOptions() {
+            const unknown = document.createElement('option');
+            unknown.value = '';
+            unknown.textContent = 'わからない・ミックス';
+            elements.breed.appendChild(unknown);
+
+            Object.entries(SIZE_PROFILES).forEach(([size, profile]) => {
+                const group = document.createElement('optgroup');
+                group.label = profile.label;
+                BREEDS[size].forEach(breed => {
+                    const option = document.createElement('option');
+                    option.value = size;
+                    option.textContent = breed;
+                    group.appendChild(option);
+                });
+                elements.breed.appendChild(group);
+            });
+        }
+
+        /** 種別・犬種の選択に応じて入力欄の表示を切り替える */
+        function syncFields() {
+            const isDog = elements.species.value === 'dog';
+            elements.dogFields.classList.toggle('hidden', !isDog);
+
+            // 犬種を選んだ場合はサイズ区分が自動で決まるため、手動指定欄を隠す
+            const breedSize = elements.breed.value;
+            elements.sizeField.classList.toggle('hidden', breedSize !== '');
+            if (breedSize) elements.size.value = breedSize;
+        }
+
+        /**
+         * 種別・サイズ・月齢から体重の初期値を推定して埋める。
+         * 利用者が体重を手で編集したあとは上書きしない。
+         */
+        let weightEdited = false;
+
+        function syncWeight(months, profile) {
+            if (weightEdited) return;
+            elements.weight.value = estimateWeight(months, profile);
+        }
+
+        /** 入力値を読み取って結果を再描画する */
+        function update() {
+            syncFields();
+
+            const species = elements.species.value;
+            const profile = getProfile(species, elements.size.value);
+            const foodEnergy = Number(elements.foodEnergy.value);
+
+            elements.result.innerHTML = '';
+
+            if (!elements.birthday.value) {
+                const placeholder = document.createElement('p');
+                placeholder.className = 'p-6 text-center text-slate-400 bg-white rounded-2xl shadow-sm';
+                placeholder.textContent = '生年月日を入力すると成長段階とグッズが表示されます。';
+                elements.result.appendChild(placeholder);
+                return;
+            }
+
+            const age = calcAge(elements.birthday.value);
+
+            // 未来の日付が入力された場合は計算せず注意を促す
+            if (age.days < 0) {
+                const invalid = document.createElement('p');
+                invalid.className = 'p-6 text-center text-amber-700 bg-amber-50 border border-amber-200 rounded-2xl';
+                invalid.textContent = '生年月日が未来の日付になっています。入力内容をご確認ください。';
+                elements.result.appendChild(invalid);
+                return;
+            }
+
+            // 体重の初期値は月齢が確定してから埋める
+            syncWeight(age.months, profile);
+            const weight = Number(elements.weight.value);
+
+            const stages = resolveStages(profile);
+            const currentIndex = findStageIndex(stages, age.months);
+            const stage = stages[currentIndex];
+            const nextStage = stages[currentIndex + 1] || null;
+
+            elements.result.appendChild(renderSummary(age, stage, profile, nextStage));
+
+            if (weight > 0 && foodEnergy > 0) {
+                elements.result.appendChild(renderFood(calcFood({
+                    species,
+                    months: age.months,
+                    weight,
+                    neutered: elements.neutered.value === 'yes',
+                    foodEnergy,
+                    profile
+                })));
+            }
+
+            const products = renderProducts(species, stage);
+            if (products) elements.result.appendChild(products);
+
+            elements.result.appendChild(renderTimeline(stages, currentIndex, species));
+
+            lucide.createIcons();
+        }
+
+        buildBreedOptions();
+
+        elements.weight.addEventListener('input', () => { weightEdited = true; });
+
+        Object.values(elements).forEach(el => {
+            if (el === elements.result || el === elements.dogFields || el === elements.sizeField) return;
+            el.addEventListener('input', update);
+            el.addEventListener('change', update);
+        });
+
+        Affiliate.renderDisclosure('#disclosure');
+        update();
+    </script>
+</body>
+</html>
