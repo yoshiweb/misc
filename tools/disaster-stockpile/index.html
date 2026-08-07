@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>防災備蓄シミュレーター</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 sm:p-10">
+
+    <header class="text-center w-full max-w-3xl mb-8">
+        <h1 class="text-3xl font-bold text-slate-900 mb-2">防災備蓄シミュレーター</h1>
+        <p class="text-slate-500">家族構成と備蓄日数から、必要な備蓄品の数量を算出します。購入日を記録すると入れ替え時期を管理できます。</p>
+    </header>
+
+    <main class="w-full max-w-3xl">
+        <!-- 入力エリア -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm mb-6">
+            <p class="text-sm font-bold text-slate-600 mb-3">家族構成</p>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-5">
+                <label class="block">
+                    <span class="text-xs font-bold text-slate-500">大人</span>
+                    <input id="adult" type="number" value="2" min="0" max="20"
+                        class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                </label>
+                <label class="block">
+                    <span class="text-xs font-bold text-slate-500">子供</span>
+                    <input id="child" type="number" value="0" min="0" max="20"
+                        class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                </label>
+                <label class="block">
+                    <span class="text-xs font-bold text-slate-500">乳児</span>
+                    <input id="infant" type="number" value="0" min="0" max="20"
+                        class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                </label>
+                <label class="block">
+                    <span class="text-xs font-bold text-slate-500">犬</span>
+                    <input id="dog" type="number" value="0" min="0" max="20"
+                        class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                </label>
+                <label class="block">
+                    <span class="text-xs font-bold text-slate-500">猫</span>
+                    <input id="cat" type="number" value="0" min="0" max="20"
+                        class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                </label>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label class="block">
+                    <span class="text-sm font-bold text-slate-600">備蓄日数</span>
+                    <select id="days" class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                        <option value="3">3日分（最低限）</option>
+                        <option value="7" selected>7日分（推奨）</option>
+                        <option value="14">14日分（手厚く）</option>
+                    </select>
+                    <span class="block text-xs text-slate-400 mt-1.5">大規模災害では1週間分以上が推奨されています。</span>
+                </label>
+                <p class="self-center text-xs text-slate-400 leading-relaxed">
+                    入力内容と購入日はブラウザのローカルストレージに保存され、次回アクセス時に復元されます。<br>
+                    サーバーには送信されません。
+                </p>
+            </div>
+        </div>
+
+        <!-- 結果エリア -->
+        <div id="result" class="space-y-6"></div>
+
+        <!-- 免責事項 -->
+        <div class="mt-10 p-5 bg-slate-100 border border-slate-200 rounded-2xl">
+            <h2 class="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
+                <i data-lucide="info" class="w-4 h-4"></i>
+                ご利用にあたって
+            </h2>
+            <ul class="text-xs text-slate-500 leading-relaxed list-disc list-inside space-y-1">
+                <li>算出される数量は一般的に用いられている目安をもとにした概算です。世帯の状況や住環境によって必要量は変わります。</li>
+                <li>備蓄の考え方や地域固有のリスク、避難所・避難経路については、お住まいの自治体および内閣府・消防庁などの公的機関が公開している情報をご確認ください。</li>
+                <li>保存期間は製品によって大きく異なります。表示している年数は初期値としての目安であり、実際の期限は必ず製品の表示をご確認ください。</li>
+                <li>常用薬やアレルギー対応食品など、健康に関わる備えについては医師や薬剤師にご相談ください。本ツールでは医薬品を扱っていません。</li>
+            </ul>
+            <div id="disclosure" class="mt-3 pt-3 border-t border-slate-200"></div>
+        </div>
+    </main>
+
+    <script src="../../assets/affiliate.js"></script>
+    <script src="../../data/products/disaster.js"></script>
+    <script>
+        lucide.createIcons();
+
+        const elements = {
+            adult: document.getElementById('adult'),
+            child: document.getElementById('child'),
+            infant: document.getElementById('infant'),
+            dog: document.getElementById('dog'),
+            cat: document.getElementById('cat'),
+            days: document.getElementById('days'),
+            result: document.getElementById('result')
+        };
+
+        /** 家族構成のキー */
+        const MEMBER_KEYS = ['adult', 'child', 'infant', 'dog', 'cat'];
+
+        /** ローカルストレージのキー。スキーマを変える場合はバージョンを上げる */
+        const STORAGE_KEY = 'disaster-stockpile.v1';
+
+        /** 期限が近いと判断する日数のしきい値 */
+        const SOON_DAYS = 90;
+
+        /**
+         * 永続化する状態。
+         * profile は入力欄の値、expiries は備蓄品ごとの購入日と保存年数。
+         */
+        const store = {
+            profile: {},
+            expiries: {}
+        };
+
+        /** ローカルストレージから状態を読み込む */
+        function loadStore() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return;
+                const parsed = JSON.parse(raw);
+                Object.assign(store.profile, parsed.profile || {});
+                Object.assign(store.expiries, parsed.expiries || {});
+            } catch (e) {
+                // 保存データが壊れていても初期状態で動作を継続する
+                console.warn('[disaster-stockpile] 保存データを読み込めませんでした', e);
+            }
+        }
+
+        /** ローカルストレージへ状態を書き込む */
+        function saveStore() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+            } catch (e) {
+                // プライベートモードなどで書き込めない場合は保存を諦める
+                console.warn('[disaster-stockpile] 保存できませんでした', e);
+            }
+        }
+
+        /** 日付を YYYY-MM-DD 形式にする */
+        function toDateString(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        /** 2つの日付の差を日数で返す */
+        function diffDays(from, to) {
+            const a = new Date(from); a.setHours(0, 0, 0, 0);
+            const b = new Date(to); b.setHours(0, 0, 0, 0);
+            return Math.round((b - a) / 86400000);
+        }
+
+        /**
+         * 必要数量を算出する。
+         *
+         *   1日あたりの必要量（構成員ごと）× 人数 × 備蓄日数
+         * + 世帯単位の1日あたり必要量 × 備蓄日数
+         * + 1人あたりの固定量 × 人数
+         * + 世帯あたりの固定量
+         *
+         * 端数は切り上げる（分割して購入できないため）。
+         */
+        function calcQuantity(product, members, days) {
+            let total = 0;
+
+            if (product.perDay) {
+                MEMBER_KEYS.forEach(key => {
+                    const rate = product.perDay[key] || 0;
+                    total += (members[key] || 0) * rate * days;
+                });
+            }
+            if (product.householdPerDay) total += product.householdPerDay * days;
+            if (product.perPerson) {
+                // 軍手や液体歯磨きなど、乳児には不要な品目は乳児を数えない
+                const count = product.perPersonExcludesInfant
+                    ? (members.adult || 0) + (members.child || 0)
+                    : peopleCount(members);
+                total += product.perPerson * count;
+            }
+            if (product.perHousehold) total += product.perHousehold;
+
+            return Math.ceil(total);
+        }
+
+        /** 人の総数（ペットを含まない） */
+        function peopleCount(members) {
+            return (members.adult || 0) + (members.child || 0) + (members.infant || 0);
+        }
+
+        /** 必要数量が1以上の備蓄品だけを返す */
+        function selectProducts(members, days) {
+            return Affiliate.getProducts('disaster')
+                .map(product => ({ product, quantity: calcQuantity(product, members, days) }))
+                .filter(entry => entry.quantity > 0)
+                .sort((a, b) => a.product.priority - b.product.priority);
+        }
+
+        /**
+         * 期限管理の対象となる備蓄品の状況を算出する。
+         *
+         * 保存期間は製品差が大きいため、利用者が編集した年数を優先する。
+         */
+        function buildExpiries(entries) {
+            const today = toDateString(new Date());
+
+            return entries
+                .filter(entry => entry.product.shelfLifeYears !== null)
+                .map(({ product, quantity }) => {
+                    const saved = store.expiries[product.id] || {};
+                    const years = saved.years || product.shelfLifeYears;
+                    const purchasedAt = saved.purchasedAt || null;
+
+                    let expiresAt = null;
+                    let remainDays = null;
+                    if (purchasedAt && years) {
+                        const expires = new Date(purchasedAt);
+                        expires.setFullYear(expires.getFullYear() + years);
+                        expiresAt = toDateString(expires);
+                        remainDays = diffDays(today, expiresAt);
+                    }
+
+                    return { product, quantity, years, purchasedAt, expiresAt, remainDays };
+                })
+                // 期限が近いものを先頭に。未記録のものは末尾へ回す
+                .sort((a, b) => {
+                    if (a.remainDays === null && b.remainDays === null) return a.product.priority - b.product.priority;
+                    if (a.remainDays === null) return 1;
+                    if (b.remainDays === null) return -1;
+                    return a.remainDays - b.remainDays;
+                });
+        }
+
+        /** 残り日数を年・月・日のうち適切な単位で表す */
+        function formatRemaining(days) {
+            if (days < 0) return `${Math.abs(days)}日超過`;
+            if (days === 0) return '本日が期限';
+            if (days < 31) return `あと${days}日`;
+            if (days < 365) return `あと${Math.floor(days / 30)}ヶ月`;
+
+            const years = Math.floor(days / 365);
+            const months = Math.floor((days % 365) / 30);
+            return months === 0 ? `あと${years}年` : `あと${years}年${months}ヶ月`;
+        }
+
+        /** 残り日数から表示のトーンを決める */
+        function expiryTone(remainDays) {
+            if (remainDays === null) return 'none';
+            if (remainDays < 0) return 'over';
+            if (remainDays <= SOON_DAYS) return 'soon';
+            return 'ok';
+        }
+
+        const TONE_STYLES = {
+            over: 'text-rose-700 bg-rose-100',
+            soon: 'text-amber-800 bg-amber-100',
+            ok: 'text-emerald-700 bg-emerald-100',
+            none: 'text-slate-500 bg-slate-100'
+        };
+
+        /** セクションの外枠を生成する */
+        function createSection(title, iconName) {
+            const section = document.createElement('section');
+            section.className = 'bg-white p-6 rounded-2xl shadow-sm';
+
+            const heading = document.createElement('h2');
+            heading.className = 'flex items-center gap-2 text-lg font-bold text-slate-800 mb-4';
+            heading.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5 text-indigo-600"></i>`;
+            heading.appendChild(document.createTextNode(title));
+            section.appendChild(heading);
+
+            return section;
+        }
+
+        /** 世帯の概要を描画する */
+        function renderSummary(members, days, expiries) {
+            const section = createSection('備蓄の前提', 'users');
+
+            const overdue = expiries.filter(e => e.remainDays !== null && e.remainDays < 0).length;
+            const soon = expiries.filter(e => expiryTone(e.remainDays) === 'soon').length;
+
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-2 sm:grid-cols-4 gap-3';
+
+            const petCount = (members.dog || 0) + (members.cat || 0);
+            const cells = [
+                { label: '人数', value: `${peopleCount(members)}人` },
+                { label: 'ペット', value: petCount > 0 ? `${petCount}頭` : 'なし' },
+                { label: '備蓄日数', value: `${days}日分` },
+                { label: '期限切れ', value: overdue > 0 ? `${overdue}件` : 'なし' }
+            ];
+
+            cells.forEach(c => {
+                const cell = document.createElement('div');
+                cell.className = 'p-3 bg-slate-50 rounded-xl';
+                cell.innerHTML = `<p class="text-xs font-bold text-slate-500 mb-1">${c.label}</p>`;
+                const value = document.createElement('p');
+                value.className = 'text-lg font-bold text-slate-900';
+                value.textContent = c.value;
+                cell.appendChild(value);
+                grid.appendChild(cell);
+            });
+            section.appendChild(grid);
+
+            if (soon > 0) {
+                const note = document.createElement('p');
+                note.className = 'mt-4 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3';
+                note.textContent = `${SOON_DAYS}日以内に期限を迎えるものが${soon}件あります。`;
+                section.appendChild(note);
+            }
+
+            return section;
+        }
+
+        /**
+         * 期限管理を描画する。
+         *
+         * 購入日を記録すると期限日と残り期間が表示され、期限が近いものが上に並ぶ。
+         */
+        function renderExpiries(expiries) {
+            if (expiries.length === 0) return null;
+
+            const section = createSection('期限の管理', 'calendar-clock');
+
+            const overdue = expiries.filter(e => e.remainDays !== null && e.remainDays < 0);
+            if (overdue.length > 0) {
+                const alert = document.createElement('p');
+                alert.className = 'text-sm font-bold text-rose-800 bg-rose-50 border border-rose-200 rounded-xl p-3 mb-4';
+                alert.textContent = `期限を過ぎているものが${overdue.length}件あります。新しいものと入れ替えてください。`;
+                section.appendChild(alert);
+            }
+
+            const guide = document.createElement('p');
+            guide.className = 'text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4 leading-relaxed';
+            guide.textContent = '古いものから普段の生活で使い、使った分を買い足していく「ローリングストック」で管理すると、'
+                + '期限切れによる無駄がなくなり、非常時にも使い慣れたものを口にできます。';
+            section.appendChild(guide);
+
+            // 広告であることが明瞭に分かるよう、商品リンクの直前にPR表記を置く
+            Affiliate.renderPrNotice(section);
+
+            const list = document.createElement('div');
+            list.className = 'space-y-2';
+
+            expiries.forEach(entry => {
+                const { product, years, purchasedAt, expiresAt, remainDays } = entry;
+
+                const row = document.createElement('div');
+                row.className = 'p-4 bg-white border border-slate-200 rounded-xl';
+
+                // 見出し行: 品目名と残り期間バッジ
+                const head = document.createElement('div');
+                head.className = 'flex items-center justify-between gap-3 mb-2';
+
+                const name = document.createElement('p');
+                name.className = 'font-bold text-slate-800';
+                name.textContent = product.name;
+                head.appendChild(name);
+
+                const badge = document.createElement('span');
+                badge.className = `shrink-0 text-xs font-bold px-2 py-1 rounded-full ${TONE_STYLES[expiryTone(remainDays)]}`;
+                badge.textContent = remainDays === null ? '未記録' : formatRemaining(remainDays);
+                head.appendChild(badge);
+                row.appendChild(head);
+
+                // 操作行: 購入日・保存年数・記録ボタン・ストアリンク
+                const controls = document.createElement('div');
+                controls.className = 'flex flex-wrap items-end gap-2';
+
+                const purchaseLabel = document.createElement('label');
+                purchaseLabel.className = 'block';
+                purchaseLabel.innerHTML = '<span class="block text-xs font-bold text-slate-500 mb-1">購入日</span>';
+                const purchaseInput = document.createElement('input');
+                purchaseInput.type = 'date';
+                purchaseInput.value = purchasedAt || '';
+                purchaseInput.className = 'p-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-200';
+                purchaseInput.addEventListener('change', () => {
+                    setExpiry(product.id, { purchasedAt: purchaseInput.value || null });
+                });
+                purchaseLabel.appendChild(purchaseInput);
+                controls.appendChild(purchaseLabel);
+
+                const yearsLabel = document.createElement('label');
+                yearsLabel.className = 'block';
+                yearsLabel.innerHTML = '<span class="block text-xs font-bold text-slate-500 mb-1">保存年数</span>';
+                const yearsInput = document.createElement('input');
+                yearsInput.type = 'number';
+                yearsInput.min = '1';
+                yearsInput.max = '30';
+                yearsInput.value = years || '';
+                yearsInput.className = 'w-20 p-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-200';
+                yearsInput.addEventListener('change', () => {
+                    const value = Number(yearsInput.value);
+                    setExpiry(product.id, { years: value > 0 ? value : null });
+                });
+                yearsLabel.appendChild(yearsInput);
+                controls.appendChild(yearsLabel);
+
+                const todayBtn = document.createElement('button');
+                todayBtn.type = 'button';
+                todayBtn.className = 'px-3 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors';
+                todayBtn.textContent = '今日入れ替えた';
+                todayBtn.addEventListener('click', () => {
+                    setExpiry(product.id, { purchasedAt: toDateString(new Date()) });
+                });
+                controls.appendChild(todayBtn);
+
+                Affiliate.storeLinks(product).forEach(link => {
+                    controls.appendChild(Affiliate.storeLinkElement(link));
+                });
+
+                row.appendChild(controls);
+
+                const meta = document.createElement('p');
+                meta.className = 'mt-2 text-xs text-slate-400';
+                meta.textContent = expiresAt
+                    ? `期限の目安: ${expiresAt}`
+                    : '購入日を記録すると入れ替え時期を表示します';
+                row.appendChild(meta);
+
+                list.appendChild(row);
+            });
+
+            section.appendChild(list);
+            return section;
+        }
+
+        /** 期限の記録を更新して保存し、再描画する */
+        function setExpiry(productId, patch) {
+            store.expiries[productId] = { ...(store.expiries[productId] || {}), ...patch };
+            saveStore();
+            update();
+        }
+
+        /** 必要数量の一覧をカテゴリ別に描画する */
+        function renderQuantities(entries) {
+            const section = createSection('必要な備蓄量', 'clipboard-list');
+
+            // 広告であることが明瞭に分かるよう、商品リンクの直前にPR表記を置く
+            Affiliate.renderPrNotice(section);
+
+            // カテゴリごとにまとめる（データの並び順を保つ）
+            const groups = new Map();
+            entries.forEach(entry => {
+                const key = entry.product.label;
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(entry);
+            });
+
+            groups.forEach((items, label) => {
+                const group = document.createElement('div');
+                group.className = 'mb-6 last:mb-0';
+
+                const heading = document.createElement('h3');
+                heading.className = 'text-sm font-bold text-slate-500 mb-2 pb-1 border-b border-slate-100';
+                heading.textContent = label;
+                group.appendChild(heading);
+
+                const list = document.createElement('div');
+                list.className = 'space-y-2';
+
+                items.forEach(({ product, quantity }) => {
+                    const row = document.createElement('div');
+                    row.className = 'flex flex-wrap items-center justify-between gap-3 p-4 bg-white border border-slate-200 rounded-xl';
+
+                    const body = document.createElement('div');
+                    body.className = 'min-w-0';
+
+                    const head = document.createElement('p');
+                    head.className = 'flex items-baseline gap-2';
+                    const name = document.createElement('span');
+                    name.className = 'font-bold text-slate-800';
+                    name.textContent = product.name;
+                    head.appendChild(name);
+                    const amount = document.createElement('span');
+                    amount.className = 'text-lg font-bold text-indigo-600';
+                    amount.textContent = `${quantity.toLocaleString()}${product.unit}`;
+                    head.appendChild(amount);
+                    body.appendChild(head);
+
+                    if (product.note) {
+                        const note = document.createElement('p');
+                        note.className = 'text-sm text-slate-500 mt-1';
+                        note.textContent = product.note;
+                        body.appendChild(note);
+                    }
+                    row.appendChild(body);
+
+                    const actions = document.createElement('div');
+                    actions.className = 'shrink-0 flex flex-wrap gap-2';
+                    Affiliate.storeLinks(product).forEach(link => {
+                        actions.appendChild(Affiliate.storeLinkElement(link));
+                    });
+                    row.appendChild(actions);
+
+                    list.appendChild(row);
+                });
+
+                group.appendChild(list);
+                section.appendChild(group);
+            });
+
+            return section;
+        }
+
+        /** 入力値を読み取って結果を再描画する */
+        function update() {
+            const members = {};
+            MEMBER_KEYS.forEach(key => {
+                members[key] = Math.max(0, Number(elements[key].value) || 0);
+            });
+            const days = Number(elements.days.value);
+
+            elements.result.innerHTML = '';
+
+            // 人がいない場合は算出できないため案内を出す
+            if (peopleCount(members) === 0) {
+                const placeholder = document.createElement('p');
+                placeholder.className = 'p-6 text-center text-slate-400 bg-white rounded-2xl shadow-sm';
+                placeholder.textContent = '大人・子供・乳児のいずれかを1人以上入力してください。';
+                elements.result.appendChild(placeholder);
+                return;
+            }
+
+            const entries = selectProducts(members, days);
+            const expiries = buildExpiries(entries);
+
+            elements.result.appendChild(renderSummary(members, days, expiries));
+
+            const expirySection = renderExpiries(expiries);
+            if (expirySection) elements.result.appendChild(expirySection);
+
+            elements.result.appendChild(renderQuantities(entries));
+
+            lucide.createIcons();
+        }
+
+        /** 入力欄の値を保存する */
+        function saveProfile() {
+            MEMBER_KEYS.concat('days').forEach(key => {
+                store.profile[key] = elements[key].value;
+            });
+            saveStore();
+        }
+
+        /** 保存済みの値を入力欄へ復元する */
+        function restoreProfile() {
+            MEMBER_KEYS.concat('days').forEach(key => {
+                const value = store.profile[key];
+                if (value !== undefined && value !== null && value !== '') elements[key].value = value;
+            });
+        }
+
+        loadStore();
+        restoreProfile();
+
+        Object.values(elements).forEach(el => {
+            if (el === elements.result) return;
+            const handler = () => { update(); saveProfile(); };
+            el.addEventListener('input', handler);
+            el.addEventListener('change', handler);
+        });
+
+        Affiliate.renderDisclosure('#disclosure');
+        update();
+    </script>
+</body>
+</html>
