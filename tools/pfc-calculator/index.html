@@ -344,6 +344,9 @@
 
             const products = selectProducts(goal, need.shortfallG > 0);
             if (products.length > 0) {
+                // 広告であることが明瞭に分かるよう、商品リンクの直前にPR表記を置く
+                Affiliate.renderPrNotice(section);
+
                 const list = document.createElement('div');
                 list.className = 'space-y-2';
                 products.forEach(p => list.appendChild(Affiliate.productCard(p)));

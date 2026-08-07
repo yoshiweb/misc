@@ -127,6 +127,31 @@
     }
 
     /**
+     * PR表記（ステマ規制／景品表示法対策）を描画する。
+     *
+     * 景品表示法の運用基準では、広告であることが消費者にとって明瞭に
+     * 分かるよう表示する必要がある。フッターの小さな注記では不十分なため、
+     * 商品リンクの直前など利用者の目に入る位置で呼び出すこと。
+     *
+     * 表記文言は tools/affiliate-links の既定値と揃えている。
+     */
+    function renderPrNotice(target) {
+        const el = typeof target === 'string' ? document.querySelector(target) : target;
+        if (!el) return;
+
+        const notice = document.createElement('p');
+        notice.className = 'flex items-center gap-2 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3';
+
+        const badge = document.createElement('span');
+        badge.className = 'shrink-0 bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded';
+        badge.textContent = 'PR';
+        notice.appendChild(badge);
+        notice.appendChild(document.createTextNode('アフィリエイト広告を利用しています'));
+
+        el.appendChild(notice);
+    }
+
+    /**
      * アソシエイト表記を描画する。
      * アソシエイト・プログラム運営規約で掲載が義務付けられているため、
      * 商品リンクを表示するページでは必ず呼び出す。
@@ -150,6 +175,7 @@
         registerProducts,
         getProducts,
         productCard,
+        renderPrNotice,
         renderDisclosure
     };
 })(window);
