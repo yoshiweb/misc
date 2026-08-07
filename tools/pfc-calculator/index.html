@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PFCカロリー計算機</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        /* 数値入力のスピナーを非表示にして見た目を整える */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        /* PFCの構成比バー */
+        .macro-bar {
+            display: flex;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 sm:p-10">
+
+    <header class="text-center w-full max-w-3xl mb-8">
+        <h1 class="text-3xl font-bold text-slate-900 mb-2">PFCカロリー計算機</h1>
+        <p class="text-slate-500">体格と目標から1日の目標カロリーとPFCバランスを算出し、不足分の補給に使えるアイテムを提案します。</p>
+    </header>
+
+    <main class="w-full max-w-3xl">
+        <!-- 入力エリア -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm mb-6">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+                <label class="block">
+                    <span class="text-sm font-bold text-slate-600">性別</span>
+                    <select id="sex" class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                        <option value="male">男性</option>
+                        <option value="female">女性</option>
+                    </select>
+                </label>
+                <label class="block">
+                    <span class="text-sm font-bold text-slate-600">年齢</span>
+                    <input id="age" type="number" value="30" min="15" max="100"
+                        class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                </label>
+                <label class="block">
+                    <span class="text-sm font-bold text-slate-600">身長 (cm)</span>
+                    <input id="height" type="number" value="170" min="120" max="230"
+                        class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                </label>
+                <label class="block">
+                    <span class="text-sm font-bold text-slate-600">体重 (kg)</span>
+                    <input id="weight" type="number" value="65" min="30" max="200" step="0.1"
+                        class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                </label>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                <label class="block">
+                    <span class="text-sm font-bold text-slate-600">目標</span>
+                    <select id="goal" class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                        <option value="lose">減量</option>
+                        <option value="maintain" selected>維持</option>
+                        <option value="gain">増量</option>
+                    </select>
+                </label>
+                <label class="block">
+                    <span class="text-sm font-bold text-slate-600">運動頻度</span>
+                    <select id="activity" class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                        <option value="1.2">ほとんど運動しない</option>
+                        <option value="1.375" selected>週1〜2回の軽い運動</option>
+                        <option value="1.55">週3〜5回の運動</option>
+                        <option value="1.725">週6〜7回の運動</option>
+                        <option value="1.9">毎日の激しい運動・肉体労働</option>
+                    </select>
+                </label>
+            </div>
+
+            <label class="block">
+                <span class="text-sm font-bold text-slate-600">食事から摂れているタンパク質の目安 (g/日)</span>
+                <input id="dietary-protein" type="number" value="65" min="0" max="400"
+                    class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                <span class="block text-xs text-slate-400 mt-1.5">
+                    わからない場合は初期値（体重 &times; 1.0g）のままで構いません。ここを差し引いた分が補給の目安になります。
+                </span>
+            </label>
+        </div>
+
+        <!-- 結果エリア -->
+        <div id="result" class="space-y-6"></div>
+
+        <!-- 免責事項 -->
+        <div class="mt-10 p-5 bg-slate-100 border border-slate-200 rounded-2xl">
+            <h2 class="flex items-center gap-2 text-sm font-bold text-slate-700 mb-2">
+                <i data-lucide="info" class="w-4 h-4"></i>
+                ご利用にあたって
+            </h2>
+            <ul class="text-xs text-slate-500 leading-relaxed list-disc list-inside space-y-1">
+                <li>本ツールの算出値は一般的な推定式（Mifflin-St Jeor式）による目安であり、医療上・栄養学上の助言ではありません。</li>
+                <li>持病や服薬がある方、妊娠・授乳中の方、未成年の方は、実践の前に医師や管理栄養士にご相談ください。</li>
+                <li>紹介しているアイテムは食品・雑貨であり、疾病の治療や予防を目的としたものではありません。摂取量は各製品の表示に従ってください。</li>
+                <li>減量時の目標カロリーは、安全のため基礎代謝量を下回らないよう自動で調整されます。</li>
+            </ul>
+            <div id="disclosure" class="mt-3 pt-3 border-t border-slate-200"></div>
+        </div>
+    </main>
+
+    <script src="../../assets/affiliate.js"></script>
+    <script src="../../data/products/supplements.js"></script>
+    <script>
+        lucide.createIcons();
+
+        const elements = {
+            sex: document.getElementById('sex'),
+            age: document.getElementById('age'),
+            height: document.getElementById('height'),
+            weight: document.getElementById('weight'),
+            goal: document.getElementById('goal'),
+            activity: document.getElementById('activity'),
+            dietaryProtein: document.getElementById('dietary-protein'),
+            result: document.getElementById('result')
+        };
+
+        /** 1食（粉末30g）あたりのタンパク質量の目安 */
+        const SERVING = { powderG: 30, proteinG: 20 };
+
+        /** 目標ごとの設定: カロリー係数、タンパク質量(g/kg)、脂質のカロリー比率 */
+        const GOAL_PRESETS = {
+            lose:     { label: '減量',  calorieRatio: 0.8, proteinPerKg: 2.0, fatRatio: 0.22 },
+            maintain: { label: '維持',  calorieRatio: 1.0, proteinPerKg: 1.6, fatRatio: 0.25 },
+            gain:     { label: '増量',  calorieRatio: 1.1, proteinPerKg: 1.8, fatRatio: 0.25 }
+        };
+
+        /** タンパク質を圧縮する場合でも下回らせない下限 (g/kg) */
+        const MIN_PROTEIN_PER_KG = 1.2;
+
+        /** 体重が変わったら、食事からのタンパク質の初期値も追従させる */
+        let dietaryProteinEdited = false;
+
+        /**
+         * 基礎代謝量を Mifflin-St Jeor 式で算出する。
+         * 男性: 10W + 6.25H - 5A + 5 / 女性: 10W + 6.25H - 5A - 161
+         */
+        function calcBmr({ sex, weight, height, age }) {
+            const base = 10 * weight + 6.25 * height - 5 * age;
+            return sex === 'male' ? base + 5 : base - 161;
+        }
+
+        /**
+         * 目標カロリーとPFCを算出する。
+         *
+         * 極端な入力（低カロリー × 高タンパク質）では炭水化物が負になり得るため、
+         * タンパク質を下限まで圧縮し、それでも収まらない場合は炭水化物を0に丸めて警告する。
+         */
+        function calcMacros(input) {
+            const preset = GOAL_PRESETS[input.goal];
+            const bmr = calcBmr(input);
+            const tdee = bmr * input.activity;
+
+            // 減量時に基礎代謝量を下回らないようクランプする（安全上のガード）
+            let calories = tdee * preset.calorieRatio;
+            const clamped = calories < bmr;
+            if (clamped) calories = bmr;
+
+            const fatG = (calories * preset.fatRatio) / 9;
+
+            // タンパク質は目標量から始め、炭水化物が確保できない場合のみ減らす
+            let proteinG = input.weight * preset.proteinPerKg;
+            const minProteinG = input.weight * MIN_PROTEIN_PER_KG;
+            let carbKcal = calories - proteinG * 4 - fatG * 9;
+
+            if (carbKcal < 0) {
+                proteinG = Math.max(minProteinG, proteinG + carbKcal / 4);
+                carbKcal = calories - proteinG * 4 - fatG * 9;
+            }
+
+            const extreme = carbKcal < 0;
+            const carbG = Math.max(0, carbKcal / 4);
+
+            return {
+                bmr: Math.round(bmr),
+                tdee: Math.round(tdee),
+                calories: Math.round(calories),
+                proteinG: Math.round(proteinG),
+                fatG: Math.round(fatG),
+                carbG: Math.round(carbG),
+                goalLabel: preset.label,
+                clamped,
+                extreme
+            };
+        }
+
+        /** 目標タンパク質と食事からの摂取量の差から、補給の目安を算出する */
+        function calcSupplementNeed(targetProteinG, dietaryProteinG) {
+            const shortfallG = Math.max(0, targetProteinG - dietaryProteinG);
+            const servings = Math.ceil(shortfallG / SERVING.proteinG);
+            const monthlyKg = (servings * SERVING.powderG * 30) / 1000;
+            return { shortfallG: Math.round(shortfallG), servings, monthlyKg };
+        }
+
+        /** 目標と補給の必要性に応じて提案する商品を絞り込む */
+        function selectProducts(goal, needsProtein) {
+            return Affiliate.getProducts('supplements')
+                .filter(p => p.goals.includes(goal))
+                // タンパク質が足りている場合は、プロテイン本体と炭水化物の提案を出さない
+                .filter(p => needsProtein || (p.type !== 'protein' && p.type !== 'carb'))
+                .sort((a, b) => a.priority - b.priority);
+        }
+
+        /** セクションの外枠を生成する */
+        function createSection(title, iconName) {
+            const section = document.createElement('section');
+            section.className = 'bg-white p-6 rounded-2xl shadow-sm';
+
+            const heading = document.createElement('h2');
+            heading.className = 'flex items-center gap-2 text-lg font-bold text-slate-800 mb-4';
+            heading.innerHTML = `<i data-lucide="${iconName}" class="w-5 h-5 text-indigo-600"></i>`;
+            heading.appendChild(document.createTextNode(title));
+            section.appendChild(heading);
+
+            return section;
+        }
+
+        /** 警告・注意を表示するバナーを生成する */
+        function createNotice(message, tone) {
+            const styles = {
+                warn: 'bg-amber-50 border-amber-200 text-amber-800',
+                info: 'bg-sky-50 border-sky-200 text-sky-800'
+            };
+            const notice = document.createElement('p');
+            notice.className = `text-sm border rounded-xl p-3 mb-4 ${styles[tone]}`;
+            notice.textContent = message;
+            return notice;
+        }
+
+        /** カロリー・PFCの内訳を描画する */
+        function renderMacros(macros) {
+            const section = createSection(`1日の目標（${macros.goalLabel}）`, 'flame');
+
+            if (macros.clamped) {
+                section.appendChild(createNotice(
+                    '目標カロリーが基礎代謝量を下回るため、基礎代謝量に合わせて調整しました。'
+                    + 'これ以上の減量ペースを狙う場合は専門家にご相談ください。', 'warn'));
+            }
+            if (macros.extreme) {
+                section.appendChild(createNotice(
+                    '入力値に対してタンパク質と脂質だけでカロリーの上限に達しています。入力内容をご確認ください。', 'warn'));
+            }
+
+            const calorie = document.createElement('div');
+            calorie.className = 'flex items-baseline gap-2 mb-5';
+            calorie.innerHTML = `
+                <span class="text-4xl font-bold text-slate-900">${macros.calories.toLocaleString()}</span>
+                <span class="text-slate-500 font-bold">kcal / 日</span>
+                <span class="ml-auto text-xs text-slate-400 text-right leading-relaxed">
+                    基礎代謝 ${macros.bmr.toLocaleString()} kcal<br>
+                    消費カロリー ${macros.tdee.toLocaleString()} kcal
+                </span>`;
+            section.appendChild(calorie);
+
+            // PFCの構成比バー
+            const macroList = [
+                { key: 'P', name: 'タンパク質', grams: macros.proteinG, kcal: macros.proteinG * 4, color: '#4f46e5' },
+                { key: 'F', name: '脂質',       grams: macros.fatG,     kcal: macros.fatG * 9,     color: '#f59e0b' },
+                { key: 'C', name: '炭水化物',   grams: macros.carbG,    kcal: macros.carbG * 4,    color: '#10b981' }
+            ];
+            const totalKcal = macroList.reduce((sum, m) => sum + m.kcal, 0) || 1;
+
+            const bar = document.createElement('div');
+            bar.className = 'macro-bar mb-4';
+            macroList.forEach(m => {
+                const seg = document.createElement('div');
+                seg.style.width = `${(m.kcal / totalKcal) * 100}%`;
+                seg.style.backgroundColor = m.color;
+                bar.appendChild(seg);
+            });
+            section.appendChild(bar);
+
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-3 gap-3';
+            macroList.forEach(m => {
+                const cell = document.createElement('div');
+                cell.className = 'p-3 bg-slate-50 rounded-xl';
+                cell.innerHTML = `
+                    <p class="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
+                        <span class="w-2 h-2 rounded-full" style="background-color:${m.color}"></span>
+                        ${m.name}
+                    </p>
+                    <p class="text-xl font-bold text-slate-900">${m.grams.toLocaleString()}<span class="text-sm font-bold text-slate-400 ml-0.5">g</span></p>
+                    <p class="text-xs text-slate-400">${Math.round((m.kcal / totalKcal) * 100)}% / ${Math.round(m.kcal).toLocaleString()} kcal</p>`;
+                grid.appendChild(cell);
+            });
+            section.appendChild(grid);
+
+            return section;
+        }
+
+        /** 補給の目安と商品提案を描画する */
+        function renderSupplements(macros, need, goal) {
+            const section = createSection('補給の目安', 'package');
+
+            if (need.shortfallG === 0) {
+                section.appendChild(createNotice(
+                    '入力内容では目標のタンパク質量を食事で満たせています。プロテインによる追加の補給は必要ありません。', 'info'));
+            } else {
+                const summary = document.createElement('div');
+                summary.className = 'grid grid-cols-3 gap-3 mb-5';
+                summary.innerHTML = `
+                    <div class="p-3 bg-slate-50 rounded-xl">
+                        <p class="text-xs font-bold text-slate-500 mb-1">不足分</p>
+                        <p class="text-xl font-bold text-slate-900">${need.shortfallG}<span class="text-sm font-bold text-slate-400 ml-0.5">g</span></p>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-xl">
+                        <p class="text-xs font-bold text-slate-500 mb-1">1日あたり</p>
+                        <p class="text-xl font-bold text-slate-900">${need.servings}<span class="text-sm font-bold text-slate-400 ml-0.5">杯</span></p>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-xl">
+                        <p class="text-xs font-bold text-slate-500 mb-1">1ヶ月の粉末量</p>
+                        <p class="text-xl font-bold text-slate-900">${need.monthlyKg.toFixed(1)}<span class="text-sm font-bold text-slate-400 ml-0.5">kg</span></p>
+                    </div>`;
+                section.appendChild(summary);
+
+                const basis = document.createElement('p');
+                basis.className = 'text-xs text-slate-400 mb-5';
+                basis.textContent = `1杯を粉末${SERVING.powderG}g（タンパク質約${SERVING.proteinG}g）として算出しています。`
+                    + '実際の含有量は製品によって異なるため、購入する製品の表示をご確認ください。';
+                section.appendChild(basis);
+            }
+
+            const products = selectProducts(goal, need.shortfallG > 0);
+            if (products.length > 0) {
+                const list = document.createElement('div');
+                list.className = 'space-y-2';
+                products.forEach(p => list.appendChild(Affiliate.productCard(p)));
+                section.appendChild(list);
+            }
+
+            return section;
+        }
+
+        /** 入力値を読み取って結果を再描画する */
+        function update() {
+            const input = {
+                sex: elements.sex.value,
+                age: Number(elements.age.value),
+                height: Number(elements.height.value),
+                weight: Number(elements.weight.value),
+                goal: elements.goal.value,
+                activity: Number(elements.activity.value)
+            };
+
+            // 未入力・不正値の場合は計算せずプレースホルダを表示する
+            const isValid = input.age > 0 && input.height > 0 && input.weight > 0;
+            elements.result.innerHTML = '';
+
+            if (!isValid) {
+                const placeholder = document.createElement('p');
+                placeholder.className = 'p-6 text-center text-slate-400 bg-white rounded-2xl shadow-sm';
+                placeholder.textContent = '年齢・身長・体重を入力すると結果が表示されます。';
+                elements.result.appendChild(placeholder);
+                return;
+            }
+
+            const macros = calcMacros(input);
+            const need = calcSupplementNeed(macros.proteinG, Number(elements.dietaryProtein.value) || 0);
+
+            elements.result.appendChild(renderMacros(macros));
+            elements.result.appendChild(renderSupplements(macros, need, input.goal));
+            lucide.createIcons();
+        }
+
+        // 体重に応じて食事からのタンパク質の初期値を更新する（手動編集後は追従しない）
+        function syncDietaryProtein() {
+            if (dietaryProteinEdited) return;
+            const weight = Number(elements.weight.value);
+            if (weight > 0) elements.dietaryProtein.value = Math.round(weight);
+        }
+
+        elements.dietaryProtein.addEventListener('input', () => { dietaryProteinEdited = true; });
+        elements.weight.addEventListener('input', syncDietaryProtein);
+
+        Object.values(elements).forEach(el => {
+            if (el === elements.result) return;
+            el.addEventListener('input', update);
+            el.addEventListener('change', update);
+        });
+
+        Affiliate.renderDisclosure('#disclosure');
+        update();
+    </script>
+</body>
+</html>
