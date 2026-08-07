@@ -14,6 +14,7 @@
 - [Video Editor](./tools/video-editor/index.html)
 - [Thumbnail Generator](./tools/thumbnail-generator/index.html)
 - [Affiliate Links Generator](./tools/affiliate-links/index.html)
+- [PFC Calculator](./tools/pfc-calculator/index.html)
 - [node-fusion game](./games/node-fusion.html)
 - [pulse-bloom game](./games/pulse-bloom.html)
 
