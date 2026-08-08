@@ -24,6 +24,47 @@
             -moz-appearance: textfield;
         }
 
+        /*
+         * 2択の入力はセグメントにしてワンクリックで選べるようにする。
+         * 実体はネイティブのラジオ（sr-only）なので、矢印キー操作と
+         * グループの読み上げがそのまま効く。選択肢が3つ以上ある場合や
+         * ラベルが長い場合は select のままにする。
+         * 色は Tailwind の slate / indigo に合わせ、高さは p-2.5 の入力欄と揃える。
+         */
+        .segment {
+            display: block;
+            padding: 0.625rem;
+            text-align: center;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: #64748b;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color .15s, border-color .15s, color .15s;
+        }
+
+        .segment:hover {
+            border-color: #cbd5e1;
+        }
+
+        input:checked + .segment {
+            background: #eef2ff;
+            border-color: #818cf8;
+            color: #4338ca;
+        }
+
+        input:focus-visible + .segment {
+            box-shadow: 0 0 0 2px #c7d2fe;
+        }
+
+        input:disabled + .segment {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
         /* タイムラインの縦線 */
         .timeline-item {
             position: relative;
@@ -79,13 +120,19 @@
         <!-- 入力エリア -->
         <div class="bg-white p-6 rounded-2xl shadow-sm mb-6">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-                <label class="block">
-                    <span class="text-sm font-bold text-slate-600">種別</span>
-                    <select id="species" class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
-                        <option value="dog">犬</option>
-                        <option value="cat">猫</option>
-                    </select>
-                </label>
+                <fieldset class="block">
+                    <legend class="text-sm font-bold text-slate-600">種別</legend>
+                    <div id="species-group" class="mt-1.5 grid grid-cols-2 gap-2">
+                        <label class="block">
+                            <input type="radio" name="species" value="dog" class="sr-only peer" checked>
+                            <span class="segment">犬</span>
+                        </label>
+                        <label class="block">
+                            <input type="radio" name="species" value="cat" class="sr-only peer">
+                            <span class="segment">猫</span>
+                        </label>
+                    </div>
+                </fieldset>
                 <label class="block">
                     <span class="text-sm font-bold text-slate-600">生年月日</span>
                     <input id="birthday" type="date"
@@ -118,13 +165,20 @@
                         class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
                     <span class="block text-xs text-slate-400 mt-1.5">初期値は月齢からの概算です。実測値を入れると精度が上がります。</span>
                 </label>
-                <label class="block">
-                    <span class="text-sm font-bold text-slate-600">避妊・去勢</span>
-                    <select id="neutered" class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
-                        <option value="no">未実施</option>
-                        <option value="yes">実施済み</option>
-                    </select>
-                </label>
+                <fieldset class="block">
+                    <legend class="text-sm font-bold text-slate-600">避妊・去勢</legend>
+                    <div id="neutered-group" class="mt-1.5 grid grid-cols-2 gap-2">
+                        <label class="block">
+                            <input type="radio" name="neutered" value="no" class="sr-only peer" checked>
+                            <span class="segment">未実施</span>
+                        </label>
+                        <label class="block">
+                            <input type="radio" name="neutered" value="yes" class="sr-only peer">
+                            <span class="segment">実施済み</span>
+                        </label>
+                    </div>
+                    <span id="neutered-hint" class="block text-xs text-slate-400 mt-1.5"></span>
+                </fieldset>
                 <label class="block">
                     <span class="text-sm font-bold text-slate-600">フードの熱量 (kcal/100g)</span>
                     <input id="food-energy" type="number" value="360" min="100" max="600"
@@ -172,18 +226,34 @@
         lucide.createIcons();
 
         const elements = {
-            species: document.getElementById('species'),
+            speciesGroup: document.getElementById('species-group'),
             birthday: document.getElementById('birthday'),
             breed: document.getElementById('breed'),
             size: document.getElementById('size'),
             sizeHint: document.getElementById('size-hint'),
             dogFields: document.getElementById('dog-fields'),
             weight: document.getElementById('weight'),
-            neutered: document.getElementById('neutered'),
+            neuteredGroup: document.getElementById('neutered-group'),
+            neuteredHint: document.getElementById('neutered-hint'),
             foodEnergy: document.getElementById('food-energy'),
             packSize: document.getElementById('pack-size'),
             result: document.getElementById('result')
         };
+
+        /** ラジオグループの選択値を取得する */
+        function radioValue(name, fallback) {
+            const checked = document.querySelector(`input[name="${name}"]:checked`);
+            return checked ? checked.value : fallback;
+        }
+
+        /** ラジオグループの選択値を設定する（該当がなければ何もしない） */
+        function setRadioValue(name, value) {
+            const target = document.querySelector(`input[name="${name}"][value="${value}"]`);
+            if (target) target.checked = true;
+        }
+
+        const getSpecies = () => radioValue('species', 'dog');
+        const isNeutered = () => radioValue('neutered', 'no') === 'yes';
 
         /** ローカルストレージのキー。スキーマを変える場合はバージョンを上げる */
         const STORAGE_KEY = 'pet-timeline.v1';
@@ -800,7 +870,7 @@
 
         /** 種別・犬種の選択に応じて入力欄の表示と状態を切り替える */
         function syncFields() {
-            const isDog = elements.species.value === 'dog';
+            const isDog = getSpecies() === 'dog';
             elements.dogFields.classList.toggle('hidden', !isDog);
 
             // 犬種を選ぶとサイズ区分は自動で決まる。欄は隠さず読み取り専用にして、
@@ -832,7 +902,7 @@
         function update() {
             syncFields();
 
-            const species = elements.species.value;
+            const species = getSpecies();
             const profile = getProfile(species, elements.size.value);
             const foodEnergy = Number(elements.foodEnergy.value);
 
@@ -874,7 +944,7 @@
                     species,
                     months: age.months,
                     weight,
-                    neutered: elements.neutered.value === 'yes',
+                    neutered: isNeutered(),
                     foodEnergy,
                     profile
                 });
@@ -900,13 +970,16 @@
         }
 
         /** 永続化する入力欄の一覧（要素キー -> 保存キー） */
-        const PERSISTED_FIELDS = ['species', 'birthday', 'breed', 'size', 'weight', 'neutered', 'foodEnergy', 'packSize'];
+        /** 永続化する入力欄（要素キー = 保存キー）。ラジオグループは個別に扱う */
+        const PERSISTED_FIELDS = ['birthday', 'breed', 'size', 'weight', 'foodEnergy', 'packSize'];
 
         /** 入力欄の値を保存する */
         function saveProfile() {
             PERSISTED_FIELDS.forEach(key => {
                 store.profile[key] = elements[key].value;
             });
+            store.profile.species = getSpecies();
+            store.profile.neutered = radioValue('neutered', 'no');
             store.profile.weightEdited = weightEdited;
             saveStore();
         }
@@ -917,6 +990,17 @@
                 const value = store.profile[key];
                 if (value !== undefined && value !== null && value !== '') elements[key].value = value;
             });
+
+            // 犬種名を value にする前の保存データ（サイズコードが入っている）への移行措置。
+            // 該当しない値だと selectedIndex が -1 になり、空白のセレクトになってしまう
+            if (elements.breed.selectedIndex < 0) {
+                if (SIZE_PROFILES[store.profile.breed]) elements.size.value = store.profile.breed;
+                elements.breed.value = '';
+            }
+
+            if (store.profile.species) setRadioValue('species', store.profile.species);
+            if (store.profile.neutered) setRadioValue('neutered', store.profile.neutered);
+
             // 体重を手で編集していた場合は、復元後も自動推定で上書きしない
             weightEdited = store.profile.weightEdited === true;
         }
@@ -933,6 +1017,11 @@
             const handler = () => { update(); saveProfile(); };
             el.addEventListener('input', handler);
             el.addEventListener('change', handler);
+        });
+
+        // ラジオグループは要素が複数あるため、コンテナで change を委譲して受ける
+        [elements.speciesGroup, elements.neuteredGroup].forEach(group => {
+            group.addEventListener('change', () => { update(); saveProfile(); });
         });
 
         Affiliate.renderDisclosure('#disclosure');
