@@ -165,8 +165,8 @@
         </div>
     </main>
 
-    <script src="../../assets/affiliate.js?v=5"></script>
-    <script src="../../data/products/pet.js?v=5"></script>
+    <script src="../../assets/affiliate.js?v=6"></script>
+    <script src="../../data/products/pet.js?v=6"></script>
     <script>
         lucide.createIcons();
 
@@ -553,7 +553,7 @@
          * 購入日を記録すると次回の補充目安日と残日数が表示され、
          * 期限が近いものが上に並ぶ。
          */
-        function renderRefills(refills) {
+        function renderRefills(refills, species) {
             if (refills.length === 0) return null;
 
             const section = createSection('消耗品の補充', 'repeat');
@@ -586,7 +586,7 @@
                 const row = document.createElement('div');
                 row.className = 'flex gap-4 p-4 bg-white border border-slate-200 rounded-xl';
 
-                const image = Affiliate.productImage(product);
+                const image = Affiliate.productImage(product, species);
                 if (image) row.appendChild(image);
 
                 // 画像の右側に見出し・操作・補足を積む
@@ -762,7 +762,8 @@
 
             const list = document.createElement('div');
             list.className = 'space-y-2';
-            products.forEach(p => list.appendChild(Affiliate.productCard(p)));
+            // 犬猫で絵柄が分かれている商品は、選択中の種別のイラストを使う
+            products.forEach(p => list.appendChild(Affiliate.productCard(p, { imageVariant: species })));
             section.appendChild(list);
 
             return section;
@@ -883,7 +884,7 @@
                 stage.key,
                 food ? food.grams : 0,
                 Number(elements.packSize.value)
-            ));
+            ), species);
             if (refills) elements.result.appendChild(refills);
 
             lucide.createIcons();
