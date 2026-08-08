@@ -888,6 +888,23 @@
         }
 
         /**
+         * 避妊・去勢は calcFood() の成犬・成猫期の分岐でしか係数に効かないため、
+         * それ以外の段階では非活性にして理由を示す。
+         * 段階が確定してから呼ぶ必要があるので syncFields() とは分けている。
+         */
+        function syncNeuteredField(stage) {
+            // 生年月日が未入力で段階が定まらないときは活性のままにする
+            const effective = !stage || stage.key === 'adult';
+
+            document.querySelectorAll('input[name="neutered"]')
+                .forEach(input => { input.disabled = !effective; });
+
+            elements.neuteredHint.textContent = effective
+                ? ''
+                : '成犬・成猫期の給与量にのみ影響します。';
+        }
+
+        /**
          * 種別・サイズ・月齢から体重の初期値を推定して埋める。
          * 利用者が体重を手で編集したあとは上書きしない。
          */
@@ -909,6 +926,7 @@
             elements.result.innerHTML = '';
 
             if (!elements.birthday.value) {
+                syncNeuteredField(null);
                 const placeholder = document.createElement('p');
                 placeholder.className = 'p-6 text-center text-slate-400 bg-white rounded-2xl shadow-sm';
                 placeholder.textContent = '生年月日を入力すると成長段階とグッズが表示されます。';
@@ -920,6 +938,7 @@
 
             // 未来の日付が入力された場合は計算せず注意を促す
             if (age.days < 0) {
+                syncNeuteredField(null);
                 const invalid = document.createElement('p');
                 invalid.className = 'p-6 text-center text-amber-700 bg-amber-50 border border-amber-200 rounded-2xl';
                 invalid.textContent = '生年月日が未来の日付になっています。入力内容をご確認ください。';
@@ -935,6 +954,8 @@
             const currentIndex = findStageIndex(stages, age.months);
             const stage = stages[currentIndex];
             const nextStage = stages[currentIndex + 1] || null;
+
+            syncNeuteredField(stage);
 
             elements.result.appendChild(renderSummary(age, stage, profile, nextStage));
 
