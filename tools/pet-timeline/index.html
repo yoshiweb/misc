@@ -849,10 +849,15 @@
         const BREED_SIZE = {};
 
         function buildBreedOptions() {
-            const unknown = document.createElement('option');
-            unknown.value = '';
-            unknown.textContent = 'わからない・ミックス';
-            elements.breed.appendChild(unknown);
+            // どちらもサイズ区分を自動判定できないため、手動指定に切り替わる。
+            // 「ミックス」と「その他」を分けているのは、一覧にない純血種の
+            // 飼い主が「わからない」を選ばされずに済むようにするため。
+            [['', 'わからない・ミックス'], ['other', 'その他（一覧にない犬種）']].forEach(([value, text]) => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = text;
+                elements.breed.appendChild(option);
+            });
 
             Object.entries(SIZE_PROFILES).forEach(([size, profile]) => {
                 const group = document.createElement('optgroup');
