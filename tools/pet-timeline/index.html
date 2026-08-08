@@ -194,6 +194,7 @@
             <ul class="text-xs text-slate-500 leading-relaxed list-disc list-inside space-y-1">
                 <li>成長段階の区切りとフードの給与量は一般的な目安であり、獣医学上の助言ではありません。個体差が大きいため、実際の量は体調や体型を見ながら調整してください。</li>
                 <li>ワクチンの接種スケジュール、避妊・去勢の適齢期、健康診断の頻度、療法食の必要性については、必ずかかりつけの獣医師にご相談ください。</li>
+                <li>人間換算年齢は一般に用いられている目安であり、獣医学的な定義ではありません。品種や個体によって実際の老化の速さは異なります。</li>
                 <li>紹介しているアイテムは食品・雑貨であり、疾病の治療や予防を目的としたものではありません。</li>
                 <li>犬の登録と狂犬病予防注射は狂犬病予防法で義務付けられています。手続きはお住まいの自治体の案内をご確認ください。</li>
             </ul>
@@ -366,10 +367,10 @@
                 otherLabel: 'その他（一覧にない犬種）',
                 defaultSize: 'small',
                 profiles: {
-                    toy:    { label: '超小型犬', adultMonths: 10, seniorMonths: 120, adultWeight: 3 },
-                    small:  { label: '小型犬',   adultMonths: 12, seniorMonths: 120, adultWeight: 8 },
-                    medium: { label: '中型犬',   adultMonths: 12, seniorMonths: 96,  adultWeight: 18 },
-                    large:  { label: '大型犬',   adultMonths: 18, seniorMonths: 84,  adultWeight: 35 }
+                    toy:    { label: '超小型犬', adultMonths: 10, seniorMonths: 120, adultWeight: 3, humanYearsPerYear: 4 },
+                    small:  { label: '小型犬',   adultMonths: 12, seniorMonths: 120, adultWeight: 8, humanYearsPerYear: 4 },
+                    medium: { label: '中型犬',   adultMonths: 12, seniorMonths: 96,  adultWeight: 18, humanYearsPerYear: 5 },
+                    large:  { label: '大型犬',   adultMonths: 18, seniorMonths: 84,  adultWeight: 35, humanYearsPerYear: 7 }
                 },
                 sizeOptions: {
                     toy: '超小型犬（〜4kg）',
@@ -391,10 +392,10 @@
                 otherLabel: 'その他（一覧にない猫種）',
                 defaultSize: 'standard',
                 profiles: {
-                    petite:   { label: '小柄な猫', adultMonths: 12, seniorMonths: 132, adultWeight: 3.5 },
-                    standard: { label: '標準的な猫', adultMonths: 12, seniorMonths: 132, adultWeight: 4.5 },
+                    petite:   { label: '小柄な猫', adultMonths: 12, seniorMonths: 132, adultWeight: 3.5, humanYearsPerYear: 4 },
+                    standard: { label: '標準的な猫', adultMonths: 12, seniorMonths: 132, adultWeight: 4.5, humanYearsPerYear: 4 },
                     // 大型種は成熟が遅く、体格が固まるまで3年前後かかる
-                    large:    { label: '大型の猫', adultMonths: 36, seniorMonths: 132, adultWeight: 7 }
+                    large:    { label: '大型の猫', adultMonths: 36, seniorMonths: 132, adultWeight: 7, humanYearsPerYear: 4 }
                 },
                 sizeOptions: {
                     petite: '小柄（〜3.5kg）',
@@ -460,6 +461,29 @@
             return def.profiles[size] || def.profiles[def.defaultSize];
         }
 
+        /**
+         * 人間年齢への換算アンカー [月齢, 人間年齢]。
+         * 2歳までは成長が速いため、この折れ線で補間する。
+         */
+        const HUMAN_AGE_ANCHORS = [[0, 0], [1, 1], [3, 5], [6, 9], [12, 15], [24, 24]];
+
+        /**
+         * 月齢を人間年齢に換算する。
+         * 2歳以降はサイズ別の加算年数で直線的に増やす。大型ほど老化が速い。
+         * 獣医学的な定義ではなく、一般に用いられている目安。
+         */
+        function toHumanAge(months, profile) {
+            if (months >= 24) {
+                return Math.round(24 + ((months - 24) / 12) * profile.humanYearsPerYear);
+            }
+            for (let i = 1; i < HUMAN_AGE_ANCHORS.length; i++) {
+                const [m0, h0] = HUMAN_AGE_ANCHORS[i - 1];
+                const [m1, h1] = HUMAN_AGE_ANCHORS[i];
+                if (months <= m1) return Math.round(h0 + (h1 - h0) * (months - m0) / (m1 - m0));
+            }
+            return 24;
+        }
+
         /** 月齢を「○ヶ月」または「○歳」に整形する */
         function formatMonths(months) {
             if (months < 24) return `${months}ヶ月`;
@@ -502,6 +526,14 @@
             if (stage.startMonths === 0) return `〜生後${formatMonths(stage.endMonths)}`;
             if (stage.endMonths === null) return `${formatMonths(stage.startMonths)}〜`;
             return `${formatMonths(stage.startMonths)}〜${formatMonths(stage.endMonths)}`;
+        }
+
+        /** ステージの期間を人間換算年齢で表す。書式は formatStageRange に揃える */
+        function formatHumanStageRange(stage, profile) {
+            const from = toHumanAge(stage.startMonths, profile);
+            if (stage.startMonths === 0) return `人間換算 〜${toHumanAge(stage.endMonths, profile)}歳`;
+            if (stage.endMonths === null) return `人間換算 ${from}歳〜`;
+            return `人間換算 ${from}歳〜${toHumanAge(stage.endMonths, profile)}歳`;
         }
 
         /** 月齢から現在のステージのインデックスを求める */
@@ -649,7 +681,7 @@
             const section = createSection('現在の成長段階', 'calendar-heart');
 
             const summary = document.createElement('div');
-            summary.className = 'grid grid-cols-2 sm:grid-cols-4 gap-3';
+            summary.className = 'grid grid-cols-2 sm:grid-cols-5 gap-3';
 
             const ageText = age.months >= 12
                 ? `${age.years}歳${age.months % 12 > 0 ? age.months % 12 + 'ヶ月' : ''}`
@@ -659,7 +691,8 @@
                 { label: '年齢', value: ageText },
                 { label: '日齢', value: `${age.days.toLocaleString()}日` },
                 { label: '区分', value: profile.label },
-                { label: '成長段階', value: stage.name }
+                { label: '成長段階', value: stage.name },
+                { label: '人間換算', value: `約${toHumanAge(age.months, profile)}歳` }
             ];
 
             cells.forEach(c => {
@@ -883,7 +916,7 @@
         }
 
         /** タイムラインを描画する */
-        function renderTimeline(stages, currentIndex, species) {
+        function renderTimeline(stages, currentIndex, species, profile) {
             const section = createSection('成長タイムライン', 'list-checks');
 
             const list = document.createElement('div');
@@ -912,6 +945,12 @@
                 range.className = 'text-xs text-slate-400';
                 range.textContent = formatStageRange(stage);
                 header.appendChild(range);
+
+                // 月齢だけでは実感しにくいため、人間換算の範囲も併記する
+                const humanRange = document.createElement('span');
+                humanRange.className = 'text-xs text-slate-400';
+                humanRange.textContent = formatHumanStageRange(stage, profile);
+                header.appendChild(humanRange);
 
                 if (index === currentIndex) {
                     const badge = document.createElement('span');
@@ -1134,7 +1173,7 @@
             // 体重が未入力でも、熱量の入力欄に触れられるよう常に描画する
             elements.result.appendChild(renderFood(food));
 
-            elements.result.appendChild(renderTimeline(stages, currentIndex, species));
+            elements.result.appendChild(renderTimeline(stages, currentIndex, species, profile));
 
             const products = renderProducts(species, stage);
             if (products) elements.result.appendChild(products);
