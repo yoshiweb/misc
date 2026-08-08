@@ -165,8 +165,8 @@
         </div>
     </main>
 
-    <script src="../../assets/affiliate.js?v=2"></script>
-    <script src="../../data/products/pet.js?v=2"></script>
+    <script src="../../assets/affiliate.js?v=5"></script>
+    <script src="../../data/products/pet.js?v=5"></script>
     <script>
         lucide.createIcons();
 
@@ -584,7 +584,14 @@
                 const status = refillStatus(remainDays);
 
                 const row = document.createElement('div');
-                row.className = 'p-4 bg-white border border-slate-200 rounded-xl';
+                row.className = 'flex gap-4 p-4 bg-white border border-slate-200 rounded-xl';
+
+                const image = Affiliate.productImage(product);
+                if (image) row.appendChild(image);
+
+                // 画像の右側に見出し・操作・補足を積む
+                const main = document.createElement('div');
+                main.className = 'min-w-0 flex-1';
 
                 // 見出し行: 商品名と残日数バッジ
                 const head = document.createElement('div');
@@ -599,7 +606,7 @@
                 badge.className = `shrink-0 text-xs font-bold px-2 py-1 rounded-full ${toneStyles[status.tone]}`;
                 badge.textContent = status.label;
                 head.appendChild(badge);
-                row.appendChild(head);
+                main.appendChild(head);
 
                 // 操作行: 購入日・サイクル・記録ボタン
                 const controls = document.createElement('div');
@@ -642,11 +649,15 @@
                 });
                 controls.appendChild(todayBtn);
 
+                // ストアリンクは2つで1組として折り返す（片方だけ改行されるのを防ぐ）
+                const stores = document.createElement('div');
+                stores.className = 'flex gap-2';
                 Affiliate.storeLinks(product).forEach(link => {
-                    controls.appendChild(Affiliate.storeLinkElement(link));
+                    stores.appendChild(Affiliate.storeLinkElement(link));
                 });
+                controls.appendChild(stores);
 
-                row.appendChild(controls);
+                main.appendChild(controls);
 
                 // 補足行: 次回目安日と、サイクルの算出根拠
                 const meta = document.createElement('p');
@@ -656,7 +667,9 @@
                 if (computed) parts.push('給与量と袋のサイズから算出');
                 else if (!purchasedAt) parts.push('購入日を記録すると補充時期を表示します');
                 meta.textContent = parts.join(' / ');
-                if (meta.textContent) row.appendChild(meta);
+                if (meta.textContent) main.appendChild(meta);
+
+                row.appendChild(main);
 
                 list.appendChild(row);
             });
