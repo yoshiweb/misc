@@ -99,7 +99,7 @@
                     <span class="text-sm font-bold text-slate-600">犬種</span>
                     <select id="breed" class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"></select>
                 </label>
-                <label id="size-field" class="block">
+                <label class="block">
                     <span class="text-sm font-bold text-slate-600">サイズ区分</span>
                     <select id="size" class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
                         <option value="toy">超小型犬（〜4kg）</option>
@@ -107,6 +107,7 @@
                         <option value="medium">中型犬（10〜25kg）</option>
                         <option value="large">大型犬（25kg〜）</option>
                     </select>
+                    <span id="size-hint" class="block text-xs text-slate-400 mt-1.5"></span>
                 </label>
             </div>
 
@@ -175,7 +176,7 @@
             birthday: document.getElementById('birthday'),
             breed: document.getElementById('breed'),
             size: document.getElementById('size'),
-            sizeField: document.getElementById('size-field'),
+            sizeHint: document.getElementById('size-hint'),
             dogFields: document.getElementById('dog-fields'),
             weight: document.getElementById('weight'),
             neutered: document.getElementById('neutered'),
@@ -797,15 +798,23 @@
             });
         }
 
-        /** 種別・犬種の選択に応じて入力欄の表示を切り替える */
+        /** 種別・犬種の選択に応じて入力欄の表示と状態を切り替える */
         function syncFields() {
             const isDog = elements.species.value === 'dog';
             elements.dogFields.classList.toggle('hidden', !isDog);
 
-            // 犬種を選んだ場合はサイズ区分が自動で決まるため、手動指定欄を隠す
+            // 犬種を選ぶとサイズ区分は自動で決まる。欄は隠さず読み取り専用にして、
+            // どう判定されたかが見えるようにする（ミックスなら手動で指定できる）
             const breedSize = BREED_SIZE[elements.breed.value] || '';
-            elements.sizeField.classList.toggle('hidden', breedSize === '');
             if (breedSize) elements.size.value = breedSize;
+
+            const derived = breedSize !== '';
+            elements.size.disabled = derived;
+            elements.size.classList.toggle('bg-slate-100', derived);
+            elements.size.classList.toggle('text-slate-400', derived);
+            elements.sizeHint.textContent = derived
+                ? '犬種から自動で判定しています。'
+                : 'ミックスや一覧にない犬種は、体格に近いものを選んでください。';
         }
 
         /**

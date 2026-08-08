@@ -44,6 +44,7 @@
                 </label>
                 <label class="block">
                     <span class="text-xs font-bold text-slate-500">子供</span>
+                    <span class="text-xs text-slate-400">（2〜12歳）</span>
                     <input id="child" type="number" value="0" min="0" max="20"
                         class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
                 </label>
@@ -183,6 +184,11 @@
          * 端数は切り上げる（分割して購入できないため）。
          */
         function calcQuantity(product, members, days) {
+            return Math.ceil(calcRawQuantity(product, members, days));
+        }
+
+        /** 切り上げ前の必要数量。計算式の表示で端数の有無を判定するために使う */
+        function calcRawQuantity(product, members, days) {
             let total = 0;
 
             if (product.perDay) {
@@ -201,7 +207,47 @@
             }
             if (product.perHousehold) total += product.perHousehold;
 
-            return Math.ceil(total);
+            return total;
+        }
+
+        /** 構成員の表示名と助数詞 */
+        const MEMBER_LABELS = { adult: '大人', child: '子供', infant: '乳児', dog: '犬', cat: '猫' };
+        const MEMBER_COUNTERS = { adult: '名', child: '名', infant: '名', dog: '頭', cat: '頭' };
+
+        /**
+         * 数量の根拠を式の形にする。例: 「大人2名 ✕ 1日2食 ✕ 7日」
+         *
+         * 算出に使った項だけを並べ、切り上げが発生した場合はその旨を添える。
+         */
+        function formulaText(product, members, days) {
+            const parts = [];
+
+            if (product.perDay) {
+                MEMBER_KEYS.forEach(key => {
+                    const rate = product.perDay[key] || 0;
+                    const count = members[key] || 0;
+                    if (rate <= 0 || count <= 0) return;
+                    parts.push(`${MEMBER_LABELS[key]}${count}${MEMBER_COUNTERS[key]} ✕ 1日${rate}${product.unit} ✕ ${days}日`);
+                });
+            }
+            if (product.householdPerDay) {
+                parts.push(`1世帯 ✕ 1日${product.householdPerDay}${product.unit} ✕ ${days}日`);
+            }
+            if (product.perPerson) {
+                const count = product.perPersonExcludesInfant
+                    ? (members.adult || 0) + (members.child || 0)
+                    : peopleCount(members);
+                if (count > 0) parts.push(`${count}名 ✕ ${product.perPerson}${product.unit}`);
+            }
+            if (product.perHousehold) {
+                parts.push(`1世帯 ✕ ${product.perHousehold}${product.unit}`);
+            }
+
+            if (parts.length === 0) return '';
+
+            const raw = calcRawQuantity(product, members, days);
+            const rounded = Math.ceil(raw) !== raw ? '（端数切り上げ）' : '';
+            return parts.join(' ＋ ') + rounded;
         }
 
         /** 人の総数（ペットを含まない） */
@@ -453,9 +499,24 @@
             update();
         }
 
+        /** 優先度（importance）の表示定義 */
+        const IMPORTANCE_STYLES = {
+            1: { label: '必須', className: 'text-rose-700 bg-rose-50 border border-rose-200' },
+            2: { label: '推奨', className: 'text-amber-800 bg-amber-50 border border-amber-200' },
+            3: { label: 'あると安心', className: 'text-slate-500 bg-slate-50 border border-slate-200' }
+        };
+
         /** 必要数量の一覧をカテゴリ別に描画する */
-        function renderQuantities(entries) {
+        function renderQuantities(entries, members, days) {
             const section = createSection('必要な備蓄量', 'clipboard-list');
+
+            // 優先度バッジの凡例。何から揃えるべきかの判断材料にする
+            const legend = document.createElement('p');
+            legend.className = 'text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4 leading-relaxed';
+            legend.textContent = '優先度は「必須」＝ライフラインが止まった直後から欠かせないもの、'
+                + '「推奨」＝数日の在宅避難で不足しやすいもの、「あると安心」＝生活の質を保つもの、の目安です。'
+                + '数量の下には算出の式を記載しています。';
+            section.appendChild(legend);
 
             // 広告であることが明瞭に分かるよう、商品リンクの直前にPR表記を置く
             Affiliate.renderPrNotice(section);
@@ -488,7 +549,16 @@
                     body.className = 'min-w-0';
 
                     const head = document.createElement('p');
-                    head.className = 'flex items-baseline gap-2';
+                    head.className = 'flex items-baseline flex-wrap gap-2';
+
+                    const importance = IMPORTANCE_STYLES[product.importance];
+                    if (importance) {
+                        const badge = document.createElement('span');
+                        badge.className = `shrink-0 self-center text-xs font-bold px-2 py-0.5 rounded-full ${importance.className}`;
+                        badge.textContent = importance.label;
+                        head.appendChild(badge);
+                    }
+
                     const name = document.createElement('span');
                     name.className = 'font-bold text-slate-800';
                     name.textContent = product.name;
@@ -498,6 +568,15 @@
                     amount.textContent = `${quantity.toLocaleString()}${product.unit}`;
                     head.appendChild(amount);
                     body.appendChild(head);
+
+                    // 数量の根拠となる式を添えて、目安の妥当性を判断できるようにする
+                    const formula = formulaText(product, members, days);
+                    if (formula) {
+                        const calc = document.createElement('p');
+                        calc.className = 'text-xs text-slate-400 mt-0.5';
+                        calc.textContent = formula;
+                        body.appendChild(calc);
+                    }
 
                     if (product.note) {
                         const note = document.createElement('p');
@@ -548,10 +627,11 @@
 
             elements.result.appendChild(renderSummary(members, days, expiries));
 
+            // 必要量を先に示し、そのあとで手持ちの入れ替え時期を管理する流れにする
+            elements.result.appendChild(renderQuantities(entries, members, days));
+
             const expirySection = renderExpiries(expiries);
             if (expirySection) elements.result.appendChild(expirySection);
-
-            elements.result.appendChild(renderQuantities(entries));
 
             lucide.createIcons();
         }
