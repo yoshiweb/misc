@@ -18,6 +18,11 @@
  * perPerson で乳児を数えるべきでない品目（軍手など）は
  * `perPersonExcludesInfant: true` を指定する。
  *
+ * 【優先度】
+ * - `importance` … 備えるべき優先度。1=必須 / 2=推奨 / 3=あると安心。
+ *   ライフラインが止まった直後から必要になるものほど 1 に近づける。
+ * - `priority` … 表示順のみを決める値。優先度とは別物。
+ *
  * 【期限管理】
  * - `shelfLifeYears` … 一般的な保存期間の目安（年）。null の場合は期限管理の対象外。
  *   実際の期限は製品によって異なるため、あくまで初期値として扱う。
@@ -37,6 +42,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perDay: { adult: 3, child: 2, infant: 1, dog: 0.5, cat: 0.2 },
             shelfLifeYears: 5,
+            importance: 1,
             priority: 10
         },
         {
@@ -49,6 +55,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perPerson: 1,
             shelfLifeYears: null,
+            importance: 2,
             priority: 11
         },
 
@@ -63,6 +70,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perDay: { adult: 2, child: 2 },
             shelfLifeYears: 5,
+            importance: 1,
             priority: 20
         },
         {
@@ -75,6 +83,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perDay: { adult: 1, child: 1 },
             shelfLifeYears: 3,
+            importance: 1,
             priority: 21
         },
         {
@@ -87,6 +96,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perDay: { adult: 1, child: 1 },
             shelfLifeYears: 3,
+            importance: 2,
             priority: 22
         },
         {
@@ -99,6 +109,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perDay: { infant: 5 },
             shelfLifeYears: 1,
+            importance: 1,
             priority: 23
         },
         {
@@ -111,6 +122,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perDay: { infant: 3 },
             shelfLifeYears: 1,
+            importance: 1,
             priority: 24
         },
         {
@@ -123,6 +135,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perDay: { dog: 200, cat: 60 },
             shelfLifeYears: 1,
+            importance: 1,
             priority: 25
         },
 
@@ -137,6 +150,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             householdPerDay: 1,
             shelfLifeYears: 7,
+            importance: 2,
             priority: 30
         },
         {
@@ -149,6 +163,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perHousehold: 1,
             shelfLifeYears: null,
+            importance: 2,
             priority: 31
         },
         {
@@ -161,6 +176,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             householdPerDay: 0.2,
             shelfLifeYears: null,
+            importance: 3,
             priority: 32
         },
         {
@@ -173,6 +189,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perDay: { adult: 1, child: 1, infant: 1 },
             shelfLifeYears: null,
+            importance: 2,
             priority: 33
         },
 
@@ -187,6 +204,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perDay: { adult: 5, child: 5, infant: 5 },
             shelfLifeYears: 10,
+            importance: 1,
             priority: 40
         },
         {
@@ -199,6 +217,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perDay: { adult: 3, child: 3, infant: 3 },
             shelfLifeYears: null,
+            importance: 1,
             priority: 41
         },
         {
@@ -211,6 +230,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             householdPerDay: 0.5,
             shelfLifeYears: 3,
+            importance: 2,
             priority: 42
         },
         {
@@ -223,6 +243,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perDay: { infant: 8 },
             shelfLifeYears: null,
+            importance: 1,
             priority: 43
         },
         {
@@ -235,6 +256,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perDay: { infant: 0.3 },
             shelfLifeYears: null,
+            importance: 1,
             priority: 44
         },
         {
@@ -248,6 +270,7 @@ Affiliate.registerProducts('disaster', {
             perPerson: 1,
             perPersonExcludesInfant: true,
             shelfLifeYears: 3,
+            importance: 3,
             priority: 45
         },
 
@@ -262,6 +285,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perDay: { adult: 15, child: 5 },
             shelfLifeYears: 3,
+            importance: 1,
             priority: 50
         },
         {
@@ -274,6 +298,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perPerson: 1,
             shelfLifeYears: null,
+            importance: 1,
             priority: 51
         },
         {
@@ -287,6 +312,7 @@ Affiliate.registerProducts('disaster', {
             perPerson: 4,
             perHousehold: 8,
             shelfLifeYears: 5,
+            importance: 2,
             priority: 52
         },
         {
@@ -299,6 +325,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perHousehold: 1,
             shelfLifeYears: null,
+            importance: 2,
             priority: 53
         },
 
@@ -313,6 +340,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perPerson: 1,
             shelfLifeYears: null,
+            importance: 2,
             priority: 60
         },
         {
@@ -325,6 +353,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perPerson: 1,
             shelfLifeYears: null,
+            importance: 2,
             priority: 61
         },
         {
@@ -338,6 +367,7 @@ Affiliate.registerProducts('disaster', {
             perPerson: 1,
             perPersonExcludesInfant: true,
             shelfLifeYears: null,
+            importance: 2,
             priority: 62
         },
         {
@@ -350,6 +380,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perHousehold: 1,
             shelfLifeYears: 3,
+            importance: 2,
             priority: 63
         },
         {
@@ -362,6 +393,7 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perDay: { adult: 1, child: 1 },
             shelfLifeYears: null,
+            importance: 3,
             priority: 64
         }
     ]
