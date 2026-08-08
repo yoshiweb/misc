@@ -153,7 +153,7 @@
                 </label>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <label class="block">
                     <span class="text-sm font-bold text-slate-600">現在の体重 (kg)</span>
                     <input id="weight" type="number" value="3" min="0.2" max="100" step="0.1"
@@ -174,26 +174,12 @@
                     </div>
                     <span id="neutered-hint" class="block text-xs text-slate-400 mt-1.5"></span>
                 </fieldset>
-                <label class="block">
-                    <span class="text-sm font-bold text-slate-600">フードの熱量 (kcal/100g)</span>
-                    <input id="food-energy" type="number" value="360" min="100" max="600"
-                        class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
-                    <span class="block text-xs text-slate-400 mt-1.5">製品のパッケージに記載されています。</span>
-                </label>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-100">
-                <label class="block">
-                    <span class="text-sm font-bold text-slate-600">フード1袋のサイズ (kg)</span>
-                    <input id="pack-size" type="number" value="2" min="0.1" max="30" step="0.1"
-                        class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
-                    <span class="block text-xs text-slate-400 mt-1.5">給与量から何日で使い切るかを算出します。</span>
-                </label>
-                <p class="sm:col-span-2 self-center text-xs text-slate-400 leading-relaxed">
-                    入力内容と消耗品の購入日はブラウザのローカルストレージに保存され、次回アクセス時に復元されます。<br>
-                    サーバーには送信されません。
-                </p>
-            </div>
+            <p class="mt-4 pt-4 border-t border-slate-100 text-xs text-slate-400 leading-relaxed">
+                入力内容と消耗品の購入日はブラウザのローカルストレージに保存され、次回アクセス時に復元されます。
+                サーバーには送信されません。
+            </p>
         </div>
 
         <!-- 結果エリア -->
@@ -231,10 +217,80 @@
             weight: document.getElementById('weight'),
             neuteredGroup: document.getElementById('neutered-group'),
             neuteredHint: document.getElementById('neutered-hint'),
-            foodEnergy: document.getElementById('food-energy'),
-            packSize: document.getElementById('pack-size'),
             result: document.getElementById('result')
         };
+
+        /**
+         * 結果エリア内で編集する数値の既定値と入力範囲。
+         *
+         * これらは影響する数値のすぐ横に置きたいが、結果エリアは update() の
+         * たびに作り直されるため、DOM を値の持ち主にできない。store を真とする。
+         */
+        const FOOD_DEFAULTS = {
+            foodEnergy: { value: 360, min: 100, max: 600, step: 10 },
+            packSize:   { value: 2,   min: 0.1, max: 30,  step: 0.1 }
+        };
+
+        /** store から数値設定を読む。未設定・範囲外は既定値に戻す */
+        function getSetting(key) {
+            const spec = FOOD_DEFAULTS[key];
+            const value = Number(store.profile[key]);
+            if (!Number.isFinite(value) || value < spec.min || value > spec.max) return spec.value;
+            return value;
+        }
+
+        /**
+         * 数値設定を更新して保存し、再描画する。
+         * 範囲外を既定値に丸めることで、入力欄が自分の値のせいで
+         * 消えたり NaN を生んだりすることを防ぐ。
+         */
+        function setSetting(key, value) {
+            const spec = FOOD_DEFAULTS[key];
+            const num = Number(value);
+            store.profile[key] = (Number.isFinite(num) && num >= spec.min && num <= spec.max)
+                ? num
+                : spec.value;
+            saveStore();
+            update();
+        }
+
+        /**
+         * 結果エリア内に置く数値入力を組み立てる。
+         *
+         * input ではなく change のみで拾う。結果エリアは再描画で作り直されるため、
+         * 1文字ごとに再描画するとフォーカスが外れてしまう（購入日欄と同じ方針）。
+         */
+        function createSettingControl(key, labelText, hintText) {
+            const spec = FOOD_DEFAULTS[key];
+
+            const wrap = document.createElement('div');
+            wrap.className = 'flex flex-wrap items-end gap-2 mb-4';
+
+            const label = document.createElement('label');
+            label.className = 'block';
+            const caption = document.createElement('span');
+            caption.className = 'block text-xs font-bold text-slate-500 mb-1';
+            caption.textContent = labelText;
+            label.appendChild(caption);
+
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.min = String(spec.min);
+            input.max = String(spec.max);
+            input.step = String(spec.step);
+            input.value = getSetting(key);
+            input.className = 'w-28 p-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-200';
+            input.addEventListener('change', () => setSetting(key, input.value));
+            label.appendChild(input);
+            wrap.appendChild(label);
+
+            const hint = document.createElement('span');
+            hint.className = 'text-xs text-slate-400 pb-2';
+            hint.textContent = hintText;
+            wrap.appendChild(hint);
+
+            return wrap;
+        }
 
         /** ラジオグループの選択値を取得する */
         function radioValue(name, fallback) {
@@ -630,31 +686,52 @@
             return section;
         }
 
-        /** フードの給与量を描画する */
+        /**
+         * フードの給与量を描画する。
+         *
+         * 体重が未入力などで算出できない場合も、熱量の入力欄に触れられるよう
+         * セクション自体は必ず描画し、数値だけを「—」にする。
+         */
         function renderFood(food) {
             const section = createSection('フードの給与量の目安', 'utensils');
 
+            const cells = [
+                { label: '1日の給与量', value: food && food.grams.toLocaleString(), unit: 'g' },
+                { label: '必要エネルギー', value: food && food.der.toLocaleString(), unit: 'kcal' },
+                { label: '安静時要求量', value: food && food.rer.toLocaleString(), unit: 'kcal' }
+            ];
+
             const grid = document.createElement('div');
             grid.className = 'grid grid-cols-3 gap-3 mb-4';
-            grid.innerHTML = `
-                <div class="p-3 bg-slate-50 rounded-xl">
-                    <p class="text-xs font-bold text-slate-500 mb-1">1日の給与量</p>
-                    <p class="text-xl font-bold text-slate-900">${food.grams}<span class="text-sm font-bold text-slate-400 ml-0.5">g</span></p>
-                </div>
-                <div class="p-3 bg-slate-50 rounded-xl">
-                    <p class="text-xs font-bold text-slate-500 mb-1">必要エネルギー</p>
-                    <p class="text-xl font-bold text-slate-900">${food.der.toLocaleString()}<span class="text-sm font-bold text-slate-400 ml-0.5">kcal</span></p>
-                </div>
-                <div class="p-3 bg-slate-50 rounded-xl">
-                    <p class="text-xs font-bold text-slate-500 mb-1">安静時要求量</p>
-                    <p class="text-xl font-bold text-slate-900">${food.rer.toLocaleString()}<span class="text-sm font-bold text-slate-400 ml-0.5">kcal</span></p>
-                </div>`;
+            cells.forEach(cell => {
+                const box = document.createElement('div');
+                box.className = 'p-3 bg-slate-50 rounded-xl';
+                box.innerHTML = `<p class="text-xs font-bold text-slate-500 mb-1">${cell.label}</p>`;
+
+                const value = document.createElement('p');
+                value.className = 'text-xl font-bold text-slate-900';
+                value.textContent = food ? cell.value : '—';
+                if (food) {
+                    const unit = document.createElement('span');
+                    unit.className = 'text-sm font-bold text-slate-400 ml-0.5';
+                    unit.textContent = cell.unit;
+                    value.appendChild(unit);
+                }
+                box.appendChild(value);
+                grid.appendChild(box);
+            });
             section.appendChild(grid);
+
+            // 給与量を左右する入力は、影響する数値のすぐ下に置く
+            section.appendChild(createSettingControl(
+                'foodEnergy', 'フードの熱量 (kcal/100g)', '製品のパッケージに記載されています。'));
 
             const basis = document.createElement('p');
             basis.className = 'text-xs text-slate-400 leading-relaxed';
-            basis.textContent = `安静時エネルギー要求量（70 × 体重^0.75）に、${food.basis}の係数 ${food.factor} を掛けて算出しています。`
-                + '個体差が大きいため、体型と体調を見ながら調整してください。';
+            basis.textContent = food
+                ? `安静時エネルギー要求量（70 × 体重^0.75）に、${food.basis}の係数 ${food.factor} を掛けて算出しています。`
+                    + '個体差が大きいため、体型と体調を見ながら調整してください。'
+                : '現在の体重を入力すると給与量を算出します。';
             section.appendChild(basis);
 
             return section;
@@ -677,6 +754,13 @@
                 alert.className = 'text-sm font-bold text-rose-800 bg-rose-50 border border-rose-200 rounded-xl p-3 mb-4';
                 alert.textContent = `補充の目安を過ぎているものが${due.length}件あります。`;
                 section.appendChild(alert);
+            }
+
+            // フードの袋サイズは補充サイクルの算出にだけ使うため、この欄に置く。
+            // フードの消耗品が並んでいないときは効果がないので出さない
+            if (refills.some(r => r.product.consumableType === 'food')) {
+                section.appendChild(createSettingControl(
+                    'packSize', 'フード1袋のサイズ (kg)', '給与量から何日で使い切るかを算出します。'));
             }
 
             // 広告であることが明瞭に分かるよう、商品リンクの直前にPR表記を置く
@@ -997,7 +1081,7 @@
 
             const species = getSpecies();
             const profile = getProfile(species, elements.size.value);
-            const foodEnergy = Number(elements.foodEnergy.value);
+            const foodEnergy = getSetting('foodEnergy');   // 範囲に丸められるため 0 にはならない
 
             elements.result.innerHTML = '';
 
@@ -1036,7 +1120,7 @@
             elements.result.appendChild(renderSummary(age, stage, profile, nextStage));
 
             let food = null;
-            if (weight > 0 && foodEnergy > 0) {
+            if (weight > 0) {
                 food = calcFood({
                     species,
                     months: age.months,
@@ -1047,7 +1131,8 @@
                 });
             }
 
-            if (food) elements.result.appendChild(renderFood(food));
+            // 体重が未入力でも、熱量の入力欄に触れられるよう常に描画する
+            elements.result.appendChild(renderFood(food));
 
             elements.result.appendChild(renderTimeline(stages, currentIndex, species));
 
@@ -1059,7 +1144,7 @@
                 species,
                 stage.key,
                 food ? food.grams : 0,
-                Number(elements.packSize.value)
+                getSetting('packSize')
             ), species);
             if (refills) elements.result.appendChild(refills);
 
@@ -1068,7 +1153,7 @@
 
         /** 永続化する入力欄の一覧（要素キー -> 保存キー） */
         /** 永続化する入力欄（要素キー = 保存キー）。ラジオグループは個別に扱う */
-        const PERSISTED_FIELDS = ['birthday', 'breed', 'size', 'weight', 'foodEnergy', 'packSize'];
+        const PERSISTED_FIELDS = ['birthday', 'breed', 'size', 'weight'];
 
         /** 入力欄の値を保存する */
         function saveProfile() {
