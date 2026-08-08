@@ -141,19 +141,14 @@
                 </label>
             </div>
 
-            <div id="dog-fields" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                 <label class="block">
-                    <span class="text-sm font-bold text-slate-600">犬種</span>
+                    <span id="breed-label" class="text-sm font-bold text-slate-600"></span>
                     <select id="breed" class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"></select>
                 </label>
                 <label class="block">
-                    <span class="text-sm font-bold text-slate-600">サイズ区分</span>
-                    <select id="size" class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
-                        <option value="toy">超小型犬（〜4kg）</option>
-                        <option value="small">小型犬（4〜10kg）</option>
-                        <option value="medium">中型犬（10〜25kg）</option>
-                        <option value="large">大型犬（25kg〜）</option>
-                    </select>
+                    <span id="size-label" class="text-sm font-bold text-slate-600"></span>
+                    <select id="size" class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"></select>
                     <span id="size-hint" class="block text-xs text-slate-400 mt-1.5"></span>
                 </label>
             </div>
@@ -229,9 +224,10 @@
             speciesGroup: document.getElementById('species-group'),
             birthday: document.getElementById('birthday'),
             breed: document.getElementById('breed'),
+            breedLabel: document.getElementById('breed-label'),
             size: document.getElementById('size'),
+            sizeLabel: document.getElementById('size-label'),
             sizeHint: document.getElementById('size-hint'),
-            dogFields: document.getElementById('dog-fields'),
             weight: document.getElementById('weight'),
             neuteredGroup: document.getElementById('neutered-group'),
             neuteredHint: document.getElementById('neutered-hint'),
@@ -297,23 +293,65 @@
          * 網羅ではなく、サイズ判定に足る代表的な犬種を収録している。
          * 該当しない場合は「わからない・ミックス」を選び、サイズ区分を直接指定する。
          */
-        const BREEDS = {
-            toy: ['チワワ', 'トイ・プードル', 'ポメラニアン', 'ヨークシャー・テリア', 'マルチーズ', 'パピヨン', 'ミニチュア・ピンシャー', 'イタリアン・グレーハウンド'],
-            small: ['柴犬', 'ミニチュア・ダックスフンド', 'シー・ズー', 'ミニチュア・シュナウザー', 'ジャック・ラッセル・テリア', 'フレンチ・ブルドッグ', 'パグ', 'ビーグル', 'キャバリア・キング・チャールズ・スパニエル', 'ウェルシュ・コーギー・ペンブローク'],
-            medium: ['ボーダー・コリー', 'シェットランド・シープドッグ', 'アメリカン・コッカー・スパニエル', '日本スピッツ', 'ウィペット', '甲斐犬', '紀州犬'],
-            large: ['ゴールデン・レトリーバー', 'ラブラドール・レトリーバー', 'バーニーズ・マウンテン・ドッグ', 'ジャーマン・シェパード・ドッグ', 'シベリアン・ハスキー', 'ドーベルマン', 'グレート・ピレニーズ', '秋田犬', 'ボルゾイ']
+        /**
+         * 種別ごとの品種・体格の定義。
+         *
+         * 犬は体格差が大きく、成犬になる月齢もシニア期に入る月齢も区分で変わる。
+         * 猫は体格差こそ犬ほどではないが、メインクーンなどの大型種は成熟が遅く、
+         * 体格が固まるまで3年前後かかる。一律12ヶ月にすると、まだ成長期の大型種に
+         * 成猫の係数を当ててしまい給与量を大幅に少なく見積もるため、猫も区分を持つ。
+         * シニア期に入る月齢は品種差より個体差が大きいため、猫は一律とする。
+         */
+        const SPECIES_DEFS = {
+            dog: {
+                breedLabel: '犬種',
+                sizeLabel: 'サイズ区分',
+                unknownLabel: 'わからない・ミックス',
+                otherLabel: 'その他（一覧にない犬種）',
+                defaultSize: 'small',
+                profiles: {
+                    toy:    { label: '超小型犬', adultMonths: 10, seniorMonths: 120, adultWeight: 3 },
+                    small:  { label: '小型犬',   adultMonths: 12, seniorMonths: 120, adultWeight: 8 },
+                    medium: { label: '中型犬',   adultMonths: 12, seniorMonths: 96,  adultWeight: 18 },
+                    large:  { label: '大型犬',   adultMonths: 18, seniorMonths: 84,  adultWeight: 35 }
+                },
+                sizeOptions: {
+                    toy: '超小型犬（〜4kg）',
+                    small: '小型犬（4〜10kg）',
+                    medium: '中型犬（10〜25kg）',
+                    large: '大型犬（25kg〜）'
+                },
+                breeds: {
+                    toy: ['チワワ', 'トイ・プードル', 'ポメラニアン', 'ヨークシャー・テリア', 'マルチーズ', 'パピヨン', 'ミニチュア・ピンシャー', 'イタリアン・グレーハウンド'],
+                    small: ['柴犬', 'ミニチュア・ダックスフンド', 'シー・ズー', 'ミニチュア・シュナウザー', 'ジャック・ラッセル・テリア', 'フレンチ・ブルドッグ', 'パグ', 'ビーグル', 'キャバリア・キング・チャールズ・スパニエル', 'ウェルシュ・コーギー・ペンブローク'],
+                    medium: ['ボーダー・コリー', 'シェットランド・シープドッグ', 'アメリカン・コッカー・スパニエル', '日本スピッツ', 'ウィペット', '甲斐犬', '紀州犬'],
+                    large: ['ゴールデン・レトリーバー', 'ラブラドール・レトリーバー', 'バーニーズ・マウンテン・ドッグ', 'ジャーマン・シェパード・ドッグ', 'シベリアン・ハスキー', 'ドーベルマン', 'グレート・ピレニーズ', '秋田犬', 'ボルゾイ']
+                }
+            },
+            cat: {
+                breedLabel: '猫種',
+                sizeLabel: '体格',
+                unknownLabel: 'わからない・ミックス',
+                otherLabel: 'その他（一覧にない猫種）',
+                defaultSize: 'standard',
+                profiles: {
+                    petite:   { label: '小柄な猫', adultMonths: 12, seniorMonths: 132, adultWeight: 3.5 },
+                    standard: { label: '標準的な猫', adultMonths: 12, seniorMonths: 132, adultWeight: 4.5 },
+                    // 大型種は成熟が遅く、体格が固まるまで3年前後かかる
+                    large:    { label: '大型の猫', adultMonths: 36, seniorMonths: 132, adultWeight: 7 }
+                },
+                sizeOptions: {
+                    petite: '小柄（〜3.5kg）',
+                    standard: '標準（3.5〜6kg）',
+                    large: '大型（6kg〜）'
+                },
+                breeds: {
+                    petite: ['シャム', 'オリエンタル・ショートヘア', 'シンガプーラ', 'コーニッシュレックス', 'デボンレックス'],
+                    standard: ['日本猫・雑種', 'アメリカン・ショートヘア', 'スコティッシュフォールド', 'マンチカン', 'ロシアンブルー', 'ブリティッシュ・ショートヘア', 'ペルシャ', 'ベンガル', 'アビシニアン', 'ソマリ', 'エキゾチックショートヘア'],
+                    large: ['メインクーン', 'ノルウェージャン・フォレスト・キャット', 'ラグドール', 'サイベリアン', 'ラガマフィン']
+                }
+            }
         };
-
-        /** サイズ区分ごとの、成犬になる月齢とシニア期に入る月齢、および成犬時の体重 */
-        const SIZE_PROFILES = {
-            toy:    { label: '超小型犬', adultMonths: 10, seniorMonths: 120, adultWeight: 3 },
-            small:  { label: '小型犬',   adultMonths: 12, seniorMonths: 120, adultWeight: 8 },
-            medium: { label: '中型犬',   adultMonths: 12, seniorMonths: 96,  adultWeight: 18 },
-            large:  { label: '大型犬',   adultMonths: 18, seniorMonths: 84,  adultWeight: 35 }
-        };
-
-        /** 猫のプロファイル（品種によるサイズ差が小さいため一律） */
-        const CAT_PROFILE = { label: '猫', adultMonths: 12, seniorMonths: 132, adultWeight: 4 };
 
         /** 成長段階の定義。arrival から順に進む */
         const STAGES = [
@@ -357,9 +395,13 @@
             return { days, months: Math.max(0, months), years: Math.floor(Math.max(0, months) / 12) };
         }
 
-        /** 種別とサイズ区分からプロファイルを取得する */
+        /**
+         * 種別と体格の区分からプロファイルを取得する。
+         * 種別を切り替えた直後など、区分が種別に対応していない場合は既定値に戻す。
+         */
         function getProfile(species, size) {
-            return species === 'cat' ? CAT_PROFILE : SIZE_PROFILES[size];
+            const def = SPECIES_DEFS[species];
+            return def.profiles[size] || def.profiles[def.defaultSize];
         }
 
         /** 月齢を「○ヶ月」または「○歳」に整形する */
@@ -841,29 +883,40 @@
         }
 
         /**
-         * 犬種セレクトの選択肢を構築する。
-         *
-         * 選択肢の value には犬種名を使う。サイズ区分を value にすると
-         * 同じ値の選択肢が複数できてしまい、保存した犬種を復元できないため。
+         * 品種名 -> 体格の区分。種別ごとに持つ。
+         * 選択肢の value には品種名を使う。区分を value にすると同じ値の選択肢が
+         * 複数できてしまい、保存した品種を復元できないため。
          */
-        const BREED_SIZE = {};
+        const BREED_SIZE = { dog: {}, cat: {} };
 
-        function buildBreedOptions() {
-            // どちらもサイズ区分を自動判定できないため、手動指定に切り替わる。
+        Object.entries(SPECIES_DEFS).forEach(([species, def]) => {
+            Object.entries(def.breeds).forEach(([size, breeds]) => {
+                breeds.forEach(breed => { BREED_SIZE[species][breed] = size; });
+            });
+        });
+
+        /** 現在の種別に合わせて品種・体格のセレクトを組み直す */
+        function buildBreedOptions(species) {
+            const def = SPECIES_DEFS[species];
+
+            elements.breedLabel.textContent = def.breedLabel;
+            elements.sizeLabel.textContent = def.sizeLabel;
+
+            elements.breed.innerHTML = '';
+            // どちらも区分を自動判定できないため、手動指定に切り替わる。
             // 「ミックス」と「その他」を分けているのは、一覧にない純血種の
             // 飼い主が「わからない」を選ばされずに済むようにするため。
-            [['', 'わからない・ミックス'], ['other', 'その他（一覧にない犬種）']].forEach(([value, text]) => {
+            [['', def.unknownLabel], ['other', def.otherLabel]].forEach(([value, text]) => {
                 const option = document.createElement('option');
                 option.value = value;
                 option.textContent = text;
                 elements.breed.appendChild(option);
             });
 
-            Object.entries(SIZE_PROFILES).forEach(([size, profile]) => {
+            Object.entries(def.profiles).forEach(([size, profile]) => {
                 const group = document.createElement('optgroup');
                 group.label = profile.label;
-                BREEDS[size].forEach(breed => {
-                    BREED_SIZE[breed] = size;
+                def.breeds[size].forEach(breed => {
                     const option = document.createElement('option');
                     option.value = breed;
                     option.textContent = breed;
@@ -871,16 +924,34 @@
                 });
                 elements.breed.appendChild(group);
             });
+
+            elements.size.innerHTML = '';
+            Object.entries(def.sizeOptions).forEach(([value, text]) => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = text;
+                elements.size.appendChild(option);
+            });
         }
 
-        /** 種別・犬種の選択に応じて入力欄の表示と状態を切り替える */
-        function syncFields() {
-            const isDog = getSpecies() === 'dog';
-            elements.dogFields.classList.toggle('hidden', !isDog);
+        /** 選択中の種別。切り替わったときだけセレクトを組み直す */
+        let builtSpecies = null;
 
-            // 犬種を選ぶとサイズ区分は自動で決まる。欄は隠さず読み取り専用にして、
+        /** 種別・品種の選択に応じて入力欄の内容と状態を切り替える */
+        function syncFields() {
+            const species = getSpecies();
+            const def = SPECIES_DEFS[species];
+
+            // 種別が変わると品種の一覧が総入れ替えになるため、選択は既定に戻す
+            if (builtSpecies !== species) {
+                buildBreedOptions(species);
+                elements.size.value = def.defaultSize;
+                builtSpecies = species;
+            }
+
+            // 品種を選ぶと体格は自動で決まる。欄は隠さず読み取り専用にして、
             // どう判定されたかが見えるようにする（ミックスなら手動で指定できる）
-            const breedSize = BREED_SIZE[elements.breed.value] || '';
+            const breedSize = BREED_SIZE[species][elements.breed.value] || '';
             if (breedSize) elements.size.value = breedSize;
 
             const derived = breedSize !== '';
@@ -888,8 +959,8 @@
             elements.size.classList.toggle('bg-slate-100', derived);
             elements.size.classList.toggle('text-slate-400', derived);
             elements.sizeHint.textContent = derived
-                ? '犬種から自動で判定しています。'
-                : 'ミックスや一覧にない犬種は、体格に近いものを選んでください。';
+                ? `${def.breedLabel}から自動で判定しています。`
+                : `ミックスや一覧にない${def.breedLabel}は、体格に近いものを選んでください。`;
         }
 
         /**
@@ -1012,26 +1083,37 @@
 
         /** 保存済みの値を入力欄へ復元する */
         function restoreProfile() {
+            // 品種の一覧は種別によって変わるため、先に種別を復元してから組み立てる
+            if (store.profile.species) setRadioValue('species', store.profile.species);
+            if (store.profile.neutered) setRadioValue('neutered', store.profile.neutered);
+
+            const species = getSpecies();
+            buildBreedOptions(species);
+            builtSpecies = species;
+
             PERSISTED_FIELDS.forEach(key => {
                 const value = store.profile[key];
                 if (value !== undefined && value !== null && value !== '') elements[key].value = value;
             });
 
-            // 犬種名を value にする前の保存データ（サイズコードが入っている）への移行措置。
+            // 品種名を value にする前の保存データ（区分のコードが入っている）への移行措置。
             // 該当しない値だと selectedIndex が -1 になり、空白のセレクトになってしまう
             if (elements.breed.selectedIndex < 0) {
-                if (SIZE_PROFILES[store.profile.breed]) elements.size.value = store.profile.breed;
+                if (SPECIES_DEFS[species].profiles[store.profile.breed]) {
+                    elements.size.value = store.profile.breed;
+                }
                 elements.breed.value = '';
             }
 
-            if (store.profile.species) setRadioValue('species', store.profile.species);
-            if (store.profile.neutered) setRadioValue('neutered', store.profile.neutered);
+            // 種別に対応しない区分が保存されていた場合も既定に戻す
+            if (elements.size.selectedIndex < 0) {
+                elements.size.value = SPECIES_DEFS[species].defaultSize;
+            }
 
             // 体重を手で編集していた場合は、復元後も自動推定で上書きしない
             weightEdited = store.profile.weightEdited === true;
         }
 
-        buildBreedOptions();
         loadStore();
         restoreProfile();
 
