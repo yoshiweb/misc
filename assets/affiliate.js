@@ -9,9 +9,9 @@
  * 古いモジュールの組み合わせで実行時エラーになる。
  * 変更したら、読み込んでいる全ツールの script タグのバージョンを上げること。
  *
- *   <script src="../../assets/affiliate.js?v=5"></script>
+ *   <script src="../../assets/affiliate.js?v=6"></script>
  *
- * 現在のバージョン: v=5
+ * 現在のバージョン: v=6
  * 読み込んでいるツール:
  *   - tools/pfc-calculator/index.html
  *   - tools/pet-timeline/index.html
@@ -132,15 +132,34 @@
     }
 
     /**
-     * 商品イラストの要素を生成する。画像が未設定の商品は null を返す。
+     * 商品の image からイラストのパスを決める。
+     *
+     * image は文字列のほか、バリアント名をキーにしたオブジェクトも取れる。
+     * 例: { dog: '...', cat: '...' } のように、同じ商品でも対象によって
+     * 絵柄を変えたい場合に使う。該当するバリアントがなければ最初の1つを使う。
+     */
+    function resolveImage(product, variant) {
+        if (!product.image) return null;
+        if (typeof product.image === 'string') return product.image;
+
+        const variants = Object.values(product.image);
+        return product.image[variant] || variants[0] || null;
+    }
+
+    /**
+     * 商品イラストの要素を生成する。
      *
      * 商品データの image は各ツールの index.html から見た相対パスで持つ。
      * ツールはすべて tools/<name>/index.html の深さに置く前提。
+     *
+     * イラストを使うカテゴリでは、未設定の商品にも同じサイズの枠を返して
+     * カードの左端を揃える。イラストを使わないカテゴリでは null を返す。
      */
-    function productImage(product) {
+    function productImage(product, variant) {
         const size = 'shrink-0 w-24 h-16 sm:w-32 sm:h-20 rounded-lg';
+        const src = resolveImage(product, variant);
 
-        if (!product.image) {
+        if (!src) {
             // イラストを使うカテゴリでは、未設定でも枠を確保して左端を揃える
             if (!categoryHasImages.get(product.category)) return null;
 
@@ -151,7 +170,7 @@
         }
 
         const img = document.createElement('img');
-        img.src = product.image;
+        img.src = src;
         img.alt = product.name;
         img.loading = 'lazy';
         img.className = `${size} object-cover bg-slate-100`;
@@ -197,12 +216,14 @@
     /**
      * 商品カード要素を生成する。
      * 価格は規約上表示できないため、いかなる形でも出力しない。
+     *
+     * options.imageVariant … image がバリアント形式のときに選ぶキー。
      */
-    function productCard(product) {
+    function productCard(product, options) {
         const card = document.createElement('div');
         card.className = 'flex flex-wrap items-center gap-4 p-4 bg-white border border-slate-200 rounded-xl';
 
-        const image = productImage(product);
+        const image = productImage(product, options && options.imageVariant);
         if (image) card.appendChild(image);
 
         const body = document.createElement('div');
