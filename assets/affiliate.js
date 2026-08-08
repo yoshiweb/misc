@@ -9,9 +9,9 @@
  * 古いモジュールの組み合わせで実行時エラーになる。
  * 変更したら、読み込んでいる全ツールの script タグのバージョンを上げること。
  *
- *   <script src="../../assets/affiliate.js?v=2"></script>
+ *   <script src="../../assets/affiliate.js?v=5"></script>
  *
- * 現在のバージョン: v=2
+ * 現在のバージョン: v=5
  * 読み込んでいるツール:
  *   - tools/pfc-calculator/index.html
  *   - tools/pet-timeline/index.html
@@ -48,6 +48,13 @@
 
     /** カテゴリ名 -> 商品データ のレジストリ */
     const registry = new Map();
+
+    /**
+     * カテゴリ名 -> そのカテゴリに1つでもイラストがあるか。
+     * イラストを使うカテゴリでは、未設定の商品にプレースホルダーを出して
+     * カードの左端を揃える。イラストを一切使わないツールでは何も出さない。
+     */
+    const categoryHasImages = new Map();
 
     /** 対応している商品データのスキーマバージョン */
     const SCHEMA_VERSION = 1;
@@ -124,6 +131,33 @@
         return links;
     }
 
+    /**
+     * 商品イラストの要素を生成する。画像が未設定の商品は null を返す。
+     *
+     * 商品データの image は各ツールの index.html から見た相対パスで持つ。
+     * ツールはすべて tools/<name>/index.html の深さに置く前提。
+     */
+    function productImage(product) {
+        const size = 'shrink-0 w-24 h-16 sm:w-32 sm:h-20 rounded-lg';
+
+        if (!product.image) {
+            // イラストを使うカテゴリでは、未設定でも枠を確保して左端を揃える
+            if (!categoryHasImages.get(product.category)) return null;
+
+            const placeholder = document.createElement('div');
+            placeholder.className = `${size} bg-slate-100 border border-slate-200`;
+            placeholder.setAttribute('aria-hidden', 'true');
+            return placeholder;
+        }
+
+        const img = document.createElement('img');
+        img.src = product.image;
+        img.alt = product.name;
+        img.loading = 'lazy';
+        img.className = `${size} object-cover bg-slate-100`;
+        return img;
+    }
+
     /** ストアリンクのボタン要素を生成する */
     function storeLinkElement(link) {
         const el = document.createElement('a');
@@ -148,7 +182,11 @@
             console.warn(`[Affiliate] 未対応のスキーマバージョンです: ${category}`);
             return;
         }
+        // 商品カードから所属カテゴリを引けるようにする
+        data.products.forEach(product => { product.category = category; });
+
         registry.set(category, data.products);
+        categoryHasImages.set(category, data.products.some(product => product.image));
     }
 
     /** 登録済みの商品リストを取得する（未登録なら空配列） */
@@ -162,10 +200,14 @@
      */
     function productCard(product) {
         const card = document.createElement('div');
-        card.className = 'flex flex-wrap items-center justify-between gap-3 p-4 bg-white border border-slate-200 rounded-xl';
+        card.className = 'flex flex-wrap items-center gap-4 p-4 bg-white border border-slate-200 rounded-xl';
+
+        const image = productImage(product);
+        if (image) card.appendChild(image);
 
         const body = document.createElement('div');
-        body.className = 'min-w-0';
+        // 画像とボタンの間で伸縮させ、長い説明文でも折り返せるようにする
+        body.className = 'min-w-0 flex-1';
 
         if (product.label) {
             const badge = document.createElement('p');
@@ -254,6 +296,7 @@
         registerProducts,
         getProducts,
         productCard,
+        productImage,
         renderPrNotice,
         renderDisclosure
     };
