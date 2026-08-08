@@ -927,8 +927,9 @@
 
         elements.weight.addEventListener('input', () => { weightEdited = true; });
 
+        // 値を持つ入力欄だけを対象にする。コンテナや説明用の要素は自動的に除外される
         Object.values(elements).forEach(el => {
-            if (el === elements.result || el === elements.dogFields || el === elements.sizeField) return;
+            if (!(el instanceof HTMLInputElement || el instanceof HTMLSelectElement)) return;
             const handler = () => { update(); saveProfile(); };
             el.addEventListener('input', handler);
             el.addEventListener('change', handler);
