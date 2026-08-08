@@ -857,7 +857,14 @@
                 });
             }
 
-            // 補充リマインドは再訪時に最初に見る情報なので、給与量より前に置く
+            if (food) elements.result.appendChild(renderFood(food));
+
+            elements.result.appendChild(renderTimeline(stages, currentIndex, species));
+
+            const products = renderProducts(species, stage);
+            if (products) elements.result.appendChild(products);
+
+            // 補充リマインドはフードの給与量に依存するため、算出後に組み立てる
             const refills = renderRefills(buildRefills(
                 species,
                 stage.key,
@@ -865,13 +872,6 @@
                 Number(elements.packSize.value)
             ));
             if (refills) elements.result.appendChild(refills);
-
-            if (food) elements.result.appendChild(renderFood(food));
-
-            const products = renderProducts(species, stage);
-            if (products) elements.result.appendChild(products);
-
-            elements.result.appendChild(renderTimeline(stages, currentIndex, species));
 
             lucide.createIcons();
         }
