@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ペット成長タイムライン</title>
+    <title>うちの子（犬猫）成長カレンダー</title>
     <meta name="description" content="犬・猫の生年月日と犬種から現在の成長段階を判定し、いま必要なグッズとフードの給与量を算出します。">
     <!--
         canonical と OGP は SNS で共有されたときのために置く。
@@ -14,7 +14,7 @@
     <link rel="canonical" href="https://misc.yoshiweb.net/tools/pet-timeline/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="misc.yoshiweb.net">
-    <meta property="og:title" content="ペット成長タイムライン">
+    <meta property="og:title" content="うちの子（犬猫）成長カレンダー">
     <meta property="og:description" content="犬・猫の生年月日と犬種から現在の成長段階を判定し、いま必要なグッズとフードの給与量を算出します。">
     <meta property="og:url" content="https://misc.yoshiweb.net/tools/pet-timeline/">
     <meta property="og:locale" content="ja_JP">
@@ -132,7 +132,7 @@
 <body class="min-h-screen flex flex-col items-center p-4 sm:p-10">
 
     <header class="text-center w-full max-w-3xl mb-8">
-        <h1 class="text-3xl font-bold text-slate-900 mb-2">ペット成長タイムライン</h1>
+        <h1 class="text-3xl font-bold text-slate-900 mb-2">うちの子（犬猫）成長カレンダー</h1>
         <p class="text-slate-500">犬・猫の生年月日と犬種から現在の成長段階を判定し、いま必要なグッズとフードの給与量を算出します。</p>
     </header>
 
@@ -329,7 +329,11 @@
         const getSpecies = () => radioValue('species', 'dog');
         const isNeutered = () => radioValue('neutered', 'no') === 'yes';
 
-        /** ローカルストレージのキー。スキーマを変える場合はバージョンを上げる */
+        /**
+         * ローカルストレージのキー。スキーマを変える場合はバージョンを上げる。
+         * サービス名を変更したあとも旧名のままなのは、既存利用者の保存データを
+         * 引き継ぐため。名前に合わせて変えると入力内容と補充の記録が消える。
+         */
         const STORAGE_KEY = 'pet-timeline.v1';
 
         /**
@@ -1065,7 +1069,9 @@
             preview.textContent = text;
             section.appendChild(preview);
 
-            Share.render(section, { text, hashtags: ['ペット成長タイムライン'] });
+            // ハッシュタグは括弧を含められない（そこでタグが切れる）ため、
+            // サービス名から括弧書きを外した表記を使う
+            Share.render(section, { text, hashtags: ['うちの子成長カレンダー'] });
 
             const note = document.createElement('p');
             note.className = 'mt-3 text-xs text-slate-400 leading-relaxed';

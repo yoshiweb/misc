@@ -15,7 +15,7 @@
 - [Thumbnail Generator](./tools/thumbnail-generator/index.html)
 - [Affiliate Links Generator](./tools/affiliate-links/index.html)
 - [PFC Calculator](./tools/pfc-calculator/index.html)
-- [Pet Growth Timeline](./tools/pet-timeline/index.html)
+- [Pet Growth Calendar](./tools/pet-timeline/index.html)
 - [Disaster Stockpile Simulator](./tools/disaster-stockpile/index.html)
 - [node-fusion game](./games/node-fusion.html)
 - [pulse-bloom game](./games/pulse-bloom.html)
