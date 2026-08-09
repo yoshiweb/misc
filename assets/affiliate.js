@@ -9,9 +9,9 @@
  * 古いモジュールの組み合わせで実行時エラーになる。
  * 変更したら、読み込んでいる全ツールの script タグのバージョンを上げること。
  *
- *   <script src="../../assets/affiliate.js?v=6"></script>
+ *   <script src="../../assets/affiliate.js?v=7"></script>
  *
- * 現在のバージョン: v=6
+ * 現在のバージョン: v=7
  * 読み込んでいるツール:
  *   - tools/pfc-calculator/index.html
  *   - tools/pet-timeline/index.html
@@ -48,6 +48,14 @@
 
     /** カテゴリ名 -> 商品データ のレジストリ */
     const registry = new Map();
+
+    /**
+     * カテゴリ名 -> 出典データ（キー -> 資料情報）のレジストリ。
+     *
+     * 算出の根拠として公的機関の資料を提示するツールのために持つ。
+     * 商品データ側では sourceIds でこのキーを参照する。
+     */
+    const sourceRegistry = new Map();
 
     /**
      * カテゴリ名 -> そのカテゴリに1つでもイラストがあるか。
@@ -205,12 +213,29 @@
         data.products.forEach(product => { product.category = category; });
 
         registry.set(category, data.products);
+        sourceRegistry.set(category, data.sources || {});
         categoryHasImages.set(category, data.products.some(product => product.image));
     }
 
     /** 登録済みの商品リストを取得する（未登録なら空配列） */
     function getProducts(category) {
         return registry.get(category) || [];
+    }
+
+    /** 登録済みの出典データを取得する（未登録なら空オブジェクト） */
+    function getSources(category) {
+        return sourceRegistry.get(category) || {};
+    }
+
+    /**
+     * 商品が参照している出典を、登録順に解決して返す。
+     * 未登録のキーは無視する。
+     */
+    function sourcesFor(product) {
+        const sources = getSources(product.category);
+        return (product.sourceIds || [])
+            .map(id => sources[id])
+            .filter(Boolean);
     }
 
     /**
@@ -316,6 +341,8 @@
         storeLinkElement,
         registerProducts,
         getProducts,
+        getSources,
+        sourcesFor,
         productCard,
         productImage,
         renderPrNotice,
