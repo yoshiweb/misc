@@ -9,9 +9,9 @@
  * 古いモジュールの組み合わせで実行時エラーになる。
  * 変更したら、読み込んでいる全ツールの script タグのバージョンを上げること。
  *
- *   <script src="../../assets/affiliate.js?v=7"></script>
+ *   <script src="../../assets/affiliate.js?v=8"></script>
  *
- * 現在のバージョン: v=7
+ * 現在のバージョン: v=8
  * 読み込んでいるツール:
  *   - tools/pfc-calculator/index.html
  *   - tools/pet-timeline/index.html
@@ -243,6 +243,8 @@
      * 価格は規約上表示できないため、いかなる形でも出力しない。
      *
      * options.imageVariant … image がバリアント形式のときに選ぶキー。
+     * options.controls … 商品名の下に差し込む要素。チェック欄など、
+     *   ツール固有の操作を1枚のカードの中に収めるための差込口。
      */
     function productCard(product, options) {
         const card = document.createElement('div');
@@ -273,6 +275,8 @@
             note.textContent = product.note;
             body.appendChild(note);
         }
+
+        if (options && options.controls) body.appendChild(options.controls);
 
         const actions = document.createElement('div');
         actions.className = 'shrink-0 flex flex-wrap gap-2';
