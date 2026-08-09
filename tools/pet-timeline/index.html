@@ -4,6 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ペット成長タイムライン</title>
+    <meta name="description" content="犬・猫の生年月日と犬種から現在の成長段階を判定し、いま必要なグッズとフードの給与量を算出します。">
+    <!--
+        canonical と OGP は SNS で共有されたときのために置く。
+        共有モジュールは canonical を共有URLの既定値として使うため、
+        localhost や file:// で開いた状態から共有しても正しいURLが流れる。
+        ここだけは共有先の環境で解決される必要があるため絶対URLで書く。
+    -->
+    <link rel="canonical" href="https://misc.yoshiweb.net/tools/pet-timeline/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="misc.yoshiweb.net">
+    <meta property="og:title" content="ペット成長タイムライン">
+    <meta property="og:description" content="犬・猫の生年月日と犬種から現在の成長段階を判定し、いま必要なグッズとフードの給与量を算出します。">
+    <meta property="og:url" content="https://misc.yoshiweb.net/tools/pet-timeline/">
+    <meta property="og:locale" content="ja_JP">
+    <meta name="twitter:card" content="summary">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -203,6 +218,7 @@
     </main>
 
     <script src="../../assets/affiliate.js?v=7"></script>
+    <script src="../../assets/share.js?v=1"></script>
     <script src="../../data/products/pet.js?v=6"></script>
     <script>
         lucide.createIcons();
@@ -484,6 +500,19 @@
             return 24;
         }
 
+        /**
+         * 現在の年齢を表示用に整形する。
+         *
+         * 1歳を境に「○ヶ月」から「○歳○ヶ月」へ切り替える。ステージの境界を表す
+         * formatMonths() が2歳まで月齢のままなのは範囲の比較のしやすさを優先した
+         * ためで、いま何歳かを伝えるこちらとは基準が異なる。
+         */
+        function formatAge(age) {
+            if (age.months < 12) return `${age.months}ヶ月`;
+            const rest = age.months % 12;
+            return rest > 0 ? `${age.years}歳${rest}ヶ月` : `${age.years}歳`;
+        }
+
         /** 月齢を「○ヶ月」または「○歳」に整形する */
         function formatMonths(months) {
             if (months < 24) return `${months}ヶ月`;
@@ -683,12 +712,8 @@
             const summary = document.createElement('div');
             summary.className = 'grid grid-cols-2 sm:grid-cols-5 gap-3';
 
-            const ageText = age.months >= 12
-                ? `${age.years}歳${age.months % 12 > 0 ? age.months % 12 + 'ヶ月' : ''}`
-                : `${age.months}ヶ月`;
-
             const cells = [
-                { label: '年齢', value: ageText },
+                { label: '年齢', value: formatAge(age) },
                 { label: '日齢', value: `${age.days.toLocaleString()}日` },
                 { label: '区分', value: profile.label },
                 { label: '成長段階', value: stage.name },
@@ -1006,6 +1031,47 @@
         }
 
         /**
+         * 共有本文を組み立てる。
+         *
+         * 品種は選択されていればそのまま使い、「ミックス」「その他」の場合は
+         * 体格の区分名で代替する。URLとハッシュタグは共有モジュールが付けるため
+         * ここには含めない。
+         */
+        function buildShareText(species, profile, age, stage) {
+            const icon = species === 'cat' ? '🐱' : '🐶';
+            const breed = elements.breed.value;
+            const breedName = (breed && breed !== 'other') ? breed : profile.label;
+
+            return `${icon} うちの子（${breedName}・${formatAge(age)}）はいま「${stage.name}」。`
+                + `人間でいうと約${toHumanAge(age.months, profile)}歳です。`;
+        }
+
+        /**
+         * 共有セクションを描画する。
+         *
+         * 共有本文には品種と年齢が入るため、何が流れるのかを見てから押せるよう
+         * ボタンの上に本文をそのまま表示する。
+         */
+        function renderShare(text) {
+            const section = createSection('この結果をシェア', 'share-2');
+
+            const preview = document.createElement('p');
+            preview.className = 'p-3 mb-3 text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-xl';
+            preview.textContent = text;
+            section.appendChild(preview);
+
+            Share.render(section, { text, hashtags: ['ペット成長タイムライン'] });
+
+            const note = document.createElement('p');
+            note.className = 'mt-3 text-xs text-slate-400 leading-relaxed';
+            note.textContent = '共有されるのは上の本文とツールのURLだけです。'
+                + '生年月日・体重・消耗品の記録は含まれません。';
+            section.appendChild(note);
+
+            return section;
+        }
+
+        /**
          * 品種名 -> 体格の区分。種別ごとに持つ。
          * 選択肢の value には品種名を使う。区分を value にすると同じ値の選択肢が
          * 複数できてしまい、保存した品種を復元できないため。
@@ -1186,6 +1252,10 @@
                 getSetting('packSize')
             ), species);
             if (refills) elements.result.appendChild(refills);
+
+            // 共有は結果をひととおり見たあとの動線になるため末尾に置く
+            elements.result.appendChild(
+                renderShare(buildShareText(species, profile, age, stage)));
 
             lucide.createIcons();
         }
