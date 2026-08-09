@@ -566,6 +566,42 @@
             return `${formatMonths(stage.startMonths)}〜${formatMonths(stage.endMonths)}`;
         }
 
+        /**
+         * 先のステージが始まるまでの期間を表示用の文字列にする。
+         *
+         * 月齢のままだと「約105ヶ月後」のように読み取れなくなるため、
+         * 2年以上は年に繰り上げる。年齢ではなく期間なので単位は「年」を使う
+         * （formatMonths() の「歳」とは意味が異なる）。
+         */
+        function formatMonthsUntil(months) {
+            if (months <= 0) return 'まもなく';
+            if (months < 24) return `約${months}ヶ月後`;
+            const years = Math.floor(months / 12);
+            const rest = months % 12;
+            return rest === 0 ? `約${years}年後` : `約${years}年${rest}ヶ月後`;
+        }
+
+        /**
+         * 準備を促す対象とみなす、次のステージまでの月数。
+         * 最初の2つのステージが2ヶ月刻みで進むため、それに合わせている。
+         */
+        const SOON_MONTHS = 2;
+
+        /**
+         * 先のステージに付ける、そこへ入るまでの期間のラベルを組み立てる。
+         * 間近のものは買い物の判断に直結するため、文言と色を分けて目立たせる。
+         */
+        function stageUntilLabel(monthsUntil) {
+            const text = formatMonthsUntil(monthsUntil);
+            if (monthsUntil > SOON_MONTHS) {
+                return { text, className: 'text-indigo-600 bg-indigo-50' };
+            }
+            return {
+                text: monthsUntil <= 0 ? 'もうすぐ準備' : `もうすぐ準備（${text}）`,
+                className: 'text-amber-800 bg-amber-100'
+            };
+        }
+
         /** ステージの期間を人間換算年齢で表す。書式は formatStageRange に揃える */
         function formatHumanStageRange(stage, profile) {
             const from = toHumanAge(stage.startMonths, profile);
@@ -950,7 +986,7 @@
         }
 
         /** タイムラインを描画する */
-        function renderTimeline(stages, currentIndex, species, profile) {
+        function renderTimeline(stages, currentIndex, species, profile, ageMonths) {
             const section = createSection('成長タイムライン', 'list-checks');
 
             const list = document.createElement('div');
@@ -986,11 +1022,20 @@
                 humanRange.textContent = formatHumanStageRange(stage, profile);
                 header.appendChild(humanRange);
 
+                // 各行の末尾は現在地を示す位置。いまいる段階には「いまここ」を、
+                // まだ先の段階にはそこへ入るまでの期間を置く。
+                // 月齢の範囲だけでは、あと何ヶ月で準備が必要になるのか読み取りにくい
                 if (index === currentIndex) {
                     const badge = document.createElement('span');
                     badge.className = 'text-xs font-bold text-white bg-indigo-600 px-2 py-0.5 rounded-full';
                     badge.textContent = 'いまここ';
                     header.appendChild(badge);
+                } else if (index > currentIndex) {
+                    const label = stageUntilLabel(stage.startMonths - ageMonths);
+                    const until = document.createElement('span');
+                    until.className = `text-xs font-bold px-2 py-0.5 rounded-full ${label.className}`;
+                    until.textContent = label.text;
+                    header.appendChild(until);
                 }
                 item.appendChild(header);
 
@@ -1250,7 +1295,7 @@
             // 体重が未入力でも、熱量の入力欄に触れられるよう常に描画する
             elements.result.appendChild(renderFood(food));
 
-            elements.result.appendChild(renderTimeline(stages, currentIndex, species, profile));
+            elements.result.appendChild(renderTimeline(stages, currentIndex, species, profile, age.months));
 
             const products = renderProducts(species, stage);
             if (products) elements.result.appendChild(products);
