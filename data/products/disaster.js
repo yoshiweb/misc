@@ -10,11 +10,12 @@
  * 必要数量は次の合計で求める。いずれのフィールドも省略可。
  *
  *   perDay        … 1日あたりの必要量（構成員ごと）× 人数（頭数）× 備蓄日数
+ *   perWeek       … 1週間あたりの必要量（構成員ごと）× 人数（頭数）× 備蓄日数 ÷ 7
  *   householdPerDay … 世帯単位で1日あたり必要な量 × 備蓄日数
  *   perPerson     … 備蓄日数に依存せず、1人あたり必要な量（人数分のみ）
  *   perHousehold  … 備蓄日数にも人数にも依存しない、世帯あたりの固定量
  *
- * perDay のキーは adult / child / infant / dog / cat。
+ * perDay / perWeek のキーは adult / child / infant / dog / cat。
  * perPerson で乳児を数えるべきでない品目（軍手など）は
  * `perPersonExcludesInfant: true` を指定する。
  *
@@ -26,10 +27,73 @@
  * 【期限管理】
  * - `shelfLifeYears` … 一般的な保存期間の目安（年）。null の場合は期限管理の対象外。
  *   実際の期限は製品によって異なるため、あくまで初期値として扱う。
+ *
+ * 【出典】
+ * - `sources` に一次資料を定義し、各商品の `sourceIds` からキーで参照する。
+ * - 公的資料に該当する数値がない品目は `sourceIds` を空にし、
+ *   `sourceNote` に当サイト独自の目安である旨と考え方を書く。
+ * - 数値を変更するときは、必ず参照している資料の記載と突き合わせること。
+ *   資料と異なる値にする場合は `sourceNote` にその理由を残す。
  */
 Affiliate.registerProducts('disaster', {
     schemaVersion: 1,
     category: 'disaster',
+
+    /** 数量の根拠として参照している一次資料 */
+    sources: {
+        'mhlw-simulator': {
+            publisher: '厚生労働省',
+            name: '大規模災害時に備えた栄養に配慮した食料備蓄・献立検討のための簡易シミュレーター（第1.0版）',
+            url: 'https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000089299_00004.html',
+            figures: '水は「調理用・飲用を合わせた1人あたり1日3リットル」を基準として算出、と手引きに明記。'
+        },
+        'mhlw-shelter-nutrition': {
+            publisher: '厚生労働省',
+            name: '大規模災害時の栄養・食生活支援（避難所における食事提供に係る適切な栄養管理の実施について）',
+            url: 'https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000089299_00005.html',
+            figures: '避難所における食事提供の評価・計画のための栄養の参照量。1人1日あたりエネルギー約2,000kcal、たんぱく質約55gなど。'
+        },
+        'maff-stockguide': {
+            publisher: '農林水産省',
+            name: '家庭備蓄ポータル／災害時に備えた食品ストックガイド',
+            url: 'https://www.maff.go.jp/j/zyukyu/foodstock/',
+            figures: '最低3日分～1週間分×人数分の家庭備蓄が望ましい。ローリングストックでの管理を推奨。'
+        },
+        'maff-iroha': {
+            publisher: '農林水産省',
+            name: 'aff（あふ）2026年3月号 知って備える 家庭備蓄のイロハ',
+            url: 'https://www.maff.go.jp/j/pr/aff/2603/spe1_01.html',
+            figures: '大人2人1週間分の例。水2L×6本×4箱（1人1日約3L）、米2kg×2袋（1人1食75g）、'
+                + 'レトルト食品18個、缶詰18缶、カセットコンロ1台、カセットボンベ12本（1人1週間約6本）。'
+        },
+        'cao-toilet': {
+            publisher: '内閣府（防災担当）',
+            name: '避難所におけるトイレの確保・管理ガイドライン（令和6年12月改定）',
+            url: 'https://www.bousai.go.jp/taisaku/hinanjo/pdf/2412hinanjo_toilet_guideline.pdf',
+            figures: '1日あたり必要な便袋の枚数＝避難者数×5回。排泄の回数は5回が平均的とされる。'
+        },
+        'tokyo-bichiku': {
+            publisher: '東京都',
+            name: '東京備蓄ナビ',
+            url: 'https://www.bichiku.metro.tokyo.lg.jp/',
+            figures: '家族構成から算出される1日あたりの目安。水3L（乳幼児2.4L）、携帯トイレ5回、マスク1枚、'
+                + '缶詰1缶、栄養補助食品1箱、液体ミルク6食、離乳食3食、おむつ10個、口内洗浄液90mL。'
+                + '給水袋・軍手は1人1つ、救急箱・ラジオは世帯に1つ。'
+        },
+        'env-pet': {
+            publisher: '環境省',
+            name: '人とペットの災害対策ガイドライン',
+            url: 'https://www.env.go.jp/nature/dobutsu/aigo/2_data/pamph/h3002.html',
+            figures: '持ち出しの優先順位1として「ペットフード、水（少なくとも5日分［できれば7日分以上］）」。'
+        },
+        'caa-liquid-milk': {
+            publisher: '消費者庁',
+            name: '乳児用液体ミルクってなに？',
+            url: 'https://www.caa.go.jp/policies/policy/food_labeling/foods_for_special_dietary_uses/assets/food_labeling_cms206_20230927_08.pdf',
+            figures: 'お湯が不要で災害時や備蓄に適する。常温保存が可能で、保存期間は紙パック約6か月、缶約1年。'
+        }
+    },
+
     products: [
         // ---- 水 ----
         {
@@ -40,9 +104,12 @@ Affiliate.registerProducts('disaster', {
             note: '飲料と調理をあわせた量。ペットの分も含みます。',
             searchKeyword: '長期保存水 5年',
             asin: null,
-            perDay: { adult: 3, child: 2, infant: 1, dog: 0.5, cat: 0.2 },
-            shelfLifeYears: 5,
+            perDay: { adult: 3, child: 3, infant: 2.4, dog: 0.5, cat: 0.2 },
+            sourceIds: ['mhlw-simulator', 'maff-iroha', 'tokyo-bichiku'],
+            sourceNote: '人の量は公的資料の1人1日3L（乳児は東京備蓄ナビの2.4L）。'
+                + '犬・猫の量は公的な数値が見当たらないため、体重あたりの一般的な飲水量から置いた当サイトの目安です。',
             importance: 1,
+            shelfLifeYears: 5,
             priority: 10
         },
         {
@@ -54,8 +121,9 @@ Affiliate.registerProducts('disaster', {
             searchKeyword: '給水袋 折りたたみ',
             asin: null,
             perPerson: 1,
-            shelfLifeYears: null,
+            sourceIds: ['tokyo-bichiku'],
             importance: 2,
+            shelfLifeYears: null,
             priority: 11
         },
 
@@ -69,8 +137,11 @@ Affiliate.registerProducts('disaster', {
             searchKeyword: 'アルファ米 非常食 5年',
             asin: null,
             perDay: { adult: 2, child: 2 },
-            shelfLifeYears: 5,
+            sourceIds: ['maff-iroha', 'maff-stockguide', 'tokyo-bichiku'],
+            sourceNote: '公的資料の主食は1人1日3食相当（米1人1食75g、レトルトご飯3食など）。'
+                + '本ツールはそのうち2食をアルファ米で確保し、残りを缶詰・補助食で補う想定にしています。',
             importance: 1,
+            shelfLifeYears: 5,
             priority: 20
         },
         {
@@ -82,8 +153,9 @@ Affiliate.registerProducts('disaster', {
             searchKeyword: '非常食 缶詰 セット',
             asin: null,
             perDay: { adult: 1, child: 1 },
-            shelfLifeYears: 3,
+            sourceIds: ['tokyo-bichiku', 'maff-iroha', 'mhlw-shelter-nutrition'],
             importance: 1,
+            shelfLifeYears: 3,
             priority: 21
         },
         {
@@ -95,8 +167,9 @@ Affiliate.registerProducts('disaster', {
             searchKeyword: '非常食 ようかん ビスケット 長期保存',
             asin: null,
             perDay: { adult: 1, child: 1 },
-            shelfLifeYears: 3,
+            sourceIds: ['tokyo-bichiku', 'mhlw-shelter-nutrition'],
             importance: 2,
+            shelfLifeYears: 3,
             priority: 22
         },
         {
@@ -107,9 +180,12 @@ Affiliate.registerProducts('disaster', {
             note: 'お湯が不要で、開封してすぐ飲ませられます。使用期限が短いため入れ替えの管理が重要です。',
             searchKeyword: '乳児用 液体ミルク',
             asin: null,
-            perDay: { infant: 5 },
-            shelfLifeYears: 1,
+            perDay: { infant: 6 },
+            sourceIds: ['tokyo-bichiku', 'caa-liquid-milk'],
+            sourceNote: '保存期間は紙パックで約6か月、缶で約1年（消費者庁）。初期値は1年にしているため、'
+                + '紙パックの製品では保存年数を短く設定してください。',
             importance: 1,
+            shelfLifeYears: 1,
             priority: 23
         },
         {
@@ -121,8 +197,9 @@ Affiliate.registerProducts('disaster', {
             searchKeyword: 'ベビーフード 常温 レトルト',
             asin: null,
             perDay: { infant: 3 },
-            shelfLifeYears: 1,
+            sourceIds: ['tokyo-bichiku'],
             importance: 1,
+            shelfLifeYears: 1,
             priority: 24
         },
         {
@@ -134,8 +211,11 @@ Affiliate.registerProducts('disaster', {
             searchKeyword: 'ペットフード 保存',
             asin: null,
             perDay: { dog: 200, cat: 60 },
-            shelfLifeYears: 1,
+            sourceIds: ['env-pet'],
+            sourceNote: '環境省が示すのは日数（少なくとも5日分、できれば7日分以上）で、量の記載はありません。'
+                + '1日あたりのグラム数は中型犬・成猫の一般的な給与量から置いた当サイトの目安です。',
             importance: 1,
+            shelfLifeYears: 1,
             priority: 25
         },
 
@@ -145,12 +225,13 @@ Affiliate.registerProducts('disaster', {
             label: '熱源・調理',
             name: 'カセットガス（ボンベ）',
             unit: '本',
-            note: '1本あたりの燃焼時間は強火で1時間前後。1日1本を目安としています。',
+            note: '1人1週間あたり約6本が目安。使用期限は製造から6〜7年程度です。',
             searchKeyword: 'カセットガス ボンベ',
             asin: null,
-            householdPerDay: 1,
-            shelfLifeYears: 7,
+            perWeek: { adult: 6, child: 6 },
+            sourceIds: ['maff-iroha'],
             importance: 2,
+            shelfLifeYears: 7,
             priority: 30
         },
         {
@@ -162,8 +243,9 @@ Affiliate.registerProducts('disaster', {
             searchKeyword: 'カセットコンロ',
             asin: null,
             perHousehold: 1,
-            shelfLifeYears: null,
+            sourceIds: ['maff-iroha', 'tokyo-bichiku'],
             importance: 2,
+            shelfLifeYears: null,
             priority: 31
         },
         {
@@ -175,8 +257,10 @@ Affiliate.registerProducts('disaster', {
             searchKeyword: '食品用ラップ',
             asin: null,
             householdPerDay: 0.2,
-            shelfLifeYears: null,
+            sourceIds: [],
+            sourceNote: '公的資料でも備える品目として挙げられていますが、数量の記載がないため当サイトの目安です。',
             importance: 3,
+            shelfLifeYears: null,
             priority: 32
         },
         {
@@ -188,8 +272,10 @@ Affiliate.registerProducts('disaster', {
             searchKeyword: '紙皿 紙コップ 割り箸 セット',
             asin: null,
             perDay: { adult: 1, child: 1, infant: 1 },
-            shelfLifeYears: null,
+            sourceIds: [],
+            sourceNote: '1人1日1セット（1食ごとの使い捨てを見込んだ概算）とした当サイトの目安です。',
             importance: 2,
+            shelfLifeYears: null,
             priority: 33
         },
 
@@ -202,9 +288,11 @@ Affiliate.registerProducts('disaster', {
             note: '1人1日5回を目安としています。断水時に最も不足しやすい品目です。',
             searchKeyword: '簡易トイレ 凝固剤 非常用',
             asin: null,
-            perDay: { adult: 5, child: 5, infant: 5 },
-            shelfLifeYears: 10,
+            perDay: { adult: 5, child: 5 },
+            sourceIds: ['cao-toilet', 'tokyo-bichiku'],
+            sourceNote: '乳児はおむつで数えるため、この品目では0としています（東京備蓄ナビと同じ扱い）。',
             importance: 1,
+            shelfLifeYears: 10,
             priority: 40
         },
         {
@@ -216,8 +304,10 @@ Affiliate.registerProducts('disaster', {
             searchKeyword: 'ポリ袋 大 厚手',
             asin: null,
             perDay: { adult: 3, child: 3, infant: 3 },
-            shelfLifeYears: null,
+            sourceIds: [],
+            sourceNote: '公的資料でも備える品目として挙げられていますが、数量の記載がないため当サイトの目安です。',
             importance: 1,
+            shelfLifeYears: null,
             priority: 41
         },
         {
@@ -229,8 +319,11 @@ Affiliate.registerProducts('disaster', {
             searchKeyword: '体拭きシート 大判 防災',
             asin: null,
             householdPerDay: 0.5,
-            shelfLifeYears: 3,
+            sourceIds: ['tokyo-bichiku'],
+            sourceNote: '東京備蓄ナビは体拭きシートを1人1日1枚としています。'
+                + '本ツールはパック単位で数えるため、世帯で1日0.5パックに換算した当サイトの目安です。',
             importance: 2,
+            shelfLifeYears: 3,
             priority: 42
         },
         {
@@ -238,12 +331,13 @@ Affiliate.registerProducts('disaster', {
             label: 'トイレ・衛生',
             name: '紙おむつ',
             unit: '枚',
-            note: '1日8枚を目安としています。成長に合わせてサイズの入れ替えが必要です。',
+            note: '1日10枚を目安としています。成長に合わせてサイズの入れ替えが必要です。',
             searchKeyword: '紙おむつ',
             asin: null,
-            perDay: { infant: 8 },
-            shelfLifeYears: null,
+            perDay: { infant: 10 },
+            sourceIds: ['tokyo-bichiku'],
             importance: 1,
+            shelfLifeYears: null,
             priority: 43
         },
         {
@@ -255,8 +349,11 @@ Affiliate.registerProducts('disaster', {
             searchKeyword: 'おしりふき',
             asin: null,
             perDay: { infant: 0.3 },
-            shelfLifeYears: null,
+            sourceIds: ['tokyo-bichiku'],
+            sourceNote: '東京備蓄ナビは1日1パックとしていますが、1パックの枚数が多い製品が一般的なため、'
+                + '本ツールは1日0.3パック（3日で1パック程度）に抑えた当サイトの目安です。',
             importance: 1,
+            shelfLifeYears: null,
             priority: 44
         },
         {
@@ -269,8 +366,11 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perPerson: 1,
             perPersonExcludesInfant: true,
-            shelfLifeYears: 3,
+            sourceIds: ['tokyo-bichiku'],
+            sourceNote: '東京備蓄ナビは口内洗浄液を1人1日90mLとしています。1週間で約630mLとなるため、'
+                + '本ツールでは1人1本として数えています。',
             importance: 3,
+            shelfLifeYears: 3,
             priority: 45
         },
 
@@ -284,8 +384,11 @@ Affiliate.registerProducts('disaster', {
             searchKeyword: 'モバイルバッテリー 大容量',
             asin: null,
             perDay: { adult: 15, child: 5 },
-            shelfLifeYears: 3,
+            sourceIds: [],
+            sourceNote: '公的資料に容量の目安がないため、スマートフォンの一般的な電池容量（約15Wh）から'
+                + '1日1回の充電を見込んだ当サイトの目安です。',
             importance: 1,
+            shelfLifeYears: 3,
             priority: 50
         },
         {
@@ -297,8 +400,11 @@ Affiliate.registerProducts('disaster', {
             searchKeyword: 'LEDランタン 防災',
             asin: null,
             perPerson: 1,
-            shelfLifeYears: null,
+            sourceIds: ['tokyo-bichiku'],
+            sourceNote: '東京備蓄ナビはLEDランタンを最低3台、ヘッドライトを1人1個としています。'
+                + '本ツールは1人1個としています。',
             importance: 1,
+            shelfLifeYears: null,
             priority: 51
         },
         {
@@ -311,8 +417,11 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perPerson: 4,
             perHousehold: 8,
-            shelfLifeYears: 5,
+            sourceIds: ['tokyo-bichiku'],
+            sourceNote: '東京備蓄ナビは「単1〜単4までのセット」を1人1セットとしています。'
+                + '本数での目安は当サイトが置いたものです。',
             importance: 2,
+            shelfLifeYears: 5,
             priority: 52
         },
         {
@@ -324,8 +433,9 @@ Affiliate.registerProducts('disaster', {
             searchKeyword: '防災ラジオ 手回し',
             asin: null,
             perHousehold: 1,
-            shelfLifeYears: null,
+            sourceIds: ['tokyo-bichiku'],
             importance: 2,
+            shelfLifeYears: null,
             priority: 53
         },
 
@@ -339,8 +449,10 @@ Affiliate.registerProducts('disaster', {
             searchKeyword: 'アルミ 保温シート 防災',
             asin: null,
             perPerson: 1,
-            shelfLifeYears: null,
+            sourceIds: [],
+            sourceNote: '公的資料でも防寒対策として挙げられていますが、数量の記載がないため当サイトの目安です。',
             importance: 2,
+            shelfLifeYears: null,
             priority: 60
         },
         {
@@ -352,8 +464,10 @@ Affiliate.registerProducts('disaster', {
             searchKeyword: '防災ヘルメット 折りたたみ',
             asin: null,
             perPerson: 1,
-            shelfLifeYears: null,
+            sourceIds: [],
+            sourceNote: '数量の記載がある公的資料が見当たらないため、1人1個とした当サイトの目安です。',
             importance: 2,
+            shelfLifeYears: null,
             priority: 61
         },
         {
@@ -366,8 +480,9 @@ Affiliate.registerProducts('disaster', {
             asin: null,
             perPerson: 1,
             perPersonExcludesInfant: true,
-            shelfLifeYears: null,
+            sourceIds: ['tokyo-bichiku'],
             importance: 2,
+            shelfLifeYears: null,
             priority: 62
         },
         {
@@ -379,8 +494,9 @@ Affiliate.registerProducts('disaster', {
             searchKeyword: '救急セット 防災',
             asin: null,
             perHousehold: 1,
-            shelfLifeYears: 3,
+            sourceIds: ['tokyo-bichiku'],
             importance: 2,
+            shelfLifeYears: 3,
             priority: 63
         },
         {
@@ -392,8 +508,9 @@ Affiliate.registerProducts('disaster', {
             searchKeyword: 'マスク 防塵',
             asin: null,
             perDay: { adult: 1, child: 1 },
-            shelfLifeYears: null,
+            sourceIds: ['tokyo-bichiku'],
             importance: 3,
+            shelfLifeYears: null,
             priority: 64
         }
     ]

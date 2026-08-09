@@ -92,7 +92,8 @@
                 ご利用にあたって
             </h2>
             <ul class="text-xs text-slate-500 leading-relaxed list-disc list-inside space-y-1">
-                <li>算出される数量は一般的に用いられている目安をもとにした概算です。世帯の状況や住環境によって必要量は変わります。</li>
+                <li>算出される数量は、公的機関が公開している資料の目安をもとにした概算です。参照した資料は結果の「算出の根拠（一次資料）」に掲載しています。世帯の状況や住環境によって必要量は変わります。</li>
+                <li>公的資料に数量の記載がない品目は当サイト独自の目安であり、品目ごとにその旨を明示しています。</li>
                 <li>備蓄の考え方や地域固有のリスク、避難所・避難経路については、お住まいの自治体および内閣府・消防庁などの公的機関が公開している情報をご確認ください。</li>
                 <li>保存期間は製品によって大きく異なります。表示している年数は初期値としての目安であり、実際の期限は必ず製品の表示をご確認ください。</li>
                 <li>常用薬やアレルギー対応食品など、健康に関わる備えについては医師や薬剤師にご相談ください。本ツールでは医薬品を扱っていません。</li>
@@ -102,7 +103,7 @@
     </main>
 
     <script src="../../assets/affiliate.js?v=7"></script>
-    <script src="../../data/products/disaster.js?v=6"></script>
+    <script src="../../data/products/disaster.js?v=7"></script>
     <script>
         lucide.createIcons();
 
@@ -177,6 +178,7 @@
          * 必要数量を算出する。
          *
          *   1日あたりの必要量（構成員ごと）× 人数 × 備蓄日数
+         * + 1週間あたりの必要量（構成員ごと）× 人数 × 備蓄日数 ÷ 7
          * + 世帯単位の1日あたり必要量 × 備蓄日数
          * + 1人あたりの固定量 × 人数
          * + 世帯あたりの固定量
@@ -195,6 +197,12 @@
                 MEMBER_KEYS.forEach(key => {
                     const rate = product.perDay[key] || 0;
                     total += (members[key] || 0) * rate * days;
+                });
+            }
+            if (product.perWeek) {
+                MEMBER_KEYS.forEach(key => {
+                    const rate = product.perWeek[key] || 0;
+                    total += (members[key] || 0) * rate * days / 7;
                 });
             }
             if (product.householdPerDay) total += product.householdPerDay * days;
@@ -228,6 +236,14 @@
                     const count = members[key] || 0;
                     if (rate <= 0 || count <= 0) return;
                     parts.push(`${MEMBER_LABELS[key]}${count}${MEMBER_COUNTERS[key]} ✕ 1日${rate}${product.unit} ✕ ${days}日`);
+                });
+            }
+            if (product.perWeek) {
+                MEMBER_KEYS.forEach(key => {
+                    const rate = product.perWeek[key] || 0;
+                    const count = members[key] || 0;
+                    if (rate <= 0 || count <= 0) return;
+                    parts.push(`${MEMBER_LABELS[key]}${count}${MEMBER_COUNTERS[key]} ✕ 1週間${rate}${product.unit} ✕ ${days}日分`);
                 });
             }
             if (product.householdPerDay) {
@@ -499,6 +515,105 @@
             update();
         }
 
+        /**
+         * 品目ごとの出典行を生成する。
+         *
+         * 数値の根拠が公的資料にある品目は発行元をリンクで示し、
+         * 根拠がない品目は当サイト独自の目安である旨を明示する。
+         */
+        function sourceLine(product) {
+            const line = document.createElement('p');
+            line.className = 'text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1';
+            const sources = Affiliate.sourcesFor(product);
+
+            const head = document.createElement('span');
+            head.className = 'font-bold text-slate-500';
+            head.textContent = sources.length > 0 ? '出典:' : '出典: なし（当サイト独自の目安）';
+            line.appendChild(head);
+
+            sources.forEach(source => {
+                const link = document.createElement('a');
+                link.href = source.url;
+                link.target = '_blank';
+                link.rel = 'noopener';
+                link.className = 'text-indigo-500 underline decoration-indigo-200 hover:decoration-indigo-500';
+                link.textContent = source.publisher;
+                link.title = source.name;
+                line.appendChild(link);
+            });
+
+            if (product.sourceNote) {
+                const note = document.createElement('span');
+                note.className = 'basis-full text-slate-400';
+                note.textContent = product.sourceNote;
+                line.appendChild(note);
+            }
+
+            return line;
+        }
+
+        /**
+         * 算出の根拠として参照している一次資料の一覧を描画する。
+         *
+         * 表示中の品目が参照している資料だけを、データの定義順で並べる。
+         */
+        function renderSources(entries) {
+            const sources = Affiliate.getSources('disaster');
+            const used = new Set();
+            entries.forEach(({ product }) => (product.sourceIds || []).forEach(id => used.add(id)));
+
+            const keys = Object.keys(sources).filter(id => used.has(id));
+            if (keys.length === 0) return null;
+
+            const section = createSection('算出の根拠（一次資料）', 'book-open-check');
+
+            const lead = document.createElement('p');
+            lead.className = 'text-xs text-slate-500 leading-relaxed mb-4';
+            lead.textContent = '数量の目安は、以下の公的機関が公開している資料の記載をもとにしています。'
+                + '該当する記載が見当たらない品目は当サイト独自の目安であり、その旨を品目ごとに明示しています。';
+            section.appendChild(lead);
+
+            const list = document.createElement('ol');
+            list.className = 'space-y-3';
+
+            keys.forEach(id => {
+                const source = sources[id];
+
+                const item = document.createElement('li');
+                item.className = 'p-4 bg-slate-50 border border-slate-200 rounded-xl';
+
+                const publisher = document.createElement('p');
+                publisher.className = 'text-xs font-bold text-slate-500 mb-1';
+                publisher.textContent = source.publisher;
+                item.appendChild(publisher);
+
+                const link = document.createElement('a');
+                link.href = source.url;
+                link.target = '_blank';
+                link.rel = 'noopener';
+                link.className = 'font-bold text-indigo-600 hover:underline break-words';
+                link.textContent = source.name;
+                item.appendChild(link);
+
+                if (source.figures) {
+                    const figures = document.createElement('p');
+                    figures.className = 'text-xs text-slate-500 mt-1 leading-relaxed';
+                    figures.textContent = source.figures;
+                    item.appendChild(figures);
+                }
+
+                const url = document.createElement('p');
+                url.className = 'text-xs text-slate-400 mt-1 break-all';
+                url.textContent = source.url;
+                item.appendChild(url);
+
+                list.appendChild(item);
+            });
+
+            section.appendChild(list);
+            return section;
+        }
+
         /** 優先度（importance）の表示定義 */
         const IMPORTANCE_STYLES = {
             1: { label: '必須', className: 'text-rose-700 bg-rose-50 border border-rose-200' },
@@ -515,7 +630,7 @@
             legend.className = 'text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4 leading-relaxed';
             legend.textContent = '優先度は「必須」＝ライフラインが止まった直後から欠かせないもの、'
                 + '「推奨」＝数日の在宅避難で不足しやすいもの、「あると安心」＝生活の質を保つもの、の目安です。'
-                + '数量の下には算出の式を記載しています。';
+                + '数量の下には算出の式と、その数値の出典を記載しています。';
             section.appendChild(legend);
 
             // 広告であることが明瞭に分かるよう、商品リンクの直前にPR表記を置く
@@ -578,6 +693,8 @@
                         body.appendChild(calc);
                     }
 
+                    body.appendChild(sourceLine(product));
+
                     if (product.note) {
                         const note = document.createElement('p');
                         note.className = 'text-sm text-slate-500 mt-1';
@@ -632,6 +749,9 @@
 
             const expirySection = renderExpiries(expiries);
             if (expirySection) elements.result.appendChild(expirySection);
+
+            const sourceSection = renderSources(entries);
+            if (sourceSection) elements.result.appendChild(sourceSection);
 
             lucide.createIcons();
         }
