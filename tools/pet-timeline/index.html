@@ -387,19 +387,32 @@
             cat: '../../assets/images/pet-calendar-hero-cat.jpg'
         };
 
-        function syncHeroImage(species, size, breed) {
-            let src = HERO_IMAGES.default;
-            let subject = '子犬と子猫';
+        /** 品種の登録順に対応する個別ヒーロー画像のパスを返す */
+        function breedHeroPath(species, breed) {
+            if (!breed || breed === 'other') return null;
 
-            if (species === 'cat') {
+            const breeds = Object.values(SPECIES_DEFS[species].breeds).flat();
+            const index = breeds.indexOf(breed);
+            if (index < 0) return null;
+
+            const number = String(index + 1).padStart(2, '0');
+            return `../../assets/images/pet-calendar-breed-${species}-${number}.jpg`;
+        }
+
+        function syncHeroImage(species, size, breed) {
+            const individualSrc = breedHeroPath(species, breed);
+            let src = individualSrc || HERO_IMAGES.default;
+            let subject = breed && breed !== 'other' ? breed : '子犬と子猫';
+
+            if (!individualSrc && species === 'cat') {
                 src = HERO_IMAGES.cat;
-                subject = breed && breed !== 'other' ? breed : '猫';
-            } else if (size === 'toy' || size === 'small') {
+                subject = '猫';
+            } else if (!individualSrc && (size === 'toy' || size === 'small')) {
                 src = HERO_IMAGES.dogSmall;
-                subject = breed && breed !== 'other' ? breed : '小型犬';
-            } else {
+                subject = '小型犬';
+            } else if (!individualSrc) {
                 src = HERO_IMAGES.dogLarge;
-                subject = breed && breed !== 'other' ? breed : '中〜大型犬';
+                subject = '中〜大型犬';
             }
 
             const nextUrl = new URL(src, document.baseURI).href;
