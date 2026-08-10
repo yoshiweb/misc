@@ -115,6 +115,7 @@
             min-height: 23rem;
             object-fit: cover;
             object-position: center;
+            transition: opacity .18s ease;
         }
 
         .section-kicker {
@@ -259,7 +260,7 @@
                     <span class="hero-point"><i data-lucide="bell-ring" class="w-3.5 h-3.5"></i>補充リマインド</span>
                 </div>
             </div>
-            <img class="hero-image" src="../../assets/images/pet-calendar-hero.jpg" alt="明るい部屋で寄り添う子犬と子猫" width="1536" height="1024">
+            <img id="hero-image" class="hero-image" src="../../assets/images/pet-calendar-hero.jpg" alt="明るい部屋で寄り添う子犬と子猫" width="1536" height="1024">
         </div>
     </header>
 
@@ -365,6 +366,7 @@
 
         const elements = {
             speciesGroup: document.getElementById('species-group'),
+            heroImage: document.getElementById('hero-image'),
             birthday: document.getElementById('birthday'),
             breed: document.getElementById('breed'),
             breedLabel: document.getElementById('breed-label'),
@@ -376,6 +378,39 @@
             neuteredHint: document.getElementById('neutered-hint'),
             result: document.getElementById('result')
         };
+
+        /** 種別・体格に合わせてヒーロー画像を切り替える */
+        const HERO_IMAGES = {
+            default: '../../assets/images/pet-calendar-hero.jpg',
+            dogSmall: '../../assets/images/pet-calendar-hero-dog-small.jpg',
+            dogLarge: '../../assets/images/pet-calendar-hero-dog-large.jpg',
+            cat: '../../assets/images/pet-calendar-hero-cat.jpg'
+        };
+
+        function syncHeroImage(species, size, breed) {
+            let src = HERO_IMAGES.default;
+            let subject = '子犬と子猫';
+
+            if (species === 'cat') {
+                src = HERO_IMAGES.cat;
+                subject = breed && breed !== 'other' ? breed : '猫';
+            } else if (size === 'toy' || size === 'small') {
+                src = HERO_IMAGES.dogSmall;
+                subject = breed && breed !== 'other' ? breed : '小型犬';
+            } else {
+                src = HERO_IMAGES.dogLarge;
+                subject = breed && breed !== 'other' ? breed : '中〜大型犬';
+            }
+
+            const nextUrl = new URL(src, document.baseURI).href;
+            if (elements.heroImage.src === nextUrl) return;
+            elements.heroImage.style.opacity = '0.35';
+            elements.heroImage.src = src;
+            elements.heroImage.alt = `明るい部屋で過ごす${subject}`;
+            elements.heroImage.addEventListener('load', () => {
+                elements.heroImage.style.opacity = '1';
+            }, { once: true });
+        }
 
         /**
          * 結果エリア内で編集する数値の既定値と入力範囲。
@@ -1458,6 +1493,8 @@
             const species = getSpecies();
             const profile = getProfile(species, elements.size.value);
             const foodEnergy = getSetting('foodEnergy');   // 範囲に丸められるため 0 にはならない
+
+            syncHeroImage(species, elements.size.value, elements.breed.value);
 
             elements.result.innerHTML = '';
 

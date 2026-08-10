@@ -26,6 +26,7 @@
 - **消耗品の補充リマインド**: 商品カードで「購入済み」にチェックを付けると、そのカード内に購入日・補充サイクル・次回の補充目安日を表示します。購入済みの商品だけで補充状況を管理できます。
 - **次の段階の準備**: 「いま必要なグッズ」のあとに、次の成長段階で新たに必要になるグッズを表示します。今の段階と重複する商品は除き、先回りして準備できます。
 - **SNSへの共有**: 判定結果を X / LINE / Facebook / はてなブックマークへ共有できます。共有本文はページ内に表示され、押す前に内容を確認できます。
+- **種別・体格に合わせたビジュアル**: 犬種・猫種を選ぶと、体格グループに合わせてヒーロー画像を切り替えます。犬猫の選択だけでも即時に反映されます。
 
 ## グッズのチェック
 
@@ -161,6 +162,10 @@ image: {
 - [../../assets/affiliate.js](../../assets/affiliate.js) — Amazonアソシエイト共通モジュール
 - [../../assets/share.js](../../assets/share.js) — SNSシェア共通モジュール
 - [../../assets/images/ogp/pet-timeline.jpg](../../assets/images/ogp/pet-timeline.jpg) — OGP画像
+- [../../assets/images/pet-calendar-hero.jpg](../../assets/images/pet-calendar-hero.jpg) — 未選択時のヒーロー画像
+- [../../assets/images/pet-calendar-hero-dog-small.jpg](../../assets/images/pet-calendar-hero-dog-small.jpg) — 小型犬向けヒーロー画像
+- [../../assets/images/pet-calendar-hero-dog-large.jpg](../../assets/images/pet-calendar-hero-dog-large.jpg) — 中〜大型犬向けヒーロー画像
+- [../../assets/images/pet-calendar-hero-cat.jpg](../../assets/images/pet-calendar-hero-cat.jpg) — 猫向けヒーロー画像
 - [../../data/products/pet.js](../../data/products/pet.js) — 商品データ
 
 ## 技術メモ
