@@ -152,6 +152,32 @@ Affiliate.registerProducts('pet', {
 
         // ---- フード ----
         {
+            id: 'puppy-milk',
+            label: 'ミルク',
+            name: '子犬用ミルク（代用乳）',
+            note: '母乳が得られない場合の犬用代用乳。牛乳や人用ミルクではなく、製品ラベルと獣医師の指示に従う。',
+            searchKeyword: '子犬用ミルク 代用乳',
+            asin: null,
+            species: ['dog'],
+            stages: ['arrival'],
+            priority: 4,
+            consumable: true,
+            consumableType: 'milk'
+        },
+        {
+            id: 'kitten-milk',
+            label: 'ミルク',
+            name: '子猫用ミルク（代用乳）',
+            note: '母乳が得られない場合の猫用代用乳。牛乳や人用ミルクではなく、製品ラベルと獣医師の指示に従う。',
+            searchKeyword: '子猫用ミルク 代用乳',
+            asin: null,
+            species: ['cat'],
+            stages: ['arrival'],
+            priority: 4,
+            consumable: true,
+            consumableType: 'milk'
+        },
+        {
             id: 'puppy-food',
             label: 'フード',
             name: '子犬用（パピー）フード',

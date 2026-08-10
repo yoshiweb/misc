@@ -479,7 +479,7 @@
 
     <script src="../../assets/affiliate.js?v=9"></script>
     <script src="../../assets/share.js?v=1"></script>
-    <script src="../../data/products/pet.js?v=6"></script>
+    <script src="../../data/products/pet.js?v=7"></script>
     <script>
         lucide.createIcons();
 
@@ -1144,9 +1144,13 @@
             const section = createSection('フード', 'utensils');
             section.classList.add('pet-food-section');
 
-            const foodProducts = ageDays < 30
-                ? []
-                : selectProducts(species, stage.key).filter(product => product.consumableType === 'food');
+            const foodTypes = ageDays < 30
+                ? ['milk']
+                : ageDays < 60
+                    ? ['milk', 'food']
+                    : ['food'];
+            const foodProducts = selectProducts(species, stage.key)
+                .filter(product => foodTypes.includes(product.consumableType));
 
             const appendFoodProducts = () => {
                 if (foodProducts.length === 0) return;
@@ -1509,7 +1513,7 @@
          */
         function renderProducts(species, stage, refillById, ageDays) {
             const products = selectCurrentProducts(species, stage.key, ageDays)
-                .filter(product => product.consumableType !== 'food');
+                .filter(product => !['food', 'milk'].includes(product.consumableType));
             const remaining = products.filter(p => !isItemChecked(p.id)).length;
             const summary = remaining === 0
                 ? `${products.length}件すべてに購入済み・不要のチェックが付いています。`
