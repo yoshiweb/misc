@@ -979,144 +979,6 @@
             return section;
         }
 
-        /**
-         * 消耗品の補充状況を描画する。
-         *
-         * 購入日を記録すると次回の補充目安日と残日数が表示され、
-         * 期限が近いものが上に並ぶ。
-         */
-        function renderRefills(refills, species) {
-            if (refills.length === 0) return null;
-
-            const section = createSection('消耗品の補充', 'repeat');
-
-            const due = refills.filter(r => r.remainDays !== null && r.remainDays <= 0);
-            if (due.length > 0) {
-                const alert = document.createElement('p');
-                alert.className = 'text-sm font-bold text-rose-800 bg-rose-50 border border-rose-200 rounded-xl p-3 mb-4';
-                alert.textContent = `補充の目安を過ぎているものが${due.length}件あります。`;
-                section.appendChild(alert);
-            }
-
-            // フードの袋サイズは補充サイクルの算出にだけ使うため、この欄に置く。
-            // フードの消耗品が並んでいないときは効果がないので出さない
-            if (refills.some(r => r.product.consumableType === 'food')) {
-                section.appendChild(createSettingControl(
-                    'packSize', 'フード1袋のサイズ (kg)', '給与量から何日で使い切るかを算出します。'));
-            }
-
-            // 広告であることが明瞭に分かるよう、商品リンクの直前にPR表記を置く
-            Affiliate.renderPrNotice(section);
-
-            const toneStyles = {
-                over: 'text-rose-700 bg-rose-100',
-                soon: 'text-amber-800 bg-amber-100',
-                ok: 'text-emerald-700 bg-emerald-100',
-                none: 'text-slate-500 bg-slate-100'
-            };
-
-            const list = document.createElement('div');
-            list.className = 'space-y-2';
-
-            refills.forEach(entry => {
-                const { product, cycleDays, computed, purchasedAt, dueDate, remainDays } = entry;
-                const status = refillStatus(remainDays);
-
-                const row = document.createElement('div');
-                row.className = 'flex gap-4 p-4 bg-white border border-slate-200 rounded-xl';
-
-                const image = Affiliate.productImage(product, species);
-                if (image) row.appendChild(image);
-
-                // 画像の右側に見出し・操作・補足を積む
-                const main = document.createElement('div');
-                main.className = 'min-w-0 flex-1';
-
-                // 見出し行: 商品名と残日数バッジ
-                const head = document.createElement('div');
-                head.className = 'flex items-center justify-between gap-3 mb-2';
-
-                const name = document.createElement('p');
-                name.className = 'font-bold text-slate-800';
-                name.textContent = product.name;
-                head.appendChild(name);
-
-                const badge = document.createElement('span');
-                badge.className = `shrink-0 text-xs font-bold px-2 py-1 rounded-full ${toneStyles[status.tone]}`;
-                badge.textContent = status.label;
-                head.appendChild(badge);
-                main.appendChild(head);
-
-                // 操作行: 購入日・サイクル・記録ボタン
-                const controls = document.createElement('div');
-                controls.className = 'flex flex-wrap items-end gap-2';
-
-                const purchaseLabel = document.createElement('label');
-                purchaseLabel.className = 'block';
-                purchaseLabel.innerHTML = '<span class="block text-xs font-bold text-slate-500 mb-1">購入日</span>';
-                const purchaseInput = document.createElement('input');
-                purchaseInput.type = 'date';
-                purchaseInput.value = purchasedAt || '';
-                purchaseInput.className = 'p-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-200';
-                purchaseInput.addEventListener('change', () => {
-                    setRefill(product.id, { purchasedAt: purchaseInput.value || null });
-                });
-                purchaseLabel.appendChild(purchaseInput);
-                controls.appendChild(purchaseLabel);
-
-                const cycleLabel = document.createElement('label');
-                cycleLabel.className = 'block';
-                cycleLabel.innerHTML = '<span class="block text-xs font-bold text-slate-500 mb-1">サイクル(日)</span>';
-                const cycleInput = document.createElement('input');
-                cycleInput.type = 'number';
-                cycleInput.min = '1';
-                cycleInput.value = cycleDays || '';
-                cycleInput.className = 'w-24 p-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-200';
-                cycleInput.addEventListener('change', () => {
-                    const value = Number(cycleInput.value);
-                    setRefill(product.id, { cycleDays: value > 0 ? value : null });
-                });
-                cycleLabel.appendChild(cycleInput);
-                controls.appendChild(cycleLabel);
-
-                const todayBtn = document.createElement('button');
-                todayBtn.type = 'button';
-                todayBtn.className = 'px-3 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors';
-                todayBtn.textContent = '今日補充した';
-                todayBtn.addEventListener('click', () => {
-                    setRefill(product.id, { purchasedAt: toDateString(new Date()) });
-                });
-                controls.appendChild(todayBtn);
-
-                // ストアリンクは2つで1組として折り返す（片方だけ改行されるのを防ぐ）
-                const stores = document.createElement('div');
-                stores.className = 'flex gap-2';
-                Affiliate.storeLinks(product).forEach(link => {
-                    stores.appendChild(Affiliate.storeLinkElement(link));
-                });
-                controls.appendChild(stores);
-
-                main.appendChild(controls);
-
-                // 補足行: 次回目安日と、サイクルの算出根拠
-                const meta = document.createElement('p');
-                meta.className = 'mt-2 text-xs text-slate-400';
-                const parts = [];
-                if (dueDate) parts.push(`次回の目安: ${dueDate}`);
-                if (computed) parts.push('給与量と袋のサイズから算出');
-                else if (!purchasedAt) parts.push('購入日を記録すると補充時期を表示します');
-                meta.textContent = parts.join(' / ');
-                if (meta.textContent) main.appendChild(meta);
-
-                row.appendChild(main);
-
-                list.appendChild(row);
-            });
-
-            section.appendChild(list);
-            return section;
-        }
-
         /** 消耗品の記録を更新して保存し、再描画する */
         function setRefill(productId, patch) {
             store.refills[productId] = { ...(store.refills[productId] || {}), ...patch };
@@ -1232,8 +1094,97 @@
             update();
         }
 
+        /** 購入済みの消耗品に差し込む補充リマインド欄を組み立てる */
+        function createRefillControls(product, refill) {
+            if (!product.consumable || !refill) return null;
+
+            const { cycleDays, computed, purchasedAt, dueDate, remainDays } = refill;
+            const status = refillStatus(remainDays);
+            const toneStyles = {
+                over: 'text-rose-700 bg-rose-100',
+                soon: 'text-amber-800 bg-amber-100',
+                ok: 'text-emerald-700 bg-emerald-100',
+                none: 'text-slate-500 bg-slate-100'
+            };
+
+            const wrap = document.createElement('div');
+            wrap.className = 'w-full mt-3 p-3 bg-slate-50 border border-slate-200 rounded-xl';
+
+            const heading = document.createElement('div');
+            heading.className = 'flex flex-wrap items-center justify-between gap-2 mb-2';
+
+            const title = document.createElement('p');
+            title.className = 'text-xs font-bold text-slate-600';
+            title.textContent = '補充リマインド';
+            heading.appendChild(title);
+
+            const badge = document.createElement('span');
+            badge.className = `text-xs font-bold px-2 py-1 rounded-full ${toneStyles[status.tone]}`;
+            badge.textContent = status.label;
+            heading.appendChild(badge);
+            wrap.appendChild(heading);
+
+            const controls = document.createElement('div');
+            controls.className = 'flex flex-wrap items-end gap-2';
+
+            const purchaseLabel = document.createElement('label');
+            purchaseLabel.className = 'block';
+            const purchaseCaption = document.createElement('span');
+            purchaseCaption.className = 'block text-xs font-bold text-slate-500 mb-1';
+            purchaseCaption.textContent = '購入日';
+            purchaseLabel.appendChild(purchaseCaption);
+            const purchaseInput = document.createElement('input');
+            purchaseInput.type = 'date';
+            purchaseInput.value = purchasedAt || '';
+            purchaseInput.className = 'p-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-200';
+            purchaseInput.addEventListener('change', () => {
+                setRefill(product.id, { purchasedAt: purchaseInput.value || null });
+            });
+            purchaseLabel.appendChild(purchaseInput);
+            controls.appendChild(purchaseLabel);
+
+            const cycleLabel = document.createElement('label');
+            cycleLabel.className = 'block';
+            const cycleCaption = document.createElement('span');
+            cycleCaption.className = 'block text-xs font-bold text-slate-500 mb-1';
+            cycleCaption.textContent = 'サイクル(日)';
+            cycleLabel.appendChild(cycleCaption);
+            const cycleInput = document.createElement('input');
+            cycleInput.type = 'number';
+            cycleInput.min = '1';
+            cycleInput.value = cycleDays || '';
+            cycleInput.className = 'w-24 p-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-200';
+            cycleInput.addEventListener('change', () => {
+                const value = Number(cycleInput.value);
+                setRefill(product.id, { cycleDays: value > 0 ? value : null });
+            });
+            cycleLabel.appendChild(cycleInput);
+            controls.appendChild(cycleLabel);
+
+            const todayBtn = document.createElement('button');
+            todayBtn.type = 'button';
+            todayBtn.className = 'px-3 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors';
+            todayBtn.textContent = '今日補充した';
+            todayBtn.addEventListener('click', () => {
+                setRefill(product.id, { purchasedAt: toDateString(new Date()) });
+            });
+            controls.appendChild(todayBtn);
+            wrap.appendChild(controls);
+
+            const meta = document.createElement('p');
+            meta.className = 'mt-2 text-xs text-slate-400';
+            const parts = [];
+            if (dueDate) parts.push(`次回の目安: ${dueDate}`);
+            if (computed) parts.push('給与量と袋のサイズから算出');
+            else if (!purchasedAt) parts.push('購入日を記録すると補充時期を表示します');
+            meta.textContent = parts.join(' / ');
+            if (meta.textContent) wrap.appendChild(meta);
+
+            return wrap;
+        }
+
         /** 商品カードに差し込むチェック欄を組み立てる */
-        function createItemChecks(product) {
+        function createItemChecks(product, refill) {
             const state = getItemState(product.id);
 
             const wrap = document.createElement('div');
@@ -1256,11 +1207,16 @@
                 wrap.appendChild(label);
             });
 
+            if (state.owned) {
+                const refillControls = createRefillControls(product, refill);
+                if (refillControls) wrap.appendChild(refillControls);
+            }
+
             return wrap;
         }
 
         /** 商品カードの一覧セクションを描画する */
-        function renderProductSection(species, title, products, summaryText, iconName = 'shopping-bag') {
+        function renderProductSection(species, title, products, summaryText, refillById, iconName = 'shopping-bag') {
             if (products.length === 0) return null;
 
             const section = createSection(title, iconName);
@@ -1284,7 +1240,7 @@
                     // 犬猫で絵柄が分かれている商品は、選択中の種別のイラストを使う
                     const card = Affiliate.productCard(product, {
                         imageVariant: species,
-                        controls: createItemChecks(product)
+                        controls: createItemChecks(product, refillById.get(product.id))
                     });
                     if (isItemChecked(product.id)) {
                         // チェックを外したくなったときのために、ポインタを乗せると元の濃さに戻す
@@ -1304,7 +1260,7 @@
          * 「購入済み」「不要」がついたものは色を落として末尾へ回す。
          * 消さずに残すのは、間違えて付けたときに戻せるようにするため。
          */
-        function renderProducts(species, stage) {
+        function renderProducts(species, stage, refillById) {
             const products = selectProducts(species, stage.key);
             const remaining = products.filter(p => !isItemChecked(p.id)).length;
             const summary = remaining === 0
@@ -1315,12 +1271,13 @@
                 species,
                 `いま必要なグッズ（${stage.name}）`,
                 products,
-                summary
+                summary,
+                refillById
             );
         }
 
         /** 次の成長段階で新たに必要になるグッズを描画する */
-        function renderUpcomingProducts(species, stage, nextStage) {
+        function renderUpcomingProducts(species, stage, nextStage, refillById) {
             if (!nextStage) return null;
 
             const currentIds = new Set(selectProducts(species, stage.key).map(product => product.id));
@@ -1337,6 +1294,7 @@
                 `もうすぐ必要になるグッズ（${nextStage.name}）`,
                 products,
                 summary,
+                refillById,
                 'clock-3'
             );
         }
@@ -1554,20 +1512,26 @@
 
             elements.result.appendChild(renderTimeline(stages, currentIndex, species, profile, age.months));
 
-            const products = renderProducts(species, stage);
-            if (products) elements.result.appendChild(products);
-
-            const upcomingProducts = renderUpcomingProducts(species, stage, nextStage);
-            if (upcomingProducts) elements.result.appendChild(upcomingProducts);
-
-            // 補充リマインドはフードの給与量に依存するため、算出後に組み立てる
-            const refills = renderRefills(buildRefills(
+            // 補充サイクルは商品カード内の「購入済み」から確認・編集できるようにする
+            const packSize = getSetting('packSize');
+            const currentRefills = buildRefills(
                 species,
                 stage.key,
                 food ? food.grams : 0,
-                getSetting('packSize')
-            ), species);
-            if (refills) elements.result.appendChild(refills);
+                packSize
+            );
+            const upcomingRefills = nextStage
+                ? buildRefills(species, nextStage.key, food ? food.grams : 0, packSize)
+                : [];
+            const refillById = new Map(
+                [...currentRefills, ...upcomingRefills].map(entry => [entry.product.id, entry])
+            );
+
+            const products = renderProducts(species, stage, refillById);
+            if (products) elements.result.appendChild(products);
+
+            const upcomingProducts = renderUpcomingProducts(species, stage, nextStage, refillById);
+            if (upcomingProducts) elements.result.appendChild(upcomingProducts);
 
             // 共有は結果をひととおり見たあとの動線になるため末尾に置く
             elements.result.appendChild(
