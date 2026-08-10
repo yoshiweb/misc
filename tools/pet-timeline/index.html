@@ -1259,24 +1259,15 @@
             return wrap;
         }
 
-        /**
-         * 現在のステージで必要なグッズを商品カードで描画する。
-         *
-         * 「購入済み」「不要」がついたものは色を落として末尾へ回す。
-         * 消さずに残すのは、間違えて付けたときに戻せるようにするため。
-         */
-        function renderProducts(species, stage) {
-            const products = selectProducts(species, stage.key);
+        /** 商品カードの一覧セクションを描画する */
+        function renderProductSection(species, title, products, summaryText, iconName = 'shopping-bag') {
             if (products.length === 0) return null;
 
-            const section = createSection(`いま必要なグッズ（${stage.name}）`, 'shopping-bag');
+            const section = createSection(title, iconName);
 
-            const remaining = products.filter(p => !isItemChecked(p.id)).length;
             const summary = document.createElement('p');
             summary.className = 'text-sm text-slate-500 mb-3';
-            summary.textContent = remaining === 0
-                ? `${products.length}件すべてに購入済み・不要のチェックが付いています。`
-                : `${products.length}件のうち、まだチェックが付いていないものが${remaining}件あります。`;
+            summary.textContent = summaryText;
             section.appendChild(summary);
 
             // 広告であることが明瞭に分かるよう、商品リンクの直前にPR表記を置く
@@ -1305,6 +1296,49 @@
             section.appendChild(list);
 
             return section;
+        }
+
+        /**
+         * 現在のステージで必要なグッズを商品カードで描画する。
+         *
+         * 「購入済み」「不要」がついたものは色を落として末尾へ回す。
+         * 消さずに残すのは、間違えて付けたときに戻せるようにするため。
+         */
+        function renderProducts(species, stage) {
+            const products = selectProducts(species, stage.key);
+            const remaining = products.filter(p => !isItemChecked(p.id)).length;
+            const summary = remaining === 0
+                ? `${products.length}件すべてに購入済み・不要のチェックが付いています。`
+                : `${products.length}件のうち、まだチェックが付いていないものが${remaining}件あります。`;
+
+            return renderProductSection(
+                species,
+                `いま必要なグッズ（${stage.name}）`,
+                products,
+                summary
+            );
+        }
+
+        /** 次の成長段階で新たに必要になるグッズを描画する */
+        function renderUpcomingProducts(species, stage, nextStage) {
+            if (!nextStage) return null;
+
+            const currentIds = new Set(selectProducts(species, stage.key).map(product => product.id));
+            const products = selectProducts(species, nextStage.key)
+                .filter(product => !currentIds.has(product.id));
+            if (products.length === 0) return null;
+
+            const remaining = products.filter(p => !isItemChecked(p.id)).length;
+            const summary = `${nextStage.name}に向けて、今のうちに準備しておくと安心なグッズです。`
+                + ` 未チェックは${remaining}件です。`;
+
+            return renderProductSection(
+                species,
+                `もうすぐ必要になるグッズ（${nextStage.name}）`,
+                products,
+                summary,
+                'clock-3'
+            );
         }
 
         /**
@@ -1522,6 +1556,9 @@
 
             const products = renderProducts(species, stage);
             if (products) elements.result.appendChild(products);
+
+            const upcomingProducts = renderUpcomingProducts(species, stage, nextStage);
+            if (upcomingProducts) elements.result.appendChild(upcomingProducts);
 
             // 補充リマインドはフードの給与量に依存するため、算出後に組み立てる
             const refills = renderRefills(buildRefills(
