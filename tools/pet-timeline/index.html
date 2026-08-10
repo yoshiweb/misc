@@ -1822,6 +1822,11 @@
                 if (value !== undefined && value !== null && value !== '') elements[key].value = value;
             });
 
+            // 生年月日の保存値がない場合は、毎回その日の年月日を初期値にする
+            if (!elements.birthday.value) {
+                elements.birthday.value = toDateString(new Date());
+            }
+
             // 品種名を value にする前の保存データ（区分のコードが入っている）への移行措置。
             // 該当しない値だと selectedIndex が -1 になり、空白のセレクトになってしまう
             if (elements.breed.selectedIndex < 0) {
