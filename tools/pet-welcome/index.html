@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>うちの子（犬猫）迎え入れ準備ノート</title>
+    <meta name="description" content="犬や猫を迎える前に考えたいこと、必要なもの、最初の1週間の過ごし方と手続きを整理するページです。">
+    <link rel="canonical" href="https://misc.yoshiweb.net/tools/pet-welcome/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="misc.yoshiweb.net">
+    <meta property="og:title" content="うちの子（犬猫）迎え入れ準備ノート">
+    <meta property="og:description" content="迎える前の不安を、今日できる準備に変えるためのチェックノートです。">
+    <meta property="og:url" content="https://misc.yoshiweb.net/tools/pet-welcome/">
+    <meta property="og:locale" content="ja_JP">
+    <meta property="og:image" content="https://misc.yoshiweb.net/assets/images/pet-calendar-hero-dog-small.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+        :root { --ink:#26352d; --muted:#64748b; --sage:#55705f; --clay:#bb6d45; }
+        body {
+            font-family:'Noto Sans JP',sans-serif;
+            color:var(--ink);
+            background:radial-gradient(circle at 8% 0%,rgba(219,234,254,.72),transparent 28rem),#f5f7f6;
+        }
+        .hero-card {
+            display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.05fr); overflow:hidden; min-height:22rem;
+            border:1px solid rgba(226,232,240,.9); border-radius:1.75rem; background:#fbfdff;
+            box-shadow:0 18px 45px rgba(71,85,105,.1);
+        }
+        .hero-copy { display:flex; flex-direction:column; justify-content:center; padding:2.5rem; }
+        .hero-image { width:100%; height:100%; min-height:22rem; object-fit:cover; }
+        .section-card { border:1px solid rgba(226,232,240,.9); border-radius:1.25rem; background:#fff; box-shadow:0 10px 28px rgba(71,85,105,.07); }
+        .check-row { display:flex; align-items:flex-start; gap:.75rem; min-height:3.25rem; padding:.8rem 0; border-bottom:1px solid #f1f5f9; cursor:pointer; }
+        .check-row:last-child { border-bottom:0; }
+        .check-row input { flex:0 0 auto; width:1.2rem; height:1.2rem; margin-top:.15rem; accent-color:#55705f; }
+        .check-row:has(input:checked) .check-label { color:#94a3b8; text-decoration:line-through; }
+        .focus-ring:focus-visible,a:focus-visible,button:focus-visible,input:focus-visible { outline:3px solid #c7d2fe; outline-offset:2px; }
+        .source-link { color:#4338ca; font-weight:700; text-decoration:underline; text-underline-offset:.2em; }
+        .step { position:relative; padding-left:1.5rem; }
+        .step::before { content:''; position:absolute; left:0; top:.4rem; width:.75rem; height:.75rem; border-radius:9999px; background:var(--dot,#94a3b8); box-shadow:0 0 0 5px var(--ring,#f1f5f9); }
+        @media (max-width:640px) {
+            body { padding:.75rem; }
+            .hero-card { display:flex; flex-direction:column; }
+            .hero-copy { padding:1.75rem 1.5rem 1.5rem; }
+            .hero-image { min-height:13rem; max-height:16rem; }
+            .section-card { border-radius:1rem; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 sm:p-8 lg:p-10">
+    <header class="w-full max-w-5xl mb-6 sm:mb-8">
+        <nav class="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm" aria-label="関連ページ">
+            <a class="inline-flex items-center gap-1.5 font-bold text-slate-500 hover:text-indigo-700" href="../../index.html"><i data-lucide="arrow-left" class="w-4 h-4"></i>misc.yoshiweb.net</a>
+            <div class="flex flex-wrap gap-2">
+                <a class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-white px-3 py-2 font-bold text-indigo-700 hover:bg-indigo-50" href="../pet-timeline/"><i data-lucide="calendar-heart" class="w-4 h-4"></i>成長カレンダー</a>
+                <a class="inline-flex items-center gap-1.5 rounded-full border border-rose-100 bg-white px-3 py-2 font-bold text-rose-700 hover:bg-rose-50" href="../pet-end-of-life/"><i data-lucide="heart-handshake" class="w-4 h-4"></i>終活ノート</a>
+            </div>
+        </nav>
+        <div class="hero-card">
+            <div class="hero-copy">
+                <p class="mb-3 inline-flex w-fit items-center gap-2 text-xs font-bold tracking-widest text-indigo-700"><i data-lucide="home-heart" class="h-4 w-4"></i>家族になる日のために</p>
+                <h1 class="m-0 text-3xl font-bold leading-tight tracking-tight text-slate-800 sm:text-4xl">うちの子（犬猫）<span class="block text-[#55705f]">迎え入れ準備ノート</span></h1>
+                <p class="mt-4 max-w-lg text-sm leading-8 text-slate-500">迎える前の不安を、今日できる準備に変えるページです。暮らし・もの・手続きを順番に確認できます。</p>
+                <div class="mt-6 flex flex-wrap gap-2" aria-label="このページでできること">
+                    <span class="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-2 text-xs font-bold text-indigo-800"><i data-lucide="clipboard-check" class="h-3.5 w-3.5"></i>準備物を確認</span>
+                    <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800"><i data-lucide="house" class="h-3.5 w-3.5"></i>暮らしを整える</span>
+                    <span class="inline-flex items-center gap-1.5 rounded-full border border-amber-100 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800"><i data-lucide="file-check-2" class="h-3.5 w-3.5"></i>手続きを確認</span>
+                </div>
+            </div>
+            <img class="hero-image" src="../../assets/images/pet-calendar-hero-dog-small.jpg" alt="新しい家で過ごす子犬のイラスト" width="1536" height="1024">
+        </div>
+    </header>
+
+    <main class="w-full max-w-5xl">
+        <section class="mb-6 rounded-2xl border border-indigo-200 bg-indigo-50 p-4 text-sm leading-7 text-indigo-950 sm:p-5" aria-label="大切な前提">
+            <div class="flex items-start gap-3"><i data-lucide="info" class="mt-1 h-5 w-5 shrink-0 text-indigo-700"></i><p><strong>大切な前提：</strong>犬や猫を迎えることは、その一生に責任をもつことです。家族の生活・住まい・費用・将来の変化まで話し合い、無理なく続けられるかを確認してから迎えましょう。</p></div>
+        </section>
+
+        <section class="mb-6 grid gap-4 sm:grid-cols-3" aria-label="迎える前に考えること">
+            <article class="section-card p-5"><div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-800"><i data-lucide="users" class="h-5 w-5"></i></div><h2 class="text-base font-bold text-slate-800">1. 家族で合意する</h2><p class="mt-2 text-sm leading-7 text-slate-500">お世話の担当、留守番、旅行や将来の変化を話します。</p></article>
+            <article class="section-card p-5"><div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800"><i data-lucide="wallet-cards" class="h-5 w-5"></i></div><h2 class="text-base font-bold text-slate-800">2. 暮らしを見積もる</h2><p class="mt-2 text-sm leading-7 text-slate-500">初期費用だけでなく、食事・医療・予防・介護も考えます。</p></article>
+            <article class="section-card p-5"><div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-800"><i data-lucide="shield-check" class="h-5 w-5"></i></div><h2 class="text-base font-bold text-slate-800">3. 迎え先を確認する</h2><p class="mt-2 text-sm leading-7 text-slate-500">販売業者の登録、譲渡条件、健康情報と説明を確認します。</p></article>
+        </section>
+
+        <section class="section-card mb-6 p-5 sm:p-7" aria-labelledby="prepare-title">
+            <div class="flex flex-wrap items-end justify-between gap-3 border-b border-slate-100 pb-4"><div><p class="mb-1 text-xs font-bold tracking-widest text-indigo-700">BEFORE WELCOME</p><h2 id="prepare-title" class="text-xl font-bold text-slate-800">迎える前にそろえるもの</h2></div><p id="check-count" class="text-sm font-bold text-slate-500" aria-live="polite">0 / 12 項目を確認</p></div>
+            <p class="mt-4 text-sm leading-7 text-slate-500">犬・猫や住まいによって必要なものは変わります。まずは安全と生活の土台から確認しましょう。チェック状態はこのブラウザにだけ保存されます。</p>
+            <div id="prepare-checklist" class="mt-3 grid gap-x-8 sm:grid-cols-2">
+                <label class="check-row"><input type="checkbox" data-check="food"><span><strong class="check-label block text-sm text-slate-700">年齢に合うフード・ミルク</strong><span class="text-xs leading-6 text-slate-500">急な切り替えを避け、迎え先で食べていたものを確認。</span></span></label>
+                <label class="check-row"><input type="checkbox" data-check="bowls"><span><strong class="check-label block text-sm text-slate-700">食器・給水器</strong><span class="text-xs leading-6 text-slate-500">食事用と水用を、安定して洗いやすいものに。</span></span></label>
+                <label class="check-row"><input type="checkbox" data-check="toilet"><span><strong class="check-label block text-sm text-slate-700">トイレ用品</strong><span class="text-xs leading-6 text-slate-500">犬はトイレシーツ、猫はトイレ本体と猫砂を準備。</span></span></label>
+                <label class="check-row"><input type="checkbox" data-check="bed"><span><strong class="check-label block text-sm text-slate-700">安心して休める場所</strong><span class="text-xs leading-6 text-slate-500">人の出入りや温度変化が少ない場所を決める。</span></span></label>
+                <label class="check-row"><input type="checkbox" data-check="carrier"><span><strong class="check-label block text-sm text-slate-700">キャリー・移動用品</strong><span class="text-xs leading-6 text-slate-500">通院・災害時にも使える、体格に合うものを。</span></span></label>
+                <label class="check-row"><input type="checkbox" data-check="safety"><span><strong class="check-label block text-sm text-slate-700">脱走・誤食対策</strong><span class="text-xs leading-6 text-slate-500">窓、玄関、電源コード、小物、植物を点検。</span></span></label>
+                <label class="check-row"><input type="checkbox" data-check="collar"><span><strong class="check-label block text-sm text-slate-700">首輪・リード・迷子対策</strong><span class="text-xs leading-6 text-slate-500">犬は散歩用品、猫も迷子対策を検討。</span></span></label>
+                <label class="check-row"><input type="checkbox" data-check="vet"><span><strong class="check-label block text-sm text-slate-700">かかりつけ動物病院</strong><span class="text-xs leading-6 text-slate-500">診療時間、夜間救急、休診日の連絡先を控える。</span></span></label>
+                <label class="check-row"><input type="checkbox" data-check="records"><span><strong class="check-label block text-sm text-slate-700">健康記録・登録証明書</strong><span class="text-xs leading-6 text-slate-500">ワクチン、駆虫、病歴、マイクロチップ情報を受け取る。</span></span></label>
+                <label class="check-row"><input type="checkbox" data-check="budget"><span><strong class="check-label block text-sm text-slate-700">初期費用と毎月の費用</strong><span class="text-xs leading-6 text-slate-500">用品・診療・予防・フード・トリミングなど。</span></span></label>
+                <label class="check-row"><input type="checkbox" data-check="backup"><span><strong class="check-label block text-sm text-slate-700">お世話の代替手段</strong><span class="text-xs leading-6 text-slate-500">家族、ペットシッター、ホテルなど候補を確認。</span></span></label>
+                <label class="check-row"><input type="checkbox" data-check="disaster"><span><strong class="check-label block text-sm text-slate-700">災害時の避難先と備蓄</strong><span class="text-xs leading-6 text-slate-500">同行避難の可否、フード・水・薬を確認。</span></span></label>
+            </div>
+            <button id="reset-checklist" type="button" class="focus-ring mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50"><i data-lucide="rotate-ccw" class="h-4 w-4"></i>チェックをリセット</button>
+        </section>
+
+        <section class="mb-6" aria-labelledby="steps-title">
+            <div class="mb-4"><p class="mb-1 text-xs font-bold tracking-widest text-[#bb6d45]">WELCOME FLOW</p><h2 id="steps-title" class="text-xl font-bold text-slate-800">迎えるまで・迎えたあとの流れ</h2></div>
+            <div class="section-card divide-y divide-slate-100 p-5 sm:p-7">
+                <article class="step pb-5" style="--dot:#55705f;--ring:#ecfdf5"><p class="text-xs font-bold text-emerald-700">STEP 01 · 迎える前</p><h3 class="mt-1 text-lg font-bold text-slate-800">住まいと家族の準備を終える</h3><p class="mt-2 text-sm leading-7 text-slate-600">飼育できる住居か、家族にアレルギーや不安がないか、留守番時間と担当を確認します。販売業者から購入する場合は、登録業者であること、健康状態や飼い方の説明があることを確認します。</p></article>
+                <article class="step py-5" style="--dot:#d19a53;--ring:#fffbeb"><p class="text-xs font-bold text-amber-700">STEP 02 · 迎える当日</p><h3 class="mt-1 text-lg font-bold text-slate-800">移動と最初の環境を静かに</h3><p class="mt-2 text-sm leading-7 text-slate-600">キャリーやタオルを使って安全に移動し、最初は決めた居場所で休ませます。食事・排泄・睡眠の変化を記録し、迎え先から受け取ったフードや薬の情報を保管します。</p></article>
+                <article class="step py-5" style="--dot:#8896c5;--ring:#eef2ff"><p class="text-xs font-bold text-indigo-700">STEP 03 · 最初の1週間</p><h3 class="mt-1 text-lg font-bold text-slate-800">健康確認と生活リズムをつくる</h3><p class="mt-2 text-sm leading-7 text-slate-600">健康状態、ワクチンや駆虫の履歴を動物病院で確認します。受診時期や予防の内容は年齢・地域・個体差があるため、獣医師に相談して予定を作ります。</p></article>
+                <article class="step pt-5" style="--dot:#bb6d45;--ring:#fff7ed"><p class="text-xs font-bold text-orange-700">STEP 04 · 登録・変更</p><h3 class="mt-1 text-lg font-bold text-slate-800">登録情報を自分のものにする</h3><p class="mt-2 text-sm leading-7 text-slate-600">マイクロチップが装着・登録された犬猫を譲り受けた場合は、登録証明書を受け取り、指定登録機関で飼い主の変更登録を行います。犬は市区町村の登録と狂犬病予防注射についても確認します。</p></article>
+            </div>
+        </section>
+
+        <section class="section-card mb-6 p-5 sm:p-7" aria-labelledby="procedure-title">
+            <div class="mb-5 border-b border-slate-100 pb-4"><p class="mb-1 text-xs font-bold tracking-widest text-indigo-700">PROCEDURES</p><h2 id="procedure-title" class="text-xl font-bold text-slate-800">必要な手続きと確認先</h2><p class="mt-2 text-sm leading-7 text-slate-500">犬・猫、迎え先、自治体によって必要な手続きは異なります。対象になるものを一つずつ確認してください。</p></div>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <a class="focus-ring rounded-xl border border-indigo-100 bg-indigo-50/60 p-4 hover:bg-indigo-50" href="https://www.env.go.jp/nature/dobutsu/aigo/pickup/owner.html" target="_blank" rel="noopener noreferrer"><span class="flex items-start justify-between gap-3"><span class="font-bold text-slate-800">迎える前の基本</span><i data-lucide="external-link" class="h-4 w-4 shrink-0 text-indigo-700"></i></span><span class="mt-2 block text-sm leading-6 text-slate-600">環境省の「飼い主の方やこれからペットを飼う方へ」。終生飼養、迎え先、販売業者の確認ポイントを確認できます。</span><span class="source-link mt-3 block text-xs">環境省の案内を見る</span></a>
+                <a class="focus-ring rounded-xl border border-emerald-100 bg-emerald-50/60 p-4 hover:bg-emerald-50" href="https://www.env.go.jp/nature/dobutsu/aigo/pickup/chip.html" target="_blank" rel="noopener noreferrer"><span class="flex items-start justify-between gap-3"><span class="font-bold text-slate-800">マイクロチップの変更登録</span><i data-lucide="external-link" class="h-4 w-4 shrink-0 text-emerald-700"></i></span><span class="mt-2 block text-sm leading-6 text-slate-600">登録証明書を受け取り、犬猫の所有者情報を新しい飼い主へ変更する手順を確認します。</span><span class="source-link mt-3 block text-xs">環境省の手続き案内</span></a>
+                <a class="focus-ring rounded-xl border border-amber-100 bg-amber-50/70 p-4 hover:bg-amber-50" href="https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/kenkou_iryou/kenkou/kekkaku-kansenshou18/kyokenbyou.html" target="_blank" rel="noopener noreferrer"><span class="flex items-start justify-between gap-3"><span class="font-bold text-slate-800">犬の登録・狂犬病予防注射</span><i data-lucide="external-link" class="h-4 w-4 shrink-0 text-amber-700"></i></span><span class="mt-2 block text-sm leading-6 text-slate-600">犬の登録、年1回の予防注射、鑑札・注射済票について厚生労働省の案内を確認します。</span><span class="source-link mt-3 block text-xs">厚生労働省の案内</span></a>
+                <a class="focus-ring rounded-xl border border-slate-200 bg-slate-50 p-4 hover:bg-slate-100" href="https://www.env.go.jp/nature/dobutsu/aigo/disaster.html" target="_blank" rel="noopener noreferrer"><span class="flex items-start justify-between gap-3"><span class="font-bold text-slate-800">災害時の備え</span><i data-lucide="external-link" class="h-4 w-4 shrink-0 text-slate-600"></i></span><span class="mt-2 block text-sm leading-6 text-slate-600">避難先、同行避難、普段からのしつけ・健康管理・備蓄を確認します。</span><span class="source-link mt-3 block text-xs">環境省の防災情報</span></a>
+            </div>
+            <p class="mt-5 border-t border-slate-100 pt-4 text-xs leading-6 text-slate-500">マイクロチップの変更登録や犬の登録は、迎え先・登録状況・お住まいの市区町村によって扱いが異なる場合があります。必要書類と期限は各窓口へ確認してください。</p>
+        </section>
+
+        <section class="rounded-2xl border border-slate-200 bg-slate-800 p-5 text-slate-100 sm:p-7" aria-labelledby="first-days-title"><div class="flex items-start gap-3"><i data-lucide="sparkles" class="mt-1 h-5 w-5 shrink-0 text-amber-300"></i><div><h2 id="first-days-title" class="text-lg font-bold">最初の数日は、完璧を目指さない</h2><p class="mt-2 text-sm leading-7 text-slate-300">食べる・眠る・排泄する・安心できる場所を見つける。まずはこの4つを見守り、気になる変化は記録して専門家に相談しましょう。うちの子の成長段階は、<a href="../pet-timeline/" class="font-bold text-amber-200 underline underline-offset-4">成長カレンダー</a>でも確認できます。</p></div></div></section>
+    </main>
+    <footer class="mt-8 w-full max-w-5xl pb-2 text-center text-xs leading-6 text-slate-400">このページのチェック内容はブラウザ内にのみ保存されます。医療・法律・自治体手続きの判断は各専門窓口へご確認ください。</footer>
+
+    <script>
+        lucide.createIcons();
+        const STORAGE_KEY = 'pet-welcome.v1';
+        const checks = [...document.querySelectorAll('[data-check]')];
+        const count = document.getElementById('check-count');
+        function readChecks() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch (error) { return {}; } }
+        function updateCount() { count.textContent = `${checks.filter(input => input.checked).length} / ${checks.length} 項目を確認`; }
+        function saveChecks() {
+            const state = Object.fromEntries(checks.map(input => [input.dataset.check, input.checked]));
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (error) { /* 保存できない環境でも利用できる */ }
+            updateCount();
+        }
+        const savedChecks = readChecks();
+        checks.forEach(input => { input.checked = savedChecks[input.dataset.check] === true; input.addEventListener('change', saveChecks); });
+        updateCount();
+        document.getElementById('reset-checklist').addEventListener('click', () => { checks.forEach(input => { input.checked = false; }); saveChecks(); });
+    </script>
+</body>
+</html>
