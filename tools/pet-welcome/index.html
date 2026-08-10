@@ -130,6 +130,34 @@
             </div>
             <button id="reset-checklist" type="button" class="focus-ring mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50"><i data-lucide="rotate-ccw" class="h-4 w-4"></i>チェックをリセット</button>
         </section>
+
+        <section class="section-card mb-6 p-5 sm:p-7" aria-labelledby="cost-title">
+            <div class="mb-5 border-b border-slate-100 pb-4">
+                <p class="mb-1 text-xs font-bold tracking-widest text-emerald-700">LIFETIME COST GUIDE</p>
+                <h2 id="cost-title" class="text-xl font-bold text-slate-800">将来かかる費用の目安</h2>
+                <p class="mt-2 text-sm leading-7 text-slate-500">犬種・猫種から体格区分を反映し、迎え入れ後の費用を幅で試算します。購入・譲渡費用や個別の医療費は大きく異なるため、別途確認してください。</p>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <fieldset>
+                    <legend class="text-sm font-bold text-slate-700">種別</legend>
+                    <div class="mt-1.5 grid grid-cols-2 gap-2">
+                        <label class="block"><input type="radio" name="cost-species" value="dog" class="sr-only peer" checked><span class="block cursor-pointer rounded-xl border border-slate-200 bg-white p-2.5 text-center text-sm font-bold text-slate-600 peer-checked:border-indigo-300 peer-checked:bg-indigo-50 peer-checked:text-indigo-800">犬</span></label>
+                        <label class="block"><input type="radio" name="cost-species" value="cat" class="sr-only peer"><span class="block cursor-pointer rounded-xl border border-slate-200 bg-white p-2.5 text-center text-sm font-bold text-slate-600 peer-checked:border-indigo-300 peer-checked:bg-indigo-50 peer-checked:text-indigo-800">猫</span></label>
+                    </div>
+                </fieldset>
+                <label class="block"><span id="cost-breed-label" class="text-sm font-bold text-slate-700">犬種</span><select id="cost-breed" class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl bg-white outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"></select></label>
+            </div>
+            <div id="cost-result" class="mt-5" aria-live="polite"></div>
+            <div class="mt-5 rounded-xl border border-emerald-100 bg-emerald-50/70 p-4 text-sm leading-7 text-emerald-950">
+                <h3 class="font-bold">この試算をどう受け止めるか</h3>
+                <p class="mt-1">費用は、年齢・体格・健康状態・地域・暮らし方で変わります。毎年の支出だけでなく、急な治療、介護、災害、飼い主の入院や引っ越しにも備え、家族で無理なく続けられるかを考えましょう。</p>
+                <p class="mt-2 text-xs text-emerald-800">参考：<a class="source-link text-xs" href="https://mag.anicom-sompo.co.jp/30951" target="_blank" rel="noopener noreferrer">アニコム損保「2025年のペットにかけた年間支出調査」</a>。このページの試算は独自の参考モデルです。</p>
+            </div>
+        </section>
+
+        <section class="rounded-2xl border border-slate-200 bg-slate-800 p-5 text-slate-100 sm:p-7" aria-labelledby="responsibility-title">
+            <div class="flex items-start gap-3"><i data-lucide="heart-handshake" class="mt-1 h-5 w-5 shrink-0 text-amber-300"></i><div><h2 id="responsibility-title" class="text-lg font-bold">命を迎えるということ</h2><p class="mt-2 text-sm leading-7 text-slate-300">犬や猫は、かわいい時期だけでなく、病気や老いも含めて家族として暮らす存在です。食事・運動・予防・医療・しつけ・環境づくりを続け、最後まで責任をもって世話をする覚悟があるかを、迎える前に家族で話し合いましょう。</p><ul class="mt-3 space-y-1.5 text-sm leading-6 text-slate-300"><li>• 毎日の世話をする人と、代わりに支える人を決める</li><li>• 年間費用と、急な医療・介護に備える方法を考える</li><li>• 住まい・仕事・家族構成が変わっても暮らし続けられるか確認する</li></ul></div></div>
+        </section>
     </main>
     <footer class="mt-8 w-full max-w-5xl pb-2 text-center text-xs leading-6 text-slate-400">このページのチェック内容はブラウザ内にのみ保存されます。医療・法律・自治体手続きの判断は各専門窓口へご確認ください。</footer>
 
@@ -149,6 +177,86 @@
         checks.forEach(input => { input.checked = savedChecks[input.dataset.check] === true; input.addEventListener('change', saveChecks); });
         updateCount();
         document.getElementById('reset-checklist').addEventListener('click', () => { checks.forEach(input => { input.checked = false; }); saveChecks(); });
+
+        const COST_BREEDS = {
+            dog: [
+                ['超小型犬', ['チワワ', 'トイ・プードル', 'ポメラニアン', 'ヨークシャー・テリア', 'マルチーズ', 'パピヨン', 'ミニチュア・ピンシャー', 'イタリアン・グレーハウンド']],
+                ['小型犬', ['柴犬', 'ミニチュア・ダックスフンド', 'シー・ズー', 'ミニチュア・シュナウザー', 'ジャック・ラッセル・テリア', 'フレンチ・ブルドッグ', 'パグ', 'ビーグル', 'キャバリア・キング・チャールズ・スパニエル', 'ウェルシュ・コーギー・ペンブローク']],
+                ['中型犬', ['ボーダー・コリー', 'シェットランド・シープドッグ', 'アメリカン・コッカー・スパニエル', '日本スピッツ', 'ウィペット', '甲斐犬', '紀州犬']],
+                ['大型犬', ['ゴールデン・レトリーバー', 'ラブラドール・レトリーバー', 'バーニーズ・マウンテン・ドッグ', 'ジャーマン・シェパード・ドッグ', 'シベリアン・ハスキー', 'ドーベルマン', 'グレート・ピレニーズ', '秋田犬', 'ボルゾイ']]
+            ],
+            cat: [
+                ['小柄な猫', ['シャム', 'オリエンタル・ショートヘア', 'シンガプーラ', 'コーニッシュレックス', 'デボンレックス']],
+                ['標準的な猫', ['日本猫・雑種', 'アメリカン・ショートヘア', 'スコティッシュフォールド', 'マンチカン', 'ロシアンブルー', 'ブリティッシュ・ショートヘア', 'ペルシャ', 'ベンガル', 'アビシニアン', 'ソマリ', 'エキゾチックショートヘア']],
+                ['大型の猫', ['メインクーン', 'ノルウェージャン・フォレスト・キャット', 'ラグドール', 'サイベリアン', 'ラガマフィン']]
+            ]
+        };
+        const COST_MODELS = {
+            dog: {
+                '超小型犬': { years: 14, annual: [24, 38], reserve: [80, 180], initial: [15, 40] },
+                '小型犬': { years: 14, annual: [28, 42], reserve: [80, 180], initial: [15, 40] },
+                '中型犬': { years: 13, annual: [32, 48], reserve: [100, 220], initial: [18, 45] },
+                '大型犬': { years: 11, annual: [38, 58], reserve: [120, 280], initial: [20, 50] }
+            },
+            cat: {
+                '小柄な猫': { years: 15, annual: [16, 24], reserve: [60, 150], initial: [12, 30] },
+                '標準的な猫': { years: 15, annual: [18, 28], reserve: [60, 150], initial: [12, 30] },
+                '大型の猫': { years: 14, annual: [22, 34], reserve: [80, 180], initial: [15, 35] }
+            }
+        };
+        const costSpeciesInputs = [...document.querySelectorAll('input[name="cost-species"]')];
+        const costBreed = document.getElementById('cost-breed');
+        const costBreedLabel = document.getElementById('cost-breed-label');
+        const costResult = document.getElementById('cost-result');
+
+        function formatCostMan(value) { return `${Math.round(value).toLocaleString('ja-JP')}万円`; }
+        function selectedCostSpecies() { return costSpeciesInputs.find(input => input.checked)?.value || 'dog'; }
+        function rebuildCostBreeds() {
+            const species = selectedCostSpecies();
+            costBreedLabel.textContent = species === 'dog' ? '犬種' : '猫種';
+            costBreed.replaceChildren();
+            const other = document.createElement('option');
+            other.value = 'other';
+            other.textContent = species === 'dog' ? 'わからない・ミックス・その他' : 'わからない・ミックス・その他';
+            costBreed.appendChild(other);
+            COST_BREEDS[species].forEach(([groupLabel, breeds]) => {
+                const group = document.createElement('optgroup');
+                group.label = groupLabel;
+                breeds.forEach(breed => {
+                    const option = document.createElement('option');
+                    option.value = breed;
+                    option.textContent = breed;
+                    group.appendChild(option);
+                });
+                costBreed.appendChild(group);
+            });
+            updateCostEstimate();
+        }
+
+        function updateCostEstimate() {
+            const species = selectedCostSpecies();
+            const selectedBreed = costBreed.value;
+            const group = COST_BREEDS[species].find(([, breeds]) => breeds.includes(selectedBreed));
+            const sizeLabel = group ? group[0] : (species === 'dog' ? '小型犬' : '標準的な猫');
+            const model = COST_MODELS[species][sizeLabel];
+            const initial = model.initial;
+            const annual = model.annual;
+            const reserve = model.reserve;
+            const lifetime = [initial[0] + annual[0] * model.years + reserve[0], initial[1] + annual[1] * model.years + reserve[1]];
+            const selectedLabel = selectedBreed === 'other' ? '犬種・猫種未選択' : selectedBreed;
+            costResult.innerHTML = `
+                <div class="mb-3 flex flex-wrap items-center justify-between gap-2"><p class="text-sm font-bold text-slate-700">${selectedLabel}（${sizeLabel}）の試算</p><p class="text-xs text-slate-500">試算年数：約${model.years}年</p></div>
+                <div class="grid gap-3 sm:grid-cols-4">
+                    <div class="rounded-xl border border-slate-100 bg-slate-50 p-4"><p class="text-xs font-bold text-slate-500">初期費用</p><p class="mt-2 text-lg font-bold text-slate-800">${formatCostMan(initial[0])}〜${formatCostMan(initial[1])}</p><p class="mt-1 text-xs text-slate-500">用品・初回医療</p></div>
+                    <div class="rounded-xl border border-slate-100 bg-slate-50 p-4"><p class="text-xs font-bold text-slate-500">年間費用</p><p class="mt-2 text-lg font-bold text-slate-800">${formatCostMan(annual[0])}〜${formatCostMan(annual[1])}</p><p class="mt-1 text-xs text-slate-500">食事・予防・生活</p></div>
+                    <div class="rounded-xl border border-amber-100 bg-amber-50 p-4"><p class="text-xs font-bold text-amber-800">医療・介護の備え</p><p class="mt-2 text-lg font-bold text-amber-950">${formatCostMan(reserve[0])}〜${formatCostMan(reserve[1])}</p><p class="mt-1 text-xs text-amber-800">別枠で確保する目安</p></div>
+                    <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4"><p class="text-xs font-bold text-emerald-800">生涯費用の目安</p><p class="mt-2 text-lg font-bold text-emerald-950">${formatCostMan(lifetime[0])}〜${formatCostMan(lifetime[1])}</p><p class="mt-1 text-xs text-emerald-800">初期＋年間×年数＋備え</p></div>
+                </div>`;
+        }
+
+        costSpeciesInputs.forEach(input => input.addEventListener('change', rebuildCostBreeds));
+        costBreed.addEventListener('change', updateCostEstimate);
+        rebuildCostBreeds();
     </script>
 </body>
 </html>
