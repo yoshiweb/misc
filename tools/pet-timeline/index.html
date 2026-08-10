@@ -135,7 +135,36 @@
             box-shadow: 0 10px 28px rgba(71, 85, 105, 0.07);
         }
 
+        /* 商品セクションは、スマホで「確認 → 記録 → 購入」の順に追える形へ整える */
+        .pet-product-section > h2 {
+            line-height: 1.45;
+        }
+
+        .pet-product-card {
+            align-items: flex-start;
+        }
+
+        .pet-item-checks {
+            align-items: center;
+        }
+
+        .pet-refill-controls {
+            width: 100%;
+        }
+
+        .pet-refill-input {
+            min-width: 0;
+        }
+
         @media (max-width: 640px) {
+            body {
+                padding: 0.75rem;
+            }
+
+            header {
+                margin-bottom: 1.25rem;
+            }
+
             .hero-card {
                 display: flex;
                 flex-direction: column;
@@ -148,6 +177,96 @@
             .hero-image {
                 min-height: 13rem;
                 max-height: 16rem;
+            }
+
+            #result {
+                gap: 1rem;
+            }
+
+            .pet-product-section {
+                padding: 1rem;
+            }
+
+            .pet-product-section > h2 {
+                align-items: flex-start;
+                margin-bottom: 0.75rem;
+                font-size: 1rem;
+            }
+
+            .pet-product-section > h2 svg {
+                flex: 0 0 auto;
+                margin-top: 0.15rem;
+            }
+
+            .pet-product-card {
+                display: grid !important;
+                grid-template-columns: 4.5rem minmax(0, 1fr);
+                gap: 0.75rem;
+                padding: 0.75rem;
+            }
+
+            .pet-product-card > img,
+            .pet-product-card > [aria-hidden="true"] {
+                grid-column: 1;
+                width: 4.5rem;
+                height: 3.5rem;
+            }
+
+            .pet-product-card > .min-w-0 {
+                grid-column: 2;
+                min-width: 0;
+            }
+
+            .pet-product-card > .shrink-0:last-child {
+                grid-column: 1 / -1;
+                width: 100%;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .pet-product-card > .shrink-0 a {
+                min-height: 2.75rem;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+            }
+
+            .pet-item-checks {
+                gap: 0.5rem 0.75rem;
+            }
+
+            .pet-item-checks > label {
+                min-height: 2rem;
+            }
+
+            .pet-refill-controls {
+                padding: 0.75rem;
+                width: calc(100% + 5.25rem) !important;
+                margin-left: -5.25rem;
+            }
+
+            .pet-refill-controls > .flex {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) 6rem;
+                align-items: end;
+                gap: 0.5rem;
+            }
+
+            .pet-refill-controls > .flex > label,
+            .pet-refill-controls input {
+                width: 100%;
+            }
+
+            .pet-refill-controls > .flex > button {
+                grid-column: 1 / -1;
+                width: 100%;
+                min-height: 2.75rem;
+            }
+
+            .pet-upcoming-section {
+                border: 1px solid #fde68a;
+                background: #fffdf5;
             }
         }
 
@@ -1156,7 +1275,7 @@
             };
 
             const wrap = document.createElement('div');
-            wrap.className = 'w-full mt-3 p-3 bg-slate-50 border border-slate-200 rounded-xl';
+            wrap.className = 'pet-refill-controls w-full mt-3 p-3 bg-slate-50 border border-slate-200 rounded-xl';
 
             const heading = document.createElement('div');
             heading.className = 'flex flex-wrap items-center justify-between gap-2 mb-2';
@@ -1184,7 +1303,7 @@
             const purchaseInput = document.createElement('input');
             purchaseInput.type = 'date';
             purchaseInput.value = purchasedAt || '';
-            purchaseInput.className = 'p-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-200';
+            purchaseInput.className = 'pet-refill-input p-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-200';
             purchaseInput.addEventListener('change', () => {
                 setRefill(product.id, { purchasedAt: purchaseInput.value || null });
             });
@@ -1201,7 +1320,7 @@
             cycleInput.type = 'number';
             cycleInput.min = '1';
             cycleInput.value = cycleDays || '';
-            cycleInput.className = 'w-24 p-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-200';
+            cycleInput.className = 'pet-refill-input w-24 p-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-200';
             cycleInput.addEventListener('change', () => {
                 const value = Number(cycleInput.value);
                 setRefill(product.id, { cycleDays: value > 0 ? value : null });
@@ -1236,7 +1355,7 @@
             const state = getItemState(product.id);
 
             const wrap = document.createElement('div');
-            wrap.className = 'flex flex-wrap gap-x-4 gap-y-1 mt-2';
+            wrap.className = 'pet-item-checks flex flex-wrap gap-x-4 gap-y-1 mt-2';
 
             ITEM_CHECKS.forEach(check => {
                 const label = document.createElement('label');
@@ -1268,6 +1387,8 @@
             if (products.length === 0) return null;
 
             const section = createSection(title, iconName);
+            section.classList.add('pet-product-section');
+            if (title.startsWith('もうすぐ')) section.classList.add('pet-upcoming-section');
 
             const summary = document.createElement('p');
             summary.className = 'text-sm text-slate-500 mb-3';
@@ -1278,7 +1399,7 @@
             Affiliate.renderPrNotice(section);
 
             const list = document.createElement('div');
-            list.className = 'space-y-2';
+            list.className = 'pet-product-list space-y-2';
 
             // チェック済みを末尾へ回す。selectProducts() が優先度順に並べており、
             // sort は安定なので、同じ状態のもの同士の並びは崩れない
@@ -1290,6 +1411,7 @@
                         imageVariant: species,
                         controls: createItemChecks(product, refillById.get(product.id))
                     });
+                    card.classList.add('pet-product-card');
                     if (isItemChecked(product.id)) {
                         // チェックを外したくなったときのために、ポインタを乗せると元の濃さに戻す
                         card.classList.add('opacity-50', 'hover:opacity-100', 'transition-opacity');
