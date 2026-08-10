@@ -1220,7 +1220,7 @@
         }
 
         /** タイムラインを描画する */
-        function renderTimeline(stages, currentIndex, species, profile, ageMonths) {
+        function renderTimeline(stages, currentIndex, profile, ageMonths) {
             const section = createSection('成長タイムライン', 'list-checks');
 
             const list = document.createElement('div');
@@ -1272,17 +1272,6 @@
                     header.appendChild(until);
                 }
                 item.appendChild(header);
-
-                // その段階で必要になるグッズ名を列挙する
-                const items = selectProducts(species, stage.key).map(p => p.name);
-                if (items.length > 0) {
-                    const goods = document.createElement('p');
-                    goods.className = index === currentIndex
-                        ? 'mt-1.5 text-sm text-slate-600'
-                        : 'mt-1.5 text-sm text-slate-400';
-                    goods.textContent = items.join(' / ');
-                    item.appendChild(goods);
-                }
 
                 // 獣医師相談・法令などの注意事項
                 (STAGE_NOTES[stage.key] || []).forEach(text => {
@@ -1742,7 +1731,7 @@
                 });
             }
 
-            elements.result.appendChild(renderTimeline(stages, currentIndex, species, profile, age.months));
+            elements.result.appendChild(renderTimeline(stages, currentIndex, profile, age.months));
             elements.result.appendChild(renderFoodSection(food, age.days));
 
             // 補充サイクルは商品カード内の「購入済み」から確認・編集できるようにする
