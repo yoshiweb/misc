@@ -31,7 +31,123 @@
 
         body {
             font-family: 'Noto Sans JP', sans-serif;
-            background-color: #f3f4f6;
+            color: #1f2937;
+            background:
+                radial-gradient(circle at 8% 0%, rgba(254, 243, 199, 0.68), transparent 28rem),
+                #f5f7f6;
+        }
+
+        .hero-card {
+            display: grid;
+            grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+            overflow: hidden;
+            min-height: 23rem;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 1.75rem;
+            background: #fffdf8;
+            box-shadow: 0 18px 45px rgba(71, 85, 105, 0.10);
+        }
+
+        .hero-copy {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 2.5rem;
+        }
+
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            width: fit-content;
+            margin-bottom: 1rem;
+            color: #55705f;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+        }
+
+        .hero-title {
+            margin: 0;
+            color: #26352d;
+            font-size: clamp(1.75rem, 4vw, 2.75rem);
+            font-weight: 700;
+            line-height: 1.25;
+            letter-spacing: -0.03em;
+        }
+
+        .hero-title span {
+            display: block;
+            color: #bb6d45;
+        }
+
+        .hero-lead {
+            max-width: 30rem;
+            margin-top: 1rem;
+            color: #64748b;
+            font-size: 0.95rem;
+            line-height: 1.8;
+        }
+
+        .hero-points {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .hero-point {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.45rem 0.7rem;
+            border: 1px solid #dce8df;
+            border-radius: 9999px;
+            color: #55705f;
+            background: #f2f8f3;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .hero-image {
+            width: 100%;
+            height: 100%;
+            min-height: 23rem;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        .section-kicker {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.35rem;
+            color: #bb6d45;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .input-card {
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            box-shadow: 0 10px 28px rgba(71, 85, 105, 0.07);
+        }
+
+        @media (max-width: 640px) {
+            .hero-card {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .hero-copy {
+                padding: 1.75rem 1.5rem 1.5rem;
+            }
+
+            .hero-image {
+                min-height: 13rem;
+                max-height: 16rem;
+            }
         }
 
         input[type="number"]::-webkit-inner-spin-button,
@@ -129,16 +245,35 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center p-4 sm:p-10">
+<body class="min-h-screen flex flex-col items-center p-4 sm:p-8 lg:p-10">
 
-    <header class="text-center w-full max-w-3xl mb-8">
-        <h1 class="text-3xl font-bold text-slate-900 mb-2">うちの子（犬猫）成長カレンダー</h1>
-        <p class="text-slate-500">犬・猫の生年月日と犬種から現在の成長段階を判定し、いま必要なグッズとフードの給与量を算出します。</p>
+    <header class="w-full max-w-5xl mb-8">
+        <div class="hero-card">
+            <div class="hero-copy">
+                <p class="hero-eyebrow"><i data-lucide="sparkles" class="w-4 h-4"></i>成長と暮らしを、ひとつのカレンダーに</p>
+                <h1 class="hero-title">うちの子（犬猫）<span>成長カレンダー</span></h1>
+                <p class="hero-lead">生年月日と犬種・猫種から、いまの成長段階と次に準備したいことを分かりやすく整理します。</p>
+                <div class="hero-points" aria-label="主な機能">
+                    <span class="hero-point"><i data-lucide="calendar-heart" class="w-3.5 h-3.5"></i>成長段階</span>
+                    <span class="hero-point"><i data-lucide="utensils" class="w-3.5 h-3.5"></i>給与量の目安</span>
+                    <span class="hero-point"><i data-lucide="bell-ring" class="w-3.5 h-3.5"></i>補充リマインド</span>
+                </div>
+            </div>
+            <img class="hero-image" src="../../assets/images/pet-calendar-hero.jpg" alt="明るい部屋で寄り添う子犬と子猫" width="1536" height="1024">
+        </div>
     </header>
 
-    <main class="w-full max-w-3xl">
+    <main class="w-full max-w-5xl">
         <!-- 入力エリア -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm mb-6">
+        <div class="input-card bg-white p-5 sm:p-6 rounded-2xl mb-6">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
+                <div>
+                    <p class="section-kicker"><span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-rose-100 text-rose-700">1</span>PROFILE</p>
+                    <h2 class="text-xl font-bold text-slate-800">うちの子の情報を入力</h2>
+                    <p class="mt-1 text-sm text-slate-500">入力は約1分。分かる範囲で大丈夫です。</p>
+                </div>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full"><i data-lucide="lock-keyhole" class="w-3.5 h-3.5"></i>ブラウザ内で保存</span>
+            </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                 <fieldset class="block">
                     <legend class="text-sm font-bold text-slate-600">種別</legend>
