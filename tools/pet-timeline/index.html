@@ -566,11 +566,15 @@
             const nextUrl = new URL(src, document.baseURI).href;
             if (elements.heroImage.src === nextUrl) return;
             elements.heroImage.style.opacity = '0.35';
-            elements.heroImage.src = src;
             elements.heroImage.alt = `明るい部屋で過ごす${subject}`;
-            elements.heroImage.addEventListener('load', () => {
+            const showHeroImage = () => {
                 elements.heroImage.style.opacity = '1';
-            }, { once: true });
+            };
+            // src の設定前に監視を登録する。キャッシュ済み画像でもフェードが解除されるようにする。
+            elements.heroImage.addEventListener('load', showHeroImage, { once: true });
+            elements.heroImage.addEventListener('error', showHeroImage, { once: true });
+            elements.heroImage.src = src;
+            if (elements.heroImage.complete) showHeroImage();
         }
 
         /**
