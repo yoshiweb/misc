@@ -477,7 +477,7 @@
         </div>
     </main>
 
-    <script src="../../assets/affiliate.js?v=8"></script>
+    <script src="../../assets/affiliate.js?v=9"></script>
     <script src="../../assets/share.js?v=1"></script>
     <script src="../../data/products/pet.js?v=6"></script>
     <script>
@@ -1057,7 +1057,7 @@
         }
 
         /** 現在の月齢と成長段階の要約を描画する */
-        function renderSummary(age, stage, profile, nextStage) {
+        function renderSummary(age, stage, profile, nextStage, species) {
             const section = createSection('現在の成長段階', 'calendar-heart');
 
             const summary = document.createElement('div');
@@ -1091,6 +1091,10 @@
                 next.textContent = `次の段階「${nextStage.name}」まであと約${Math.max(0, remain)}ヶ月です。`;
                 section.appendChild(next);
             }
+
+            section.appendChild(renderShareBody(
+                buildShareText(species, profile, age, stage),
+            ));
 
             return section;
         }
@@ -1248,7 +1252,7 @@
             return store.items[productId] || {};
         }
 
-        /** どれか1つでもチェックが付いているか。色を落とす・下へ回す判定に使う */
+        /** どれか1つでもチェックが付いているか。カードの見た目を変える判定に使う */
         function isItemChecked(productId) {
             const state = getItemState(productId);
             return ITEM_CHECKS.some(check => state[check.key]);
@@ -1328,14 +1332,6 @@
             cycleLabel.appendChild(cycleInput);
             controls.appendChild(cycleLabel);
 
-            const todayBtn = document.createElement('button');
-            todayBtn.type = 'button';
-            todayBtn.className = 'px-3 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors';
-            todayBtn.textContent = '今日補充した';
-            todayBtn.addEventListener('click', () => {
-                setRefill(product.id, { purchasedAt: toDateString(new Date()) });
-            });
-            controls.appendChild(todayBtn);
             wrap.appendChild(controls);
 
             const meta = document.createElement('p');
@@ -1366,6 +1362,12 @@
                 input.checked = state[check.key] === true;
                 input.className = 'w-4 h-4 accent-indigo-600 cursor-pointer';
                 input.addEventListener('change', () => {
+                    if (check.key === 'owned' && input.checked && product.consumable) {
+                        store.refills[product.id] = {
+                            ...(store.refills[product.id] || {}),
+                            purchasedAt: toDateString(new Date())
+                        };
+                    }
                     setItemState(product.id, { [check.key]: input.checked });
                 });
 
@@ -1401,23 +1403,20 @@
             const list = document.createElement('div');
             list.className = 'pet-product-list space-y-2';
 
-            // チェック済みを末尾へ回す。selectProducts() が優先度順に並べており、
-            // sort は安定なので、同じ状態のもの同士の並びは崩れない
-            [...products]
-                .sort((a, b) => (isItemChecked(a.id) ? 1 : 0) - (isItemChecked(b.id) ? 1 : 0))
-                .forEach(product => {
-                    // 犬猫で絵柄が分かれている商品は、選択中の種別のイラストを使う
-                    const card = Affiliate.productCard(product, {
-                        imageVariant: species,
-                        controls: createItemChecks(product, refillById.get(product.id))
-                    });
-                    card.classList.add('pet-product-card');
-                    if (isItemChecked(product.id)) {
-                        // チェックを外したくなったときのために、ポインタを乗せると元の濃さに戻す
-                        card.classList.add('opacity-50', 'hover:opacity-100', 'transition-opacity');
-                    }
-                    list.appendChild(card);
+            // 商品データの優先度順をそのまま保ち、チェック状態では並び替えない
+            products.forEach(product => {
+                // 犬猫で絵柄が分かれている商品は、選択中の種別のイラストを使う
+                const card = Affiliate.productCard(product, {
+                    imageVariant: species,
+                    controls: createItemChecks(product, refillById.get(product.id))
                 });
+                card.classList.add('pet-product-card');
+                if (isItemChecked(product.id)) {
+                    // チェックを外したくなったときのために、ポインタを乗せると元の濃さに戻す
+                    card.classList.add('opacity-50', 'hover:opacity-100', 'transition-opacity');
+                }
+                list.appendChild(card);
+            });
 
             section.appendChild(list);
 
@@ -1485,31 +1484,32 @@
                 + `人間でいうと約${toHumanAge(age.months, profile)}歳です。`;
         }
 
-        /**
-         * 共有セクションを描画する。
-         *
-         * 共有本文には品種と年齢が入るため、何が流れるのかを見てから押せるよう
-         * ボタンの上に本文をそのまま表示する。
-         */
-        function renderShare(text) {
-            const section = createSection('この結果をシェア', 'share-2');
+        /** 共有欄を描画する。本文をボタンの上に表示してから共有できるようにする。 */
+        function renderShareBody(text) {
+            const body = document.createElement('div');
+            body.className = 'mt-5 pt-5 border-t border-slate-100';
+
+            const heading = document.createElement('h3');
+            heading.className = 'flex items-center gap-2 text-base font-bold text-slate-800 mb-3';
+            heading.innerHTML = '<i data-lucide="share-2" class="w-4 h-4 text-indigo-600"></i>この結果をシェア';
+            body.appendChild(heading);
 
             const preview = document.createElement('p');
             preview.className = 'p-3 mb-3 text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-xl';
             preview.textContent = text;
-            section.appendChild(preview);
+            body.appendChild(preview);
 
             // ハッシュタグは括弧を含められない（そこでタグが切れる）ため、
             // サービス名から括弧書きを外した表記を使う
-            Share.render(section, { text, hashtags: ['うちの子成長カレンダー'] });
+            Share.render(body, { text, hashtags: ['うちの子成長カレンダー'] });
 
             const note = document.createElement('p');
             note.className = 'mt-3 text-xs text-slate-400 leading-relaxed';
             note.textContent = '共有されるのは上の本文とツールのURLだけです。'
                 + '生年月日・体重・消耗品の記録は含まれません。';
-            section.appendChild(note);
+            body.appendChild(note);
 
-            return section;
+            return body;
         }
 
         /**
@@ -1665,7 +1665,7 @@
 
             syncNeuteredField(stage);
 
-            elements.result.appendChild(renderSummary(age, stage, profile, nextStage));
+            elements.result.appendChild(renderSummary(age, stage, profile, nextStage, species));
 
             let food = null;
             if (weight > 0) {
@@ -1704,10 +1704,6 @@
 
             const upcomingProducts = renderUpcomingProducts(species, stage, nextStage, refillById);
             if (upcomingProducts) elements.result.appendChild(upcomingProducts);
-
-            // 共有は結果をひととおり見たあとの動線になるため末尾に置く
-            elements.result.appendChild(
-                renderShare(buildShareText(species, profile, age, stage)));
 
             lucide.createIcons();
         }

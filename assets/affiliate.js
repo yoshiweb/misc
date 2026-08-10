@@ -1,5 +1,5 @@
 /**
- * アフィリエイト共通モジュール（Amazon / 楽天）
+ * アフィリエイト共通モジュール（Amazon / 楽天 / メルカリ）
  *
  * 各ツールから商品リンク・商品カード・アフィリエイト表記を生成するための共通基盤。
  *
@@ -9,9 +9,9 @@
  * 古いモジュールの組み合わせで実行時エラーになる。
  * 変更したら、読み込んでいる全ツールの script タグのバージョンを上げること。
  *
- *   <script src="../../assets/affiliate.js?v=8"></script>
+ *   <script src="../../assets/affiliate.js?v=9"></script>
  *
- * 現在のバージョン: v=8
+ * 現在のバージョン: v=9
  * 読み込んでいるツール:
  *   - tools/pfc-calculator/index.html
  *   - tools/pet-timeline/index.html
@@ -43,7 +43,8 @@
         siteName: 'misc.yoshiweb.net',
         baseUrl: 'https://www.amazon.co.jp',
         rakutenSearchUrl: 'https://search.rakuten.co.jp/search/mall',
-        rakutenRedirectUrl: 'https://hb.afl.rakuten.co.jp/hgc'
+        rakutenRedirectUrl: 'https://hb.afl.rakuten.co.jp/hgc',
+        mercariSearchUrl: 'https://jp.mercari.com/search'
     };
 
     /** カテゴリ名 -> 商品データ のレジストリ */
@@ -116,6 +117,13 @@
             + `?pc=${encodeURIComponent(target)}`;
     }
 
+    /** メルカリの検索結果URLを生成する（アフィリエイトIDは付与しない） */
+    function mercariSearchUrl(keyword) {
+        const parsed = new URL(CONFIG.mercariSearchUrl);
+        parsed.searchParams.set('keyword', keyword);
+        return parsed.toString();
+    }
+
     /**
      * 商品に対する各ストアのリンクを返す。
      * 商品カードと、ツール側で独自にリンクを並べる箇所の両方から使う。
@@ -133,6 +141,11 @@
                 store: '楽天',
                 url: rakutenSearchUrl(product.rakutenKeyword || product.searchKeyword),
                 label: '楽天で探す'
+            });
+            links.push({
+                store: 'メルカリ',
+                url: mercariSearchUrl(product.searchKeyword),
+                label: 'メルカリで探す'
             });
         }
 
@@ -193,7 +206,9 @@
         el.rel = 'nofollow sponsored noopener';
         el.className = link.store === 'Amazon'
             ? 'px-3 py-1.5 text-sm font-bold text-indigo-600 border border-indigo-200 hover:bg-indigo-50 rounded-lg transition-colors whitespace-nowrap'
-            : 'px-3 py-1.5 text-sm font-bold text-rose-600 border border-rose-200 hover:bg-rose-50 rounded-lg transition-colors whitespace-nowrap';
+            : link.store === '楽天'
+                ? 'px-3 py-1.5 text-sm font-bold text-rose-600 border border-rose-200 hover:bg-rose-50 rounded-lg transition-colors whitespace-nowrap'
+                : 'px-3 py-1.5 text-sm font-bold text-emerald-700 border border-emerald-200 hover:bg-emerald-50 rounded-lg transition-colors whitespace-nowrap';
         el.textContent = link.label;
         return el;
     }
@@ -341,6 +356,7 @@
         linkFor,
         isRakutenEnabled,
         rakutenSearchUrl,
+        mercariSearchUrl,
         storeLinks,
         storeLinkElement,
         registerProducts,
