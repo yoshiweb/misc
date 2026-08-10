@@ -398,6 +398,25 @@
                 </div>
                 <span class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full"><i data-lucide="lock-keyhole" class="w-3.5 h-3.5"></i>ブラウザ内で保存</span>
             </div>
+            <div class="mb-5 rounded-xl border border-indigo-100 bg-indigo-50/60 p-3 sm:p-4">
+                <div class="flex flex-wrap items-end gap-3">
+                    <label class="min-w-0 flex-1">
+                        <span class="text-xs font-bold text-indigo-900">登録中のうちの子</span>
+                        <select id="profile-select" class="mt-1.5 w-full min-w-0 p-2.5 border border-indigo-100 rounded-xl bg-white outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"></select>
+                    </label>
+                    <button id="add-profile" type="button" class="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-indigo-200 bg-white px-3 py-2.5 text-sm font-bold text-indigo-700 hover:bg-indigo-50"><i data-lucide="user-round-plus" class="h-4 w-4"></i>追加</button>
+                    <button id="delete-profile" type="button" class="inline-flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50"><i data-lucide="trash-2" class="h-4 w-4"></i>削除</button>
+                </div>
+                <p class="mt-2 text-xs leading-5 text-indigo-700">複数登録すると、ここから表示するうちの子を切り替えられます。</p>
+            </div>
+            <div class="mb-5">
+                <label class="block">
+                    <span class="text-sm font-bold text-slate-600">名前（任意）</span>
+                    <input id="name" type="text" maxlength="40" autocomplete="off" placeholder="例：モモ"
+                        class="mt-1.5 w-full p-2.5 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400">
+                    <span class="block text-xs text-slate-400 mt-1.5">名前はこのブラウザ内での表示にだけ使います。</span>
+                </label>
+            </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
                 <fieldset class="block">
                     <legend class="text-sm font-bold text-slate-600">種別</legend>
@@ -490,6 +509,10 @@
         const elements = {
             speciesGroup: document.getElementById('species-group'),
             heroImage: document.getElementById('hero-image'),
+            profileSelect: document.getElementById('profile-select'),
+            addProfile: document.getElementById('add-profile'),
+            deleteProfile: document.getElementById('delete-profile'),
+            name: document.getElementById('name'),
             birthday: document.getElementById('birthday'),
             breed: document.getElementById('breed'),
             breedLabel: document.getElementById('breed-label'),
@@ -644,36 +667,102 @@
 
         /**
          * 永続化する状態。
-         * profile は入力欄の値、refills は消耗品ごとの購入日と補充サイクル、
-         * items はグッズごとの「購入済み」「不要」のチェック。
-         * ペット1匹分を想定した単一プロファイル構成。
+         * profiles はペットごとの入力・補充・グッズチェックを持ち、
+         * profile/refills/items は現在選択中のペットを扱うための作業用参照。
          */
         const store = {
+            profiles: {},
+            activeProfileId: '',
             profile: {},
             refills: {},
             items: {}
         };
 
+        /** 現在のペットを作業用の参照へ読み込む */
+        function activateProfile(id) {
+            const saved = store.profiles[id];
+            if (!saved) return false;
+            store.activeProfileId = id;
+            store.profile = { ...(saved.profile || {}) };
+            store.refills = { ...(saved.refills || {}) };
+            store.items = { ...(saved.items || {}) };
+            return true;
+        }
+
+        /** 作業用の参照を現在のペットへ反映する */
+        function syncActiveProfile() {
+            const id = store.activeProfileId;
+            if (!id) return;
+            store.profiles[id] = {
+                id,
+                profile: { ...store.profile },
+                refills: { ...store.refills },
+                items: { ...store.items }
+            };
+        }
+
+        /** ペット一覧の表示を更新する */
+        function syncProfileControls() {
+            const ids = Object.keys(store.profiles);
+            elements.profileSelect.replaceChildren();
+            ids.forEach((id, index) => {
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = store.profiles[id].profile?.name?.trim() || `うちの子 ${index + 1}`;
+                elements.profileSelect.appendChild(option);
+            });
+            elements.profileSelect.value = store.activeProfileId;
+            elements.deleteProfile.disabled = ids.length <= 1;
+            elements.deleteProfile.classList.toggle('opacity-50', ids.length <= 1);
+            elements.deleteProfile.classList.toggle('cursor-not-allowed', ids.length <= 1);
+        }
+
         /** ローカルストレージから状態を読み込む */
         function loadStore() {
             try {
                 const raw = localStorage.getItem(STORAGE_KEY);
-                if (!raw) return;
-                const parsed = JSON.parse(raw);
-                Object.assign(store.profile, parsed.profile || {});
-                Object.assign(store.refills, parsed.refills || {});
-                // items は後から追加したため、それ以前の保存データには入っていない
-                Object.assign(store.items, parsed.items || {});
+                const parsed = raw ? JSON.parse(raw) : null;
+
+                if (parsed?.profiles && typeof parsed.profiles === 'object' && Object.keys(parsed.profiles).length) {
+                    Object.entries(parsed.profiles).forEach(([id, profile]) => {
+                        store.profiles[id] = {
+                            id,
+                            profile: { ...(profile.profile || {}) },
+                            refills: { ...(profile.refills || {}) },
+                            items: { ...(profile.items || {}) }
+                        };
+                    });
+                    const firstId = Object.keys(store.profiles)[0];
+                    activateProfile(store.profiles[parsed.activeProfileId] ? parsed.activeProfileId : firstId);
+                } else {
+                    // 旧形式（1匹分）を最初のプロフィールへ移行する
+                    const legacyProfile = parsed?.profile || {};
+                    const id = 'pet-1';
+                    store.profiles[id] = {
+                        id,
+                        profile: { ...legacyProfile },
+                        refills: { ...(parsed?.refills || {}) },
+                        items: { ...(parsed?.items || {}) }
+                    };
+                    activateProfile(id);
+                }
             } catch (e) {
                 // 保存データが壊れていても初期状態で動作を継続する
                 console.warn('[pet-timeline] 保存データを読み込めませんでした', e);
+                store.profiles = { 'pet-1': { id: 'pet-1', profile: {}, refills: {}, items: {} } };
+                activateProfile('pet-1');
             }
         }
 
         /** ローカルストレージへ状態を書き込む */
         function saveStore() {
             try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+                syncActiveProfile();
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    version: 2,
+                    activeProfileId: store.activeProfileId,
+                    profiles: store.profiles
+                }));
             } catch (e) {
                 // プライベートモードなどで書き込めない場合は保存を諦める
                 console.warn('[pet-timeline] 保存できませんでした', e);
@@ -1796,9 +1885,8 @@
             lucide.createIcons();
         }
 
-        /** 永続化する入力欄の一覧（要素キー -> 保存キー） */
         /** 永続化する入力欄（要素キー = 保存キー）。ラジオグループは個別に扱う */
-        const PERSISTED_FIELDS = ['birthday', 'breed', 'size', 'weight'];
+        const PERSISTED_FIELDS = ['name', 'birthday', 'breed', 'size', 'weight'];
 
         /** 入力欄の値を保存する */
         function saveProfile() {
@@ -1809,17 +1897,23 @@
             store.profile.neutered = radioValue('neutered', 'no');
             store.profile.weightEdited = weightEdited;
             saveStore();
+            syncProfileControls();
         }
 
         /** 保存済みの値を入力欄へ復元する */
         function restoreProfile() {
             // 品種の一覧は種別によって変わるため、先に種別を復元してから組み立てる
-            if (store.profile.species) setRadioValue('species', store.profile.species);
-            if (store.profile.neutered) setRadioValue('neutered', store.profile.neutered);
+            setRadioValue('species', store.profile.species || 'dog');
+            setRadioValue('neutered', store.profile.neutered || 'no');
 
             const species = getSpecies();
             buildBreedOptions(species);
             builtSpecies = species;
+
+            // 前のペットの値が新しいペットへ残らないよう、入力欄を先に初期化する
+            elements.name.value = '';
+            elements.birthday.value = '';
+            elements.weight.value = '';
 
             PERSISTED_FIELDS.forEach(key => {
                 const value = store.profile[key];
@@ -1849,13 +1943,59 @@
             weightEdited = store.profile.weightEdited === true;
         }
 
+        /** ペットを切り替える */
+        function switchProfile(id) {
+            if (id === store.activeProfileId || !store.profiles[id]) return;
+            saveProfile();
+            activateProfile(id);
+            restoreProfile();
+            syncProfileControls();
+            update();
+        }
+
+        /** 新しいペットを追加する */
+        function addProfile() {
+            saveProfile();
+            const id = `pet-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+            store.profiles[id] = { id, profile: {}, refills: {}, items: {} };
+            activateProfile(id);
+            restoreProfile();
+            syncProfileControls();
+            saveProfile();
+            update();
+            elements.name.focus();
+        }
+
+        /** 現在のペットを削除する（最後の1匹は残す） */
+        function deleteProfile() {
+            const ids = Object.keys(store.profiles);
+            if (ids.length <= 1) return;
+            const currentName = store.profile.name?.trim() || 'このうちの子';
+            if (!window.confirm(`${currentName}の保存データを削除しますか？`)) return;
+
+            delete store.profiles[store.activeProfileId];
+            activateProfile(Object.keys(store.profiles)[0]);
+            restoreProfile();
+            syncProfileControls();
+            saveProfile();
+            update();
+        }
+
         loadStore();
         restoreProfile();
+        syncProfileControls();
+
+        elements.profileSelect.addEventListener('change', () => {
+            switchProfile(elements.profileSelect.value);
+        });
+        elements.addProfile.addEventListener('click', addProfile);
+        elements.deleteProfile.addEventListener('click', deleteProfile);
 
         elements.weight.addEventListener('input', () => { weightEdited = true; });
 
         // 値を持つ入力欄だけを対象にする。コンテナや説明用の要素は自動的に除外される
         Object.values(elements).forEach(el => {
+            if (el === elements.profileSelect) return;
             if (!(el instanceof HTMLInputElement || el instanceof HTMLSelectElement)) return;
             const handler = () => { update(); saveProfile(); };
             el.addEventListener('input', handler);
