@@ -332,7 +332,7 @@
             </div>
 
             <p class="mt-4 pt-4 border-t border-slate-100 text-xs text-slate-400 leading-relaxed">
-                入力内容と消耗品の購入日はブラウザのローカルストレージに保存され、次回アクセス時に復元されます。
+                入力内容・消耗品の購入日・グッズのチェックはブラウザのローカルストレージに保存され、次回アクセス時に復元されます。
                 サーバーには送信されません。
             </p>
         </div>
@@ -357,7 +357,7 @@
         </div>
     </main>
 
-    <script src="../../assets/affiliate.js?v=7"></script>
+    <script src="../../assets/affiliate.js?v=8"></script>
     <script src="../../assets/share.js?v=1"></script>
     <script src="../../data/products/pet.js?v=6"></script>
     <script>
@@ -473,12 +473,14 @@
 
         /**
          * 永続化する状態。
-         * profile は入力欄の値、refills は消耗品ごとの購入日と補充サイクル。
+         * profile は入力欄の値、refills は消耗品ごとの購入日と補充サイクル、
+         * items はグッズごとの「購入済み」「不要」のチェック。
          * ペット1匹分を想定した単一プロファイル構成。
          */
         const store = {
             profile: {},
-            refills: {}
+            refills: {},
+            items: {}
         };
 
         /** ローカルストレージから状態を読み込む */
@@ -489,6 +491,8 @@
                 const parsed = JSON.parse(raw);
                 Object.assign(store.profile, parsed.profile || {});
                 Object.assign(store.refills, parsed.refills || {});
+                // items は後から追加したため、それ以前の保存データには入っていない
+                Object.assign(store.items, parsed.items || {});
             } catch (e) {
                 // 保存データが壊れていても初期状態で動作を継続する
                 console.warn('[pet-timeline] 保存データを読み込めませんでした', e);
@@ -699,6 +703,42 @@
             if (stage.startMonths === 0) return `〜生後${formatMonths(stage.endMonths)}`;
             if (stage.endMonths === null) return `${formatMonths(stage.startMonths)}〜`;
             return `${formatMonths(stage.startMonths)}〜${formatMonths(stage.endMonths)}`;
+        }
+
+        /**
+         * 先のステージが始まるまでの期間を表示用の文字列にする。
+         *
+         * 月齢のままだと「約105ヶ月後」のように読み取れなくなるため、
+         * 2年以上は年に繰り上げる。年齢ではなく期間なので単位は「年」を使う
+         * （formatMonths() の「歳」とは意味が異なる）。
+         */
+        function formatMonthsUntil(months) {
+            if (months <= 0) return 'まもなく';
+            if (months < 24) return `約${months}ヶ月後`;
+            const years = Math.floor(months / 12);
+            const rest = months % 12;
+            return rest === 0 ? `約${years}年後` : `約${years}年${rest}ヶ月後`;
+        }
+
+        /**
+         * 準備を促す対象とみなす、次のステージまでの月数。
+         * 最初の2つのステージが2ヶ月刻みで進むため、それに合わせている。
+         */
+        const SOON_MONTHS = 2;
+
+        /**
+         * 先のステージに付ける、そこへ入るまでの期間のラベルを組み立てる。
+         * 間近のものは買い物の判断に直結するため、文言と色を分けて目立たせる。
+         */
+        function stageUntilLabel(monthsUntil) {
+            const text = formatMonthsUntil(monthsUntil);
+            if (monthsUntil > SOON_MONTHS) {
+                return { text, className: 'text-indigo-600 bg-indigo-50' };
+            }
+            return {
+                text: monthsUntil <= 0 ? 'もうすぐ準備' : `もうすぐ準備（${text}）`,
+                className: 'text-amber-800 bg-amber-100'
+            };
         }
 
         /** ステージの期間を人間換算年齢で表す。書式は formatStageRange に揃える */
@@ -1085,7 +1125,7 @@
         }
 
         /** タイムラインを描画する */
-        function renderTimeline(stages, currentIndex, species, profile) {
+        function renderTimeline(stages, currentIndex, species, profile, ageMonths) {
             const section = createSection('成長タイムライン', 'list-checks');
 
             const list = document.createElement('div');
@@ -1121,11 +1161,20 @@
                 humanRange.textContent = formatHumanStageRange(stage, profile);
                 header.appendChild(humanRange);
 
+                // 各行の末尾は現在地を示す位置。いまいる段階には「いまここ」を、
+                // まだ先の段階にはそこへ入るまでの期間を置く。
+                // 月齢の範囲だけでは、あと何ヶ月で準備が必要になるのか読み取りにくい
                 if (index === currentIndex) {
                     const badge = document.createElement('span');
                     badge.className = 'text-xs font-bold text-white bg-indigo-600 px-2 py-0.5 rounded-full';
                     badge.textContent = 'いまここ';
                     header.appendChild(badge);
+                } else if (index > currentIndex) {
+                    const label = stageUntilLabel(stage.startMonths - ageMonths);
+                    const until = document.createElement('span');
+                    until.className = `text-xs font-bold px-2 py-0.5 rounded-full ${label.className}`;
+                    until.textContent = label.text;
+                    header.appendChild(until);
                 }
                 item.appendChild(header);
 
@@ -1155,20 +1204,104 @@
             return section;
         }
 
-        /** 現在のステージで必要なグッズを商品カードで描画する */
+        /**
+         * グッズのチェック欄の定義。
+         * 「購入済み」と「不要」はどちらも “もう見なくてよい” という意味では同じだが、
+         * 買ったのか要らないのかは利用者にとって別の情報なので分けて持つ。
+         */
+        const ITEM_CHECKS = [
+            { key: 'owned', label: '購入済み' },
+            { key: 'skipped', label: '不要' }
+        ];
+
+        /** グッズのチェック状態を取得する（未記録なら空オブジェクト） */
+        function getItemState(productId) {
+            return store.items[productId] || {};
+        }
+
+        /** どれか1つでもチェックが付いているか。色を落とす・下へ回す判定に使う */
+        function isItemChecked(productId) {
+            const state = getItemState(productId);
+            return ITEM_CHECKS.some(check => state[check.key]);
+        }
+
+        /** グッズのチェック状態を更新して保存し、再描画する */
+        function setItemState(productId, patch) {
+            store.items[productId] = { ...getItemState(productId), ...patch };
+            saveStore();
+            update();
+        }
+
+        /** 商品カードに差し込むチェック欄を組み立てる */
+        function createItemChecks(product) {
+            const state = getItemState(product.id);
+
+            const wrap = document.createElement('div');
+            wrap.className = 'flex flex-wrap gap-x-4 gap-y-1 mt-2';
+
+            ITEM_CHECKS.forEach(check => {
+                const label = document.createElement('label');
+                label.className = 'flex items-center gap-1.5 text-xs font-bold text-slate-500 cursor-pointer select-none';
+
+                const input = document.createElement('input');
+                input.type = 'checkbox';
+                input.checked = state[check.key] === true;
+                input.className = 'w-4 h-4 accent-indigo-600 cursor-pointer';
+                input.addEventListener('change', () => {
+                    setItemState(product.id, { [check.key]: input.checked });
+                });
+
+                label.appendChild(input);
+                label.appendChild(document.createTextNode(check.label));
+                wrap.appendChild(label);
+            });
+
+            return wrap;
+        }
+
+        /**
+         * 現在のステージで必要なグッズを商品カードで描画する。
+         *
+         * 「購入済み」「不要」がついたものは色を落として末尾へ回す。
+         * 消さずに残すのは、間違えて付けたときに戻せるようにするため。
+         */
         function renderProducts(species, stage) {
             const products = selectProducts(species, stage.key);
             if (products.length === 0) return null;
 
             const section = createSection(`いま必要なグッズ（${stage.name}）`, 'shopping-bag');
 
+            const remaining = products.filter(p => !isItemChecked(p.id)).length;
+            const summary = document.createElement('p');
+            summary.className = 'text-sm text-slate-500 mb-3';
+            summary.textContent = remaining === 0
+                ? `${products.length}件すべてに購入済み・不要のチェックが付いています。`
+                : `${products.length}件のうち、まだチェックが付いていないものが${remaining}件あります。`;
+            section.appendChild(summary);
+
             // 広告であることが明瞭に分かるよう、商品リンクの直前にPR表記を置く
             Affiliate.renderPrNotice(section);
 
             const list = document.createElement('div');
             list.className = 'space-y-2';
-            // 犬猫で絵柄が分かれている商品は、選択中の種別のイラストを使う
-            products.forEach(p => list.appendChild(Affiliate.productCard(p, { imageVariant: species })));
+
+            // チェック済みを末尾へ回す。selectProducts() が優先度順に並べており、
+            // sort は安定なので、同じ状態のもの同士の並びは崩れない
+            [...products]
+                .sort((a, b) => (isItemChecked(a.id) ? 1 : 0) - (isItemChecked(b.id) ? 1 : 0))
+                .forEach(product => {
+                    // 犬猫で絵柄が分かれている商品は、選択中の種別のイラストを使う
+                    const card = Affiliate.productCard(product, {
+                        imageVariant: species,
+                        controls: createItemChecks(product)
+                    });
+                    if (isItemChecked(product.id)) {
+                        // チェックを外したくなったときのために、ポインタを乗せると元の濃さに戻す
+                        card.classList.add('opacity-50', 'hover:opacity-100', 'transition-opacity');
+                    }
+                    list.appendChild(card);
+                });
+
             section.appendChild(list);
 
             return section;
@@ -1385,7 +1518,7 @@
             // 体重が未入力でも、熱量の入力欄に触れられるよう常に描画する
             elements.result.appendChild(renderFood(food));
 
-            elements.result.appendChild(renderTimeline(stages, currentIndex, species, profile));
+            elements.result.appendChild(renderTimeline(stages, currentIndex, species, profile, age.months));
 
             const products = renderProducts(species, stage);
             if (products) elements.result.appendChild(products);
