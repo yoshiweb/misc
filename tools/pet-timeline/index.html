@@ -1140,9 +1140,33 @@
         }
 
         /** 食事・給与量を独立した「フード」セクションとして描画する */
-        function renderFoodSection(food, ageDays) {
+        function renderFoodSection(food, ageDays, species, stage, refillById) {
             const section = createSection('フード', 'utensils');
             section.classList.add('pet-food-section');
+
+            const foodProducts = ageDays < 30
+                ? []
+                : selectProducts(species, stage.key).filter(product => product.consumableType === 'food');
+
+            const appendFoodProducts = () => {
+                if (foodProducts.length === 0) return;
+
+                Affiliate.renderPrNotice(section);
+                const list = document.createElement('div');
+                list.className = 'pet-product-list space-y-2 mt-4';
+                foodProducts.forEach(product => {
+                    const card = Affiliate.productCard(product, {
+                        imageVariant: species,
+                        controls: createItemChecks(product, refillById.get(product.id))
+                    });
+                    card.classList.add('pet-product-card');
+                    if (isItemChecked(product.id)) {
+                        card.classList.add('opacity-50', 'hover:opacity-100', 'transition-opacity');
+                    }
+                    list.appendChild(card);
+                });
+                section.appendChild(list);
+            };
 
             const heading = document.createElement('h3');
             heading.className = 'flex items-center gap-2 text-base font-bold text-slate-800 mb-3';
@@ -1156,6 +1180,7 @@
                 note.textContent = '生後約1ヶ月までは母乳・初乳が基本です。母親がいない場合は、犬用・猫用の代用乳を使い、給与量や回数は製品ラベルと獣医師の指示に従ってください。';
                 section.appendChild(note);
                 renderFoodSources(section, 'nursing');
+                appendFoodProducts();
                 return section;
             }
 
@@ -1166,6 +1191,7 @@
                 note.textContent = 'ミルクから、ふやかした子犬用・子猫用フードへ少しずつ移行する時期です。急に切り替えず、食べられる量や体調を見ながら進めてください。';
                 section.appendChild(note);
                 renderFoodSources(section, 'weaning');
+                appendFoodProducts();
                 return section;
             }
 
@@ -1208,6 +1234,7 @@
                 : '現在の体重を入力すると給与量を算出します。';
             section.appendChild(basis);
             renderFoodSources(section, 'food');
+            appendFoodProducts();
 
             return section;
         }
@@ -1481,7 +1508,8 @@
          * 消さずに残すのは、間違えて付けたときに戻せるようにするため。
          */
         function renderProducts(species, stage, refillById, ageDays) {
-            const products = selectCurrentProducts(species, stage.key, ageDays);
+            const products = selectCurrentProducts(species, stage.key, ageDays)
+                .filter(product => product.consumableType !== 'food');
             const remaining = products.filter(p => !isItemChecked(p.id)).length;
             const summary = remaining === 0
                 ? `${products.length}件すべてに購入済み・不要のチェックが付いています。`
@@ -1732,7 +1760,6 @@
             }
 
             elements.result.appendChild(renderTimeline(stages, currentIndex, profile, age.months));
-            elements.result.appendChild(renderFoodSection(food, age.days));
 
             // 補充サイクルは商品カード内の「購入済み」から確認・編集できるようにする
             const packSize = getSetting('packSize');
@@ -1748,6 +1775,9 @@
             const refillById = new Map(
                 [...currentRefills, ...upcomingRefills].map(entry => [entry.product.id, entry])
             );
+
+            elements.result.appendChild(
+                renderFoodSection(food, age.days, species, stage, refillById));
 
             const products = renderProducts(species, stage, refillById, age.days);
             if (products) elements.result.appendChild(products);
