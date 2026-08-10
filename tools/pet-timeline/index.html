@@ -1093,20 +1093,21 @@
             }
 
             section.appendChild(renderShareBody(
-                buildShareText(species, profile, age, stage),
+                buildShareText(species, profile, age, stage)
             ));
 
             return section;
         }
 
-        /**
-         * フードの給与量を描画する。
-         *
-         * 体重が未入力などで算出できない場合も、熱量の入力欄に触れられるよう
-         * セクション自体は必ず描画し、数値だけを「—」にする。
-         */
-        function renderFood(food) {
-            const section = createSection('フードの給与量の目安', 'utensils');
+        /** フード商品と一緒に確認する給与量の目安を描画する */
+        function renderFoodGuidance(food) {
+            const section = document.createElement('div');
+            section.className = 'pet-food-guidance mt-5 pt-5 border-t border-slate-100';
+
+            const heading = document.createElement('h3');
+            heading.className = 'flex items-center gap-2 text-base font-bold text-slate-800 mb-3';
+            heading.innerHTML = '<i data-lucide="utensils" class="w-4 h-4 text-indigo-600"></i>フードの給与量の目安';
+            section.appendChild(heading);
 
             const cells = [
                 { label: '1日の給与量', value: food && food.grams.toLocaleString(), unit: 'g' },
@@ -1115,7 +1116,7 @@
             ];
 
             const grid = document.createElement('div');
-            grid.className = 'grid grid-cols-3 gap-3 mb-4';
+            grid.className = 'grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4';
             cells.forEach(cell => {
                 const box = document.createElement('div');
                 box.className = 'p-3 bg-slate-50 rounded-xl';
@@ -1385,7 +1386,7 @@
         }
 
         /** 商品カードの一覧セクションを描画する */
-        function renderProductSection(species, title, products, summaryText, refillById, iconName = 'shopping-bag') {
+        function renderProductSection(species, title, products, summaryText, refillById, iconName = 'shopping-bag', extraContent = null) {
             if (products.length === 0) return null;
 
             const section = createSection(title, iconName);
@@ -1419,6 +1420,7 @@
             });
 
             section.appendChild(list);
+            if (extraContent) section.appendChild(extraContent);
 
             return section;
         }
@@ -1426,10 +1428,10 @@
         /**
          * 現在のステージで必要なグッズを商品カードで描画する。
          *
-         * 「購入済み」「不要」がついたものは色を落として末尾へ回す。
+         * 「購入済み」「不要」がついたものは色を落として状態を見やすくする。
          * 消さずに残すのは、間違えて付けたときに戻せるようにするため。
          */
-        function renderProducts(species, stage, refillById) {
+        function renderProducts(species, stage, refillById, food) {
             const products = selectProducts(species, stage.key);
             const remaining = products.filter(p => !isItemChecked(p.id)).length;
             const summary = remaining === 0
@@ -1441,7 +1443,9 @@
                 `いま必要なグッズ（${stage.name}）`,
                 products,
                 summary,
-                refillById
+                refillById,
+                'shopping-bag',
+                renderFoodGuidance(food)
             );
         }
 
@@ -1679,9 +1683,6 @@
                 });
             }
 
-            // 体重が未入力でも、熱量の入力欄に触れられるよう常に描画する
-            elements.result.appendChild(renderFood(food));
-
             elements.result.appendChild(renderTimeline(stages, currentIndex, species, profile, age.months));
 
             // 補充サイクルは商品カード内の「購入済み」から確認・編集できるようにする
@@ -1699,7 +1700,7 @@
                 [...currentRefills, ...upcomingRefills].map(entry => [entry.product.id, entry])
             );
 
-            const products = renderProducts(species, stage, refillById);
+            const products = renderProducts(species, stage, refillById, food);
             if (products) elements.result.appendChild(products);
 
             const upcomingProducts = renderUpcomingProducts(species, stage, nextStage, refillById);
