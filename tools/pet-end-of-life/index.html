@@ -184,29 +184,6 @@
             </article>
         </section>
 
-        <section class="section-card mb-6 p-5 sm:p-7" aria-labelledby="prepare-title">
-            <div class="flex flex-wrap items-end justify-between gap-3 border-b border-slate-100 pb-4">
-                <div>
-                    <p class="mb-1 text-xs font-bold tracking-widest text-emerald-700">PREPARE NOW</p>
-                    <h2 id="prepare-title" class="text-xl font-bold text-slate-800">元気なうちに準備しておくもの</h2>
-                </div>
-                <p id="check-count" class="text-sm font-bold text-slate-500" aria-live="polite">0 / 9 項目を確認</p>
-            </div>
-            <p class="mt-4 text-sm leading-7 text-slate-500">すべてを一度に決めなくて大丈夫です。チェック状態はこのブラウザにだけ保存されます。</p>
-            <div id="prepare-checklist" class="mt-3 grid gap-x-8 sm:grid-cols-2">
-                <label class="check-row"><input type="checkbox" data-check="vet"><span><strong class="check-label block text-sm text-slate-700">かかりつけ・夜間救急の連絡先</strong><span class="text-xs leading-6 text-slate-500">診察券や病院名、休診日も一緒に。</span></span></label>
-                <label class="check-row"><input type="checkbox" data-check="medical"><span><strong class="check-label block text-sm text-slate-700">病歴・薬・アレルギーのメモ</strong><span class="text-xs leading-6 text-slate-500">最新の検査結果や投薬量も確認。</span></span></label>
-                <label class="check-row"><input type="checkbox" data-check="contact"><span><strong class="check-label block text-sm text-slate-700">家族・代理連絡先の共有</strong><span class="text-xs leading-6 text-slate-500">不在時に動ける人と、連絡の順番を決める。</span></span></label>
-                <label class="check-row"><input type="checkbox" data-check="registration"><span><strong class="check-label block text-sm text-slate-700">マイクロチップ・犬の登録情報</strong><span class="text-xs leading-6 text-slate-500">登録証明書や鑑札の保管場所を確認。</span></span></label>
-                <label class="check-row"><input type="checkbox" data-check="insurance"><span><strong class="check-label block text-sm text-slate-700">ペット保険・定期契約の確認</strong><span class="text-xs leading-6 text-slate-500">請求期限、解約、フード配送など。</span></span></label>
-                <label class="check-row"><input type="checkbox" data-check="farewell"><span><strong class="check-label block text-sm text-slate-700">火葬・供養の候補と費用</strong><span class="text-xs leading-6 text-slate-500">個別・合同、返骨、訪問など希望を整理。</span></span></label>
-                <label class="check-row"><input type="checkbox" data-check="transport"><span><strong class="check-label block text-sm text-slate-700">移動用キャリー・タオル</strong><span class="text-xs leading-6 text-slate-500">体を安定させる敷物や保冷材も候補に。</span></span></label>
-                <label class="check-row"><input type="checkbox" data-check="memories"><span><strong class="check-label block text-sm text-slate-700">思い出と希望のメモ</strong><span class="text-xs leading-6 text-slate-500">写真、好きなもの、家族への伝言など。</span></span></label>
-                <label class="check-row"><input type="checkbox" data-check="budget"><span><strong class="check-label block text-sm text-slate-700">費用の備え</strong><span class="text-xs leading-6 text-slate-500">診療費・移動・火葬などの予算感を確認。</span></span></label>
-            </div>
-            <button id="reset-checklist" type="button" class="focus-ring mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50"><i data-lucide="rotate-ccw" class="h-4 w-4"></i>チェックをリセット</button>
-        </section>
-
         <section class="mb-6" aria-labelledby="flow-title">
             <div class="mb-4">
                 <p class="mb-1 text-xs font-bold tracking-widest text-[#bb6d45]">WHEN THE TIME COMES</p>
@@ -289,6 +266,29 @@
                     <p class="mt-2 text-sm leading-7 text-slate-300">終活は、お別れを急ぐためのものではありません。今の時間を大切にしながら、家族が迷ったときに「この子ならどうしてほしいか」を思い出せるようにする準備です。</p>
                 </div>
             </div>
+        </section>
+
+        <section class="section-card mb-6 p-5 sm:p-7" aria-labelledby="prepare-title">
+            <div class="flex flex-wrap items-end justify-between gap-3 border-b border-slate-100 pb-4">
+                <div>
+                    <p class="mb-1 text-xs font-bold tracking-widest text-emerald-700">PREPARE NOW</p>
+                    <h2 id="prepare-title" class="text-xl font-bold text-slate-800">元気なうちに準備しておくもの</h2>
+                </div>
+                <p id="check-count" class="text-sm font-bold text-slate-500" aria-live="polite">0 / 9 項目を確認</p>
+            </div>
+            <p class="mt-4 text-sm leading-7 text-slate-500">すべてを一度に決めなくて大丈夫です。チェック状態はこのブラウザにだけ保存されます。</p>
+            <div id="prepare-checklist" class="mt-3 grid gap-x-8 sm:grid-cols-2">
+                <label class="check-row"><input type="checkbox" data-check="vet"><span><strong class="check-label block text-sm text-slate-700">かかりつけ・夜間救急の連絡先</strong><span class="text-xs leading-6 text-slate-500">診察券や病院名、休診日も一緒に。</span></span></label>
+                <label class="check-row"><input type="checkbox" data-check="medical"><span><strong class="check-label block text-sm text-slate-700">病歴・薬・アレルギーのメモ</strong><span class="text-xs leading-6 text-slate-500">最新の検査結果や投薬量も確認。</span></span></label>
+                <label class="check-row"><input type="checkbox" data-check="contact"><span><strong class="check-label block text-sm text-slate-700">家族・代理連絡先の共有</strong><span class="text-xs leading-6 text-slate-500">不在時に動ける人と、連絡の順番を決める。</span></span></label>
+                <label class="check-row"><input type="checkbox" data-check="registration"><span><strong class="check-label block text-sm text-slate-700">マイクロチップ・犬の登録情報</strong><span class="text-xs leading-6 text-slate-500">登録証明書や鑑札の保管場所を確認。</span></span></label>
+                <label class="check-row"><input type="checkbox" data-check="insurance"><span><strong class="check-label block text-sm text-slate-700">ペット保険・定期契約の確認</strong><span class="text-xs leading-6 text-slate-500">請求期限、解約、フード配送など。</span></span></label>
+                <label class="check-row"><input type="checkbox" data-check="farewell"><span><strong class="check-label block text-sm text-slate-700">火葬・供養の候補と費用</strong><span class="text-xs leading-6 text-slate-500">個別・合同、返骨、訪問など希望を整理。</span></span></label>
+                <label class="check-row"><input type="checkbox" data-check="transport"><span><strong class="check-label block text-sm text-slate-700">移動用キャリー・タオル</strong><span class="text-xs leading-6 text-slate-500">体を安定させる敷物や保冷材も候補に。</span></span></label>
+                <label class="check-row"><input type="checkbox" data-check="memories"><span><strong class="check-label block text-sm text-slate-700">思い出と希望のメモ</strong><span class="text-xs leading-6 text-slate-500">写真、好きなもの、家族への伝言など。</span></span></label>
+                <label class="check-row"><input type="checkbox" data-check="budget"><span><strong class="check-label block text-sm text-slate-700">費用の備え</strong><span class="text-xs leading-6 text-slate-500">診療費・移動・火葬などの予算感を確認。</span></span></label>
+            </div>
+            <button id="reset-checklist" type="button" class="focus-ring mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50"><i data-lucide="rotate-ccw" class="h-4 w-4"></i>チェックをリセット</button>
         </section>
     </main>
 
