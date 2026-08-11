@@ -3,29 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>misc</title>
+    <meta name="description" content="ブラウザですぐに使える小さなツールとゲームのコレクション。">
+    <title>misc.yoshiweb.net</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --ink: #172033;
+            --muted: #667085;
+            --line: #e6e9ef;
+            --surface: #ffffff;
+            --accent: #635bff;
+            --accent-soft: #f0efff;
+            --page: #f7f8fc;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            background: var(--page);
+            font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+            line-height: 1.6;
+        }
+
+        .container {
+            width: min(1080px, calc(100% - 40px));
+            margin: 0 auto;
+            padding: 72px 0 80px;
+        }
+
+        header { margin-bottom: 48px; }
+
+        .eyebrow {
+            margin: 0 0 10px;
+            color: var(--accent);
+            font-size: .78rem;
+            font-weight: 700;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(2rem, 5vw, 3.4rem);
+            letter-spacing: -.04em;
+        }
+
+        .intro {
+            max-width: 560px;
+            margin: 14px 0 0;
+            color: var(--muted);
+        }
+
+        section { margin-top: 42px; }
+
+        h2 {
+            margin: 0 0 16px;
+            font-size: 1.2rem;
+            letter-spacing: -.02em;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+        }
+
+        .card {
+            display: flex;
+            flex-direction: column;
+            min-height: 140px;
+            padding: 20px;
+            color: inherit;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            text-decoration: none;
+            transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+        }
+
+        .card:hover,
+        .card:focus-visible {
+            border-color: var(--accent);
+            box-shadow: 0 10px 24px rgba(23, 32, 51, .08);
+            outline: none;
+            transform: translateY(-2px);
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+        }
+
+        .icon {
+            display: inline-grid;
+            width: 30px;
+            height: 30px;
+            place-items: center;
+            color: var(--accent);
+            background: var(--accent-soft);
+            border-radius: 9px;
+            font-size: .95rem;
+        }
+
+        .card-description {
+            margin: 10px 0 0 40px;
+            color: var(--muted);
+            font-size: .9rem;
+        }
+
+        footer {
+            margin-top: 60px;
+            color: var(--muted);
+            font-size: .82rem;
+        }
+
+        @media (max-width: 560px) {
+            .container { width: min(100% - 28px, 1080px); padding-top: 48px; }
+            header { margin-bottom: 36px; }
+            section { margin-top: 34px; }
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>misc.yoshiweb.net</h1>
-        <ul>
-            <li><a href="./feed-viewer/index.html">Feed Viewer</a></li>
-            <li><a href="games/pulse-bloom.html">Pulse Bloom</a></li>
-            <li><a href="games/node-fusion.html">Node Fusion</a></li>
-            <li><a href="tools/pdf2img/index.html">PDF to Image Converter</a></li>
-            <li><a href="tools/imgcrop/index.html">Image Cropper</a></li>
-            <li><a href="tools/video2png/index.html">Video to PNG Converter</a></li>
-            <li><a href="tools/png2webp/index.html">PNG to WEBP Converter</a></li>
-            <li><a href="tools/webp2png/index.html">WEBP to PNG Converter</a></li>
-            <li><a href="tools/video-editor/index.html">Video Editor</a></li>
-            <li><a href="tools/pfc-calculator/index.html">PFC Calculator</a></li>
-            <li><a href="tools/pet-timeline/index.html">Pet Growth Calendar</a></li>
-            <li><a href="tools/pet-end-of-life/index.html">Pet End-of-Life Notes</a></li>
-            <li><a href="tools/pet-welcome/index.html">Pet Welcome Preparation</a></li>
-            <li><a href="tools/disaster-stockpile/index.html">Disaster Stockpile Simulator</a></li>
-            <li><a href="tools/thumbnail-generator/index.html">Thumbnail Generator</a></li>
-            <li><a href="tools/affiliate-links/index.html">Affiliate Links Generator</a></li>
-        </ul>
-    </div>
+    <main class="container">
+        <header>
+            <p class="eyebrow">Small tools, made useful</p>
+            <h1>misc.yoshiweb.net</h1>
+            <p class="intro">ブラウザですぐに使える小さなツールとゲームをまとめています。ファイルを外部へ送らず、手元で完結するものが中心です。</p>
+        </header>
+
+        <section aria-labelledby="reading-heading">
+            <h2 id="reading-heading">閲覧</h2>
+            <div class="grid">
+                <a class="card" href="feed-viewer/">
+                    <span class="card-title"><span class="icon" aria-hidden="true">◌</span>Feed Viewer</span>
+                    <span class="card-description">RSSフィードをまとめて読む</span>
+                </a>
+            </div>
+        </section>
+
+        <section aria-labelledby="media-heading">
+            <h2 id="media-heading">画像・PDF</h2>
+            <div class="grid">
+                <a class="card" href="tools/pdf2img/"><span class="card-title"><span class="icon" aria-hidden="true">▧</span>PDF to Image Converter</span><span class="card-description">PDFのページを画像に変換</span></a>
+                <a class="card" href="tools/imgcrop/"><span class="card-title"><span class="icon" aria-hidden="true">⌗</span>Image Cropper</span><span class="card-description">画像を切り抜いて保存</span></a>
+                <a class="card" href="tools/png2webp/"><span class="card-title"><span class="icon" aria-hidden="true">⇢</span>PNG to WEBP Converter</span><span class="card-description">PNG画像をWEBPに変換</span></a>
+                <a class="card" href="tools/webp2png/"><span class="card-title"><span class="icon" aria-hidden="true">⇢</span>WEBP to PNG Converter</span><span class="card-description">WEBP画像をPNGに変換</span></a>
+                <a class="card" href="tools/stroke-order/"><span class="card-title"><span class="icon" aria-hidden="true">書</span>Stroke Order</span><span class="card-description">漢字の書き順を確認</span></a>
+            </div>
+        </section>
+
+        <section aria-labelledby="video-heading">
+            <h2 id="video-heading">動画</h2>
+            <div class="grid">
+                <a class="card" href="tools/video2png/"><span class="card-title"><span class="icon" aria-hidden="true">▶</span>Video to PNG Converter</span><span class="card-description">動画からフレーム画像を抽出</span></a>
+                <a class="card" href="tools/video-editor/"><span class="card-title"><span class="icon" aria-hidden="true">✂</span>Video Editor</span><span class="card-description">ブラウザで動画を編集</span></a>
+                <a class="card" href="tools/thumbnail-generator/"><span class="card-title"><span class="icon" aria-hidden="true">▣</span>Thumbnail Generator</span><span class="card-description">動画用サムネイルを作成</span></a>
+            </div>
+        </section>
+
+        <section aria-labelledby="life-heading">
+            <h2 id="life-heading">暮らし・計算</h2>
+            <div class="grid">
+                <a class="card" href="tools/pfc-calculator/"><span class="card-title"><span class="icon" aria-hidden="true">%</span>PFC Calculator</span><span class="card-description">たんぱく質・脂質・炭水化物を計算</span></a>
+                <a class="card" href="tools/pet-timeline/"><span class="card-title"><span class="icon" aria-hidden="true">♡</span>Pet Growth Calendar</span><span class="card-description">うちの子の成長を記録</span></a>
+                <a class="card" href="tools/pet-end-of-life/"><span class="card-title"><span class="icon" aria-hidden="true">♡</span>Pet End-of-Life Notes</span><span class="card-description">ペットの終活情報を整理</span></a>
+                <a class="card" href="tools/pet-welcome/"><span class="card-title"><span class="icon" aria-hidden="true">♡</span>Pet Welcome Preparation</span><span class="card-description">犬猫を迎える準備を確認</span></a>
+                <a class="card" href="tools/disaster-stockpile/"><span class="card-title"><span class="icon" aria-hidden="true">⌂</span>Disaster Stockpile Simulator</span><span class="card-description">防災備蓄の目安をシミュレーション</span></a>
+                <a class="card" href="tools/affiliate-links/"><span class="card-title"><span class="icon" aria-hidden="true">↗</span>Affiliate Links Generator</span><span class="card-description">アフィリエイトリンクを作成</span></a>
+            </div>
+        </section>
+
+        <section aria-labelledby="games-heading">
+            <h2 id="games-heading">ゲーム</h2>
+            <div class="grid">
+                <a class="card" href="games/pulse-bloom.html"><span class="card-title"><span class="icon" aria-hidden="true">✦</span>Pulse Bloom</span><span class="card-description">リズムに合わせて遊ぶミニゲーム</span></a>
+                <a class="card" href="games/node-fusion.html"><span class="card-title"><span class="icon" aria-hidden="true">✣</span>Node Fusion</span><span class="card-description">ノードをつないで成長させるゲーム</span></a>
+            </div>
+        </section>
+
+        <footer>© yoshiweb</footer>
+    </main>
 </body>
 </html>
