@@ -6,6 +6,7 @@
 
     // ドラッグ開始判定用のグローバルステート
     let isTitleBarGrabbed = false;
+    let activeCatalogId = window.RSS_FEED_CATALOG?.[0]?.id || '';
 
     // マウスアップでフラグをリセット（グローバルで1つだけ登録）
     window.addEventListener('mouseup', () => {
@@ -62,6 +63,64 @@
         }
     }
 
+    function isFeedAdded(url) {
+        return getStoredFeeds().some(feed => feed.url === url);
+    }
+
+    function renderCatalog() {
+        const tabs = document.getElementById('category-tabs');
+        const list = document.getElementById('catalog-list');
+        const count = document.getElementById('catalog-count');
+        if (!tabs || !list || !Array.isArray(window.RSS_FEED_CATALOG)) return;
+        tabs.replaceChildren();
+        window.RSS_FEED_CATALOG.forEach(category => {
+            const tab = document.createElement('button');
+            tab.type = 'button';
+            tab.className = 'category-tab';
+            tab.textContent = category.label;
+            tab.setAttribute('role', 'tab');
+            tab.setAttribute('aria-selected', String(category.id === activeCatalogId));
+            tab.classList.toggle('is-active', category.id === activeCatalogId);
+            tab.addEventListener('click', () => { activeCatalogId = category.id; renderCatalog(); });
+            tabs.appendChild(tab);
+        });
+        const category = window.RSS_FEED_CATALOG.find(item => item.id === activeCatalogId) || window.RSS_FEED_CATALOG[0];
+        if (!category) return;
+        if (count) count.textContent = `${category.feeds.length} feeds`;
+        list.replaceChildren();
+        category.feeds.forEach(feed => {
+            const card = document.createElement('article');
+            card.className = 'catalog-card';
+            const icon = document.createElement('div');
+            icon.className = 'catalog-icon material-symbols-outlined';
+            icon.textContent = 'rss_feed';
+            icon.setAttribute('aria-hidden', 'true');
+            const details = document.createElement('div');
+            details.className = 'catalog-details';
+            const title = document.createElement('h3'); title.textContent = feed.title;
+            const description = document.createElement('p'); description.textContent = feed.description;
+            const site = document.createElement('span'); site.className = 'catalog-site'; site.textContent = feed.site;
+            details.append(title, description, site);
+            const button = document.createElement('button');
+            button.type = 'button'; button.className = 'catalog-add'; button.dataset.url = feed.url;
+            updateCatalogButton(button, isFeedAdded(feed.url));
+            button.addEventListener('click', async () => {
+                if (isFeedAdded(feed.url)) { showToast('このRSSはすでに登録されています。', 'info'); return; }
+                button.disabled = true; button.classList.add('is-loading');
+                const success = await addRssFeed(feed.url, feed.title);
+                button.classList.remove('is-loading');
+                updateCatalogButton(button, success || isFeedAdded(feed.url));
+            });
+            card.append(icon, details, button); list.appendChild(card);
+        });
+    }
+
+    function updateCatalogButton(button, added) {
+        button.classList.toggle('is-added', added); button.disabled = added; button.replaceChildren();
+        const icon = document.createElement('span'); icon.className = 'material-symbols-outlined'; icon.textContent = added ? 'check' : 'add';
+        button.append(icon, document.createTextNode(added ? '登録済み' : '登録する'));
+    }
+
     /**
      * 現在のカラムの「並び順」と「折りたたみ状態」をローカルストレージに一括保存する
      */
@@ -84,20 +143,23 @@
     /**
      * URLをローカルストレージに追加し, RSSフィードを取得する
      */
-    async function addRssFeed(url) {
+    async function addRssFeed(url, label = '') {
         const storedFeeds = getStoredFeeds();
         const urls = storedFeeds.map(f => f.url);
         if (urls.includes(url)) {
             showToast("This RSS Feed is already added.", "info");
-            return;
+            return false;
         }
 
         const success = await fetchRssFeed(url, false); // 追加時は初期展開
         if (success) {
             storedFeeds.push({ url, collapsed: false });
             localStorage.setItem("rss-urls", JSON.stringify(storedFeeds));
-            showToast("RSS Feed added successfully!", "success");
+            showToast(`${label || 'RSS Feed'}を登録しました。`, "success");
+            renderCatalog();
+            return true;
         }
+        return false;
     }
 
     /**
@@ -315,6 +377,7 @@
 
     // ページが読み込まれたときにローカルストレージからURLを取得し, 表示する
     document.addEventListener("DOMContentLoaded", async function () {
+        renderCatalog();
         const storedFeeds = getStoredFeeds();
         if (storedFeeds && storedFeeds.length > 0) {
             // 並列で全フィードを取得する

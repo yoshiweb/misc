@@ -42,10 +42,23 @@
             </form>
         </header>
         <main>
+            <section class="catalog" aria-labelledby="catalog-title">
+                <div class="catalog-heading">
+                    <div>
+                        <p class="eyebrow">START WITH A FEED</p>
+                        <h2 id="catalog-title">読みたいRSSを見つける</h2>
+                        <p class="catalog-description">カテゴリを選ぶと、すぐに登録できるフィードを表示します。</p>
+                    </div>
+                    <span class="catalog-count" id="catalog-count"></span>
+                </div>
+                <div class="category-tabs" id="category-tabs" role="tablist" aria-label="RSSカテゴリ"></div>
+                <div class="catalog-list" id="catalog-list" aria-live="polite"></div>
+            </section>
             <div id="rss-feed-columns"></div>
         </main>
     </div>
     <div id="toast-container" class="toast-container"></div>
-    <script src="app.js?v=7"></script>
+    <script src="feeds.js?v=1"></script>
+    <script src="app.js?v=8"></script>
 </body>
 </html>
