@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://misc.yoshiweb.net/sitemap.xml
