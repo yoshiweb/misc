@@ -6,7 +6,9 @@ const gameUrl = new URL('./retro-clash.html', import.meta.url);
 const html = await readFile(gameUrl, 'utf8');
 
 function inlineScript(source) {
-  const start = source.indexOf('<script>');
+  const marker = "'use strict';";
+  const markerIndex = source.indexOf(marker);
+  const start = source.lastIndexOf('<script>', markerIndex);
   const end = source.indexOf('</script>', start);
   assert.notEqual(start, -1, 'inline game script should exist');
   assert.notEqual(end, -1, 'inline game script should close');
@@ -23,10 +25,24 @@ async function pngMetadata(relativePath) {
   };
 }
 
-test('the single-file game JavaScript parses without external libraries', () => {
+test('the game JavaScript parses and only loads the GA4 measurement script', () => {
   assert.doesNotThrow(() => new Function(inlineScript(html)));
-  assert.doesNotMatch(html, /<script\s+src=/i);
-  assert.doesNotMatch(html, /https?:\/\//i);
+  const externalScripts = [...html.matchAll(/<script\s+[^>]*src=["']([^"']+)["']/gi)].map(match => match[1]);
+  assert.deepEqual(externalScripts, ['https://www.googletagmanager.com/gtag/js?id=G-W2L9NES4NJ']);
+});
+
+test('share metadata uses the production key visual and GA4 tracks the game loop', async () => {
+  assert.match(html, /property="og:image" content="https:\/\/misc\.yoshiweb\.net\/assets\/images\/ogp\/retro-clash\.jpg"/);
+  assert.match(html, /name="twitter:card" content="summary_large_image"/);
+  assert.match(html, /url\("assets\/retro-clash\/key-visual\.png"\) center \/ cover/);
+  assert.match(html, /gtag\('config', 'G-W2L9NES4NJ'\)/);
+  for (const event of ['game_start', 'level_start', 'level_end', 'select_content']) {
+    assert.match(html, new RegExp(`track\\('${event}'`));
+  }
+  const keyVisual = await pngMetadata('./assets/retro-clash/key-visual.png');
+  assert.ok(keyVisual.width >= 1200 && keyVisual.height >= 630);
+  const ogp = await readFile(new URL('../assets/images/ogp/retro-clash.jpg', import.meta.url));
+  assert.equal(ogp.subarray(0, 3).toString('hex'), 'ffd8ff');
 });
 
 test('all required game-flow screens and actions are present', () => {

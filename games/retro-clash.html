@@ -4,7 +4,31 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta name="theme-color" content="#080b16">
+  <meta name="description" content="Azure Renを操り、CPUのCrimson Kaiと戦う本格2Dアーケード格闘ゲーム。スマホのジョイスティックとキーボードに対応。">
+  <link rel="canonical" href="https://misc.yoshiweb.net/games/retro-clash.html">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:site_name" content="yoshiweb.net">
+  <meta property="og:title" content="Retro Clash — 2D Arcade Fighter">
+  <meta property="og:description" content="青き拳でCPUを打ち倒せ。必殺技・ガード・コンボを備えた、無料で遊べる本格アーケード格闘ゲーム。">
+  <meta property="og:url" content="https://misc.yoshiweb.net/games/retro-clash.html">
+  <meta property="og:image" content="https://misc.yoshiweb.net/assets/images/ogp/retro-clash.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="月夜の道場で青と赤の格闘家が激突するRetro Clashのキービジュアル">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Retro Clash — 2D Arcade Fighter">
+  <meta name="twitter:description" content="青き拳でCPUを打ち倒せ。本格2Dアーケード格闘ゲーム。">
+  <meta name="twitter:image" content="https://misc.yoshiweb.net/assets/images/ogp/retro-clash.jpg">
   <title>Retro Clash — 2D Arcade Fighter</title>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-W2L9NES4NJ"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-W2L9NES4NJ');
+  </script>
   <style>
     :root {
       --ink: #fff8dc;
@@ -68,6 +92,12 @@
       background:
         linear-gradient(135deg, transparent 0 49.5%, rgba(255, 212, 71, .08) 50% 50.7%, transparent 51%),
         radial-gradient(circle at 50% 45%, rgba(39, 61, 111, .82), rgba(5, 8, 18, .98) 72%);
+    }
+    #title {
+      background:
+        linear-gradient(90deg, rgba(4, 7, 16, .82), rgba(4, 7, 16, .48) 50%, rgba(4, 7, 16, .82)),
+        linear-gradient(0deg, rgba(4, 7, 16, .92), transparent 55%),
+        url("assets/retro-clash/key-visual.png") center / cover;
     }
     .hidden { display: none !important; }
     .eyebrow {
@@ -451,6 +481,12 @@
     const FLOOR = 445;
     const FIXED_STEP = 1000 / 60;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    // Keep analytics optional: gameplay continues normally when GA is blocked.
+    function track(eventName, parameters = {}) {
+      if (typeof window.gtag !== 'function') return;
+      window.gtag(eventName, { game_name: 'retro_clash', ...parameters });
+    }
 
     function loadImage(path) {
       const image = new Image();
@@ -1234,6 +1270,10 @@
       game.timer = 99;
       game.roundOver = false;
       game.cameraX = 160;
+      track('level_start', {
+        level_name: `round_${game.round}`,
+        stage_name: stageNames[game.stage]
+      });
       announce(`ROUND ${game.round}`, 850, () => announce('FIGHT!', 600, () => {
         game.ready = true;
         audio.play('start');
@@ -1255,6 +1295,10 @@
       fighters.forEach(f => f.reset());
       cpu.reset();
       particles.length = 0; projectiles.length = 0;
+      track('game_start', {
+        stage_name: stageNames[game.stage],
+        control_type: matchMedia('(pointer: coarse)').matches ? 'touch' : 'keyboard'
+      });
       document.querySelector('#vsStage').textContent = stageNames[game.stage];
       showScreen('vs');
       setTimeout(() => {
@@ -1269,6 +1313,13 @@
 
     function showMatchResult(winner) {
       game.mode = 'result';
+      track('level_end', {
+        level_name: 'match',
+        success: winner === 0,
+        winner: winner === 0 ? 'azure_ren' : 'crimson_kai',
+        player_rounds: game.wins[0],
+        cpu_rounds: game.wins[1]
+      });
       document.querySelector('#winner').innerHTML = `${winner ? 'CRIMSON' : 'AZURE'}<br>WINS`;
       document.querySelector('#resultStats').textContent = `ROUNDS ${game.wins[0]} — ${game.wins[1]}　·　TOTAL HITS ${game.matchHits[0]} — ${game.matchHits[1]}`;
       document.querySelector('#help').classList.add('hidden');
@@ -1506,6 +1557,10 @@
       game.stage = (game.stage + delta + stageNames.length) % stageNames.length;
       document.querySelector('#stageName').textContent = stageNames[game.stage];
       document.querySelector('#select').style.setProperty('--stage-preview', `url("assets/retro-clash/${game.stage ? 'neon-street' : 'moonlit-dojo'}.png")`);
+      track('select_content', {
+        content_type: 'game_stage',
+        item_id: game.stage ? 'neon_city_street' : 'moonlit_dojo'
+      });
       audio.play('start');
     }
 
