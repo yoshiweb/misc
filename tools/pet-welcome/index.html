@@ -167,7 +167,7 @@
                 <p class="mt-1">費用は、年齢・体格・健康状態・地域・暮らし方で変わります。毎年の支出だけでなく、急な治療、介護、災害、飼い主の入院や引っ越しにも備え、家族で無理なく続けられるかを考えましょう。</p>
                 <p class="mt-2 text-xs text-emerald-800">参考：<a class="source-link text-xs" href="https://mag.anicom-sompo.co.jp/30951" target="_blank" rel="noopener noreferrer">アニコム損保「2025年のペットにかけた年間支出調査」</a>。このページの試算は独自の参考モデルです。</p>
             </div>
-            <p class="mt-5 border-t border-slate-100 pt-4 text-sm leading-7 text-slate-500">犬種・猫種ごとの詳しい準備ページは、選択後にそのまま開けます。各ページは独立したURLなので、ブックマークや共有にも使えます。<a class="source-link" href="breeds/">犬種・猫種別ページ一覧を見る</a></p>
+            <p class="mt-5 border-t border-slate-100 pt-4 text-sm leading-7 text-slate-500">犬種・猫種を選ぶと、このページ内で費用試算が更新されます。詳しい準備ページは、試算結果のリンクまたは一覧から開けます。各ページは独立したURLなので、ブックマークや共有にも使えます。<a class="source-link" href="breeds/">犬種・猫種別ページ一覧を見る</a></p>
         </section>
 
         <section class="section-card mb-6 p-5 sm:p-7" aria-labelledby="starter-items-title">
@@ -297,14 +297,7 @@
         }
 
         costSpeciesInputs.forEach(input => input.addEventListener('change', rebuildCostBreeds));
-        costBreed.addEventListener('change', () => {
-            const species = selectedCostSpecies();
-            if (costBreed.value !== 'other' && BREED_SLUGS[costBreed.value]) {
-                window.location.href = `breeds/${species}/${BREED_SLUGS[costBreed.value]}/`;
-                return;
-            }
-            updateCostEstimate();
-        });
+        costBreed.addEventListener('change', updateCostEstimate);
         rebuildCostBreeds();
         costSpeciesInputs.forEach(input => input.addEventListener('change', renderStarterItems));
         renderStarterItems();
