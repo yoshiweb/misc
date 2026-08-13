@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W2L9NES4NJ"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag("js", new Date());
+        gtag("config", "G-W2L9NES4NJ");
+    </script>
+    <title>ローカルWebサイト監査 | misc.yoshiweb.net</title>
+    <meta name="description" content="HTML一式やZIPをブラウザ内で監査し、SEO・アクセシビリティ・リンク切れを確認するツール。">
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <style>
+        :root { color-scheme: light; --ink:#182230; --muted:#667085; --subtle:#98a2b3; --line:#e4e7ec; --surface:#fff; --page:#f5f7fb; --primary:#3157d5; --primary-dark:#2445b5; --primary-soft:#eef2ff; --success:#067647; --success-soft:#ecfdf3; --warning:#b54708; --warning-soft:#fffaeb; --danger:#b42318; --danger-soft:#fef3f2; --shadow:0 12px 30px rgba(16,24,40,.07); }
+        * { box-sizing:border-box; }
+        body { margin:0; color:var(--ink); background:var(--page); font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif; line-height:1.55; }
+        button,input { font:inherit; } button { cursor:pointer; } button:disabled { cursor:not-allowed; opacity:.5; } :focus-visible { outline:3px solid rgba(49,87,213,.3); outline-offset:2px; }
+        .topbar { display:flex; align-items:center; justify-content:space-between; gap:20px; max-width:1180px; margin:0 auto; padding:22px 24px; }
+        .brand { color:var(--ink); font-weight:800; text-decoration:none; letter-spacing:-.02em; } .brand span { color:var(--primary); }
+        .privacy-badge { display:inline-flex; align-items:center; gap:7px; padding:6px 10px; color:var(--success); background:var(--success-soft); border:1px solid #abefc6; border-radius:999px; font-size:.78rem; font-weight:700; }
+        .container { width:min(1180px,calc(100% - 32px)); margin:0 auto; padding:22px 0 72px; }
+        .hero { margin-bottom:26px; } .eyebrow { margin:0 0 8px; color:var(--primary); font-size:.78rem; font-weight:800; letter-spacing:.12em; } h1 { margin:0; font-size:clamp(1.8rem,4vw,2.7rem); letter-spacing:-.04em; } .lead { max-width:720px; margin:10px 0 0; color:var(--muted); }
+        .panel { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); } .panel-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:22px 24px 16px; border-bottom:1px solid var(--line); } h2 { margin:0; font-size:1.1rem; letter-spacing:-.02em; } .panel-note { margin:3px 0 0; color:var(--muted); font-size:.84rem; } .panel-body { padding:22px 24px; }
+        .dropzone { display:grid; min-height:190px; place-items:center; padding:28px; text-align:center; background:#fbfcff; border:1.5px dashed #9aaef3; border-radius:12px; transition:background .2s,border-color .2s; } .dropzone.dragover { background:var(--primary-soft); border-color:var(--primary); } .drop-icon { display:grid; width:48px; height:48px; place-items:center; margin:0 auto 10px; color:var(--primary); background:var(--primary-soft); border-radius:13px; font-size:1.45rem; } .dropzone strong { display:block; } .dropzone p { margin:5px 0 15px; color:var(--muted); font-size:.85rem; }
+        .primary-button,.secondary-button,.ghost-button { border:1px solid transparent; border-radius:9px; font-weight:700; transition:background .2s,border-color .2s,transform .2s; } .primary-button { padding:11px 16px; color:#fff; background:var(--primary); } .primary-button:hover:not(:disabled) { background:var(--primary-dark); transform:translateY(-1px); } .secondary-button { padding:9px 13px; color:var(--ink); background:#fff; border-color:var(--line); } .secondary-button:hover:not(:disabled),.ghost-button:hover:not(:disabled) { background:#f8faff; border-color:#b7c4f5; } .ghost-button { padding:5px 8px; color:var(--muted); background:transparent; font-size:.82rem; } .visually-hidden { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+        .summary-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:20px 0; } .stat { padding:14px 16px; background:var(--surface); border:1px solid var(--line); border-radius:12px; } .stat-value { display:block; font-size:1.45rem; font-weight:800; } .stat-label { color:var(--muted); font-size:.76rem; }
+        .toolbar { display:flex; align-items:center; justify-content:space-between; gap:14px; margin:22px 0 12px; } .filters { display:flex; gap:6px; } .filter { padding:6px 10px; color:var(--muted); background:transparent; border:1px solid var(--line); border-radius:999px; font-size:.78rem; font-weight:700; } .filter.active { color:var(--primary); background:var(--primary-soft); border-color:#c7d2fe; }
+        .page-list { display:grid; gap:10px; margin:0; padding:0; list-style:none; } .page-row { border:1px solid var(--line); border-radius:11px; overflow:hidden; } .page-summary { display:grid; grid-template-columns:32px minmax(0,1fr) auto; gap:10px; align-items:center; padding:13px 14px; cursor:pointer; } .page-summary:hover { background:#fbfcff; } .page-icon { display:grid; width:28px; height:28px; place-items:center; color:var(--primary); background:var(--primary-soft); border-radius:8px; font-size:.72rem; font-weight:800; } .page-name { overflow:hidden; font-size:.88rem; font-weight:700; text-overflow:ellipsis; white-space:nowrap; } .page-meta { margin-top:2px; color:var(--muted); font-size:.75rem; } .page-badges { display:flex; gap:5px; align-items:center; } .badge { padding:4px 7px; border-radius:999px; font-size:.7rem; font-weight:800; white-space:nowrap; } .badge.pass { color:var(--success); background:var(--success-soft); } .badge.warn { color:var(--warning); background:var(--warning-soft); } .badge.fail { color:var(--danger); background:var(--danger-soft); } .badge.muted { color:var(--muted); background:#f2f4f7; }
+        .page-details { display:none; padding:0 14px 14px; border-top:1px solid var(--line); } .page-row.open .page-details { display:block; } .issue-list { display:grid; gap:7px; margin:12px 0 0; padding:0; list-style:none; } .issue { display:grid; grid-template-columns:24px minmax(0,1fr); gap:8px; align-items:start; padding:9px 10px; background:#fbfcfe; border-radius:8px; font-size:.8rem; } .issue-mark { font-weight:800; } .issue.fail .issue-mark { color:var(--danger); } .issue.warn .issue-mark { color:var(--warning); } .issue.pass .issue-mark { color:var(--success); } .issue strong { display:block; } .issue p { margin:2px 0 0; color:var(--muted); }
+        .empty { padding:28px; color:var(--muted); background:#fbfcfe; border:1px solid var(--line); border-radius:10px; text-align:center; } .notice { margin-top:20px; padding:13px 14px; color:#344054; background:#f8f9fc; border-radius:10px; font-size:.78rem; } .notice strong { display:block; margin-bottom:3px; color:var(--ink); } .status { min-height:20px; margin:10px 0 0; color:var(--muted); font-size:.8rem; text-align:right; } .status.error { color:var(--danger); } .status.success { color:var(--success); } .footer-note { margin-top:28px; color:var(--muted); font-size:.78rem; text-align:center; }
+        @media (max-width:700px) { .summary-bar { grid-template-columns:repeat(2,1fr); } .page-summary { grid-template-columns:32px minmax(0,1fr); } .page-badges { grid-column:2; justify-content:flex-start; } }
+        @media (max-width:520px) { .topbar { padding:17px 16px; } .container { width:min(100% - 24px,1180px); padding-top:16px; } .privacy-badge { font-size:.7rem; } .panel-header,.panel-body { padding-left:16px; padding-right:16px; } .toolbar { display:block; } .filters { margin-top:10px; overflow-x:auto; padding-bottom:3px; } }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <a class="brand" href="../../">misc<span>.yoshiweb.net</span></a>
+        <span class="privacy-badge"><span aria-hidden="true">✓</span> ファイルは外部へ送信されません</span>
+    </header>
+    <main class="container">
+        <section class="hero" aria-labelledby="page-title">
+            <p class="eyebrow">LOCAL SITE AUDITOR</p>
+            <h1 id="page-title">公開前のサイトを、ローカルで監査。</h1>
+            <p class="lead">HTML一式またはZIPを読み込み、SEO・アクセシビリティ・リンク切れをまとめて確認します。サイトの中身をサーバーへ送らず、公開前の見落としを減らせます。</p>
+        </section>
+
+        <section class="panel" aria-labelledby="input-heading">
+            <div class="panel-header"><div><h2 id="input-heading">1. サイトファイルを読み込む</h2><p class="panel-note">ZIP、または複数のHTMLファイルを選択できます。</p></div><button class="secondary-button" id="clear-button" type="button" disabled>クリア</button></div>
+            <div class="panel-body">
+                <label class="dropzone" id="dropzone" for="file-input">
+                    <span><span class="drop-icon" aria-hidden="true">⌕</span><strong>ZIPまたはHTMLをドロップ</strong><p>相対リンクの検査には、関連ファイルをまとめて追加してください</p><span class="primary-button">ファイルを選択</span></span>
+                </label>
+                <input class="visually-hidden" id="file-input" type="file" accept=".zip,.html,.htm,text/html" multiple>
+                <p class="status" id="status" role="status" aria-live="polite"></p>
+            </div>
+        </section>
+
+        <section id="results" hidden aria-labelledby="results-heading">
+            <div class="summary-bar">
+                <div class="stat"><span class="stat-value" id="total-pages">0</span><span class="stat-label">HTMLページ</span></div>
+                <div class="stat"><span class="stat-value" id="pass-count">0</span><span class="stat-label">問題なし</span></div>
+                <div class="stat"><span class="stat-value" id="warn-count">0</span><span class="stat-label">要確認</span></div>
+                <div class="stat"><span class="stat-value" id="fail-count">0</span><span class="stat-label">要修正</span></div>
+            </div>
+            <section class="panel" aria-labelledby="results-heading">
+                <div class="panel-header"><div><h2 id="results-heading">2. 監査結果</h2><p class="panel-note" id="result-note">ページごとの問題を確認できます。</p></div><button class="primary-button" id="download-button" type="button">レポートを保存</button></div>
+                <div class="panel-body"><div class="toolbar"><strong>ページ一覧</strong><div class="filters" aria-label="結果フィルター"><button class="filter active" data-filter="all" type="button">すべて</button><button class="filter" data-filter="fail" type="button">要修正</button><button class="filter" data-filter="warn" type="button">要確認</button><button class="filter" data-filter="pass" type="button">問題なし</button></div></div><ul class="page-list" id="page-list"></ul><div class="notice"><strong>監査の範囲</strong>HTMLに記述されたメタ情報・見出し・画像alt・相対リンクを検査します。JavaScript実行後のDOM、実際のHTTPステータス、Core Web Vitalsまでは検査しません。</div></div>
+            </section>
+        </section>
+        <p class="footer-note">選択したファイルはページを閉じると破棄されます。外部リソースのURL自体は一覧に表示しますが、アクセス確認は行いません。</p>
+    </main>
+
+    <script>
+        (() => {
+            const state = { files: new Map(), results: [], filter: 'all' };
+            const els = { input: document.getElementById('file-input'), dropzone: document.getElementById('dropzone'), clear: document.getElementById('clear-button'), status: document.getElementById('status'), results: document.getElementById('results'), list: document.getElementById('page-list'), total: document.getElementById('total-pages'), pass: document.getElementById('pass-count'), warn: document.getElementById('warn-count'), fail: document.getElementById('fail-count'), note: document.getElementById('result-note'), download: document.getElementById('download-button') };
+            const localSchemes = /^(?:data:|blob:|mailto:|tel:|javascript:|#)/i;
+            const externalScheme = /^(?:https?:|\/\/)/i;
+
+            function normalizePath(value) { const parts = []; value.replace(/\\/g, '/').split('/').forEach(part => { if (!part || part === '.') return; if (part === '..') parts.pop(); else parts.push(part); }); return parts.join('/'); }
+            function getFileName(path) { return path.split('/').pop() || path; }
+            function htmlPathFromHref(pagePath, href) { const clean = href.split('#')[0].split('?')[0]; if (!clean || localSchemes.test(clean) || externalScheme.test(clean)) return null; if (clean.startsWith('/')) return normalizePath(clean.slice(1)); return normalizePath(`${pagePath.includes('/') ? pagePath.slice(0, pagePath.lastIndexOf('/') + 1) : ''}${clean}`); }
+            function escapeHtml(value) { return String(value).replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[char])); }
+            function issue(kind, title, detail) { return { kind, title, detail }; }
+
+            async function readInput(fileList) {
+                state.files.clear();
+                const files = Array.from(fileList);
+                if (!files.length) return;
+                const zip = files.find(file => /\.zip$/i.test(file.name));
+                if (zip) {
+                    if (typeof JSZip === 'undefined') throw new Error('ZIPライブラリを読み込めませんでした。通信状態を確認してください。');
+                    const archive = await JSZip.loadAsync(zip);
+                    const entries = Object.values(archive.files).filter(entry => !entry.dir);
+                    for (const entry of entries) state.files.set(normalizePath(entry.name), await entry.async('string'));
+                } else {
+                    for (const file of files.filter(item => /\.html?$/i.test(item.name) || item.type === 'text/html')) state.files.set(normalizePath(file.name), await file.text());
+                }
+                if (!state.files.size) throw new Error('HTMLファイルが見つかりませんでした。');
+                state.results = auditAll();
+                render();
+            }
+
+            function auditAll() { return Array.from(state.files.entries()).filter(([path]) => /\.html?$/i.test(path)).map(([path, html]) => auditPage(path, html)); }
+
+            function auditPage(path, html) {
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const issues = [];
+                const title = doc.querySelector('title')?.textContent.trim() || '';
+                const description = doc.querySelector('meta[name="description"]')?.getAttribute('content')?.trim() || '';
+                const lang = doc.documentElement.getAttribute('lang')?.trim() || '';
+                const viewport = doc.querySelector('meta[name="viewport"]');
+                const h1s = Array.from(doc.querySelectorAll('h1'));
+                const images = Array.from(doc.querySelectorAll('img'));
+                const links = Array.from(doc.querySelectorAll('[href], [src]'));
+                const canonical = doc.querySelector('link[rel="canonical"]')?.getAttribute('href') || '';
+                const ogTitle = doc.querySelector('meta[property="og:title"]')?.getAttribute('content') || '';
+                const ogDescription = doc.querySelector('meta[property="og:description"]')?.getAttribute('content') || '';
+                const ogImage = doc.querySelector('meta[property="og:image"]')?.getAttribute('content') || '';
+                const seenTitles = state.results.filter(result => result.title === title && title).length;
+
+                if (!title) issues.push(issue('fail', 'titleがありません', '検索結果やブラウザタブに表示されるページタイトルを追加してください。'));
+                else if (title.length < 10) issues.push(issue('warn', 'titleが短すぎる可能性があります', `現在 ${title.length}文字です。内容が伝わる具体的なタイトルを検討してください。`));
+                else issues.push(issue('pass', 'titleがあります', title));
+                if (!description) issues.push(issue('fail', 'descriptionがありません', '検索結果の説明文になるmeta descriptionを追加してください。'));
+                else if (description.length < 50 || description.length > 160) issues.push(issue('warn', 'descriptionの長さを確認', `${description.length}文字です。目安は50〜160文字です。`));
+                else issues.push(issue('pass', 'descriptionがあります', `${description.length}文字`));
+                if (!lang) issues.push(issue('warn', 'lang属性がありません', 'html要素に lang="ja" などの言語指定を追加してください。'));
+                else issues.push(issue('pass', 'lang属性があります', lang));
+                if (!viewport) issues.push(issue('fail', 'viewportがありません', 'モバイル表示のためにviewport metaを追加してください。'));
+                else issues.push(issue('pass', 'viewportがあります', 'モバイル表示設定あり'));
+                if (h1s.length === 0) issues.push(issue('fail', 'h1がありません', 'ページの主題を示すh1を1つ追加してください。'));
+                else if (h1s.length > 1) issues.push(issue('warn', 'h1が複数あります', `${h1s.length}個あります。ページの主題を1つに絞れるか確認してください。`));
+                else issues.push(issue('pass', 'h1があります', h1s[0].textContent.trim().slice(0, 80)));
+                const missingAlt = images.filter(img => !img.hasAttribute('alt')).length;
+                const emptyAlt = images.filter(img => img.hasAttribute('alt') && !img.getAttribute('alt').trim()).length;
+                if (missingAlt) issues.push(issue('fail', 'alt属性がない画像があります', `${missingAlt}枚の画像にalt属性がありません。`));
+                else if (emptyAlt) issues.push(issue('warn', '空のalt属性があります', `${emptyAlt}枚です。装飾画像なら問題ありませんが、意味のある画像か確認してください。`));
+                else issues.push(issue('pass', '画像のalt属性を確認', `${images.length}枚`));
+                const localMissing = [];
+                const external = [];
+                links.forEach(node => { const value = node.getAttribute('href') || node.getAttribute('src') || ''; if (externalScheme.test(value)) external.push(value); const target = htmlPathFromHref(path, value); if (target && !state.files.has(target) && !target.endsWith('/')) localMissing.push(target); });
+                const uniqueMissing = [...new Set(localMissing)];
+                if (uniqueMissing.length) issues.push(issue('fail', 'ローカル参照が見つかりません', `${uniqueMissing.slice(0, 3).join(', ')}${uniqueMissing.length > 3 ? ` ほか${uniqueMissing.length - 3}件` : ''}`));
+                else issues.push(issue('pass', 'ローカル参照を確認', '参照先ファイルは見つかりました。'));
+                if (external.length) issues.push(issue('warn', '外部リソースがあります', `${[...new Set(external)].slice(0, 2).join(', ')}${external.length > 2 ? ` ほか${external.length - 2}件` : ''}`));
+                if (!canonical) issues.push(issue('warn', 'canonicalがありません', '検索エンジンに代表URLを伝える必要がある場合は追加してください。'));
+                else issues.push(issue('pass', 'canonicalがあります', canonical));
+                const missingOg = [!ogTitle && 'og:title', !ogDescription && 'og:description', !ogImage && 'og:image'].filter(Boolean);
+                if (missingOg.length) issues.push(issue('warn', 'OGPタグが不足しています', `不足: ${missingOg.join(', ')}`));
+                else issues.push(issue('pass', 'OGPタグがあります', '主要3項目あり'));
+                const failCount = issues.filter(item => item.kind === 'fail').length;
+                const warnCount = issues.filter(item => item.kind === 'warn').length;
+                return { path, title, issues, failCount, warnCount, status: failCount ? 'fail' : warnCount ? 'warn' : 'pass' };
+            }
+
+            function render() {
+                const results = state.results;
+                const counts = { pass:0, warn:0, fail:0 }; results.forEach(result => counts[result.status]++);
+                els.results.hidden = !results.length; els.total.textContent = results.length; els.pass.textContent = counts.pass; els.warn.textContent = counts.warn; els.fail.textContent = counts.fail; els.note.textContent = `${state.files.size}ファイルを読み込み、${results.length}ページを監査しました。`;
+                const visible = results.filter(result => state.filter === 'all' || result.status === state.filter);
+                els.list.innerHTML = visible.length ? visible.map((result, index) => renderPage(result, index)).join('') : '<li class="empty">この条件に該当するページはありません。</li>';
+                document.querySelectorAll('.filter').forEach(button => button.classList.toggle('active', button.dataset.filter === state.filter));
+                els.clear.disabled = !state.files.size;
+            }
+
+            function renderPage(result, index) { const label = result.status === 'fail' ? '要修正' : result.status === 'warn' ? '要確認' : '問題なし'; return `<li class="page-row" data-index="${state.results.indexOf(result)}"><div class="page-summary" tabindex="0" role="button" aria-expanded="false"><span class="page-icon" aria-hidden="true">HTML</span><span><span class="page-name" title="${escapeHtml(result.path)}">${escapeHtml(result.path)}</span><span class="page-meta">${escapeHtml(result.title || 'タイトルなし')} · ${result.issues.length}項目</span></span><span class="page-badges"><span class="badge ${result.status}">${label}</span>${result.failCount ? `<span class="badge fail">${result.failCount}件</span>` : ''}</span></div><div class="page-details"><ul class="issue-list">${result.issues.map(item => `<li class="issue ${item.kind}"><span class="issue-mark">${item.kind === 'pass' ? '✓' : item.kind === 'fail' ? '!' : '△'}</span><span><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.detail)}</p></span></li>`).join('')}</ul></div></li>`; }
+
+            function reportText() { const lines = ['ローカルWebサイト監査レポート', '==============================', `監査日時: ${new Date().toLocaleString('ja-JP')}`, `HTMLページ数: ${state.results.length}`, '', 'ページ別結果', '------------------------------']; state.results.forEach(result => { lines.push('', `[${result.status === 'fail' ? '要修正' : result.status === 'warn' ? '要確認' : '問題なし'}] ${result.path}`); result.issues.forEach(item => lines.push(`  ${item.kind === 'pass' ? '[OK]' : item.kind === 'fail' ? '[NG]' : '[確認]'} ${item.title}: ${item.detail}`)); }); lines.push('', '注: JavaScript実行後のDOM、実際のHTTPステータス、Core Web Vitalsは未検査です。'); return lines.join('\n'); }
+            function downloadReport() { const blob = new Blob([reportText()], { type:'text/plain;charset=utf-8' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = 'site-audit-report.txt'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
+            function status(message, kind) { els.status.textContent = message; els.status.className = `status ${kind || ''}`; }
+
+            els.input.addEventListener('change', async event => { try { status('監査しています…'); await readInput(event.target.files); status(`${state.results.length}ページを監査しました。`, 'success'); } catch (error) { status(error.message || '読み込みに失敗しました。', 'error'); } });
+            ['dragenter','dragover'].forEach(name => els.dropzone.addEventListener(name, event => { event.preventDefault(); els.dropzone.classList.add('dragover'); }));
+            ['dragleave','drop'].forEach(name => els.dropzone.addEventListener(name, event => { event.preventDefault(); els.dropzone.classList.remove('dragover'); }));
+            els.dropzone.addEventListener('drop', async event => { try { status('監査しています…'); await readInput(event.dataTransfer.files); status(`${state.results.length}ページを監査しました。`, 'success'); } catch (error) { status(error.message || '読み込みに失敗しました。', 'error'); } });
+            els.clear.addEventListener('click', () => { state.files.clear(); state.results = []; els.input.value = ''; els.results.hidden = true; els.clear.disabled = true; status(''); });
+            els.download.addEventListener('click', downloadReport);
+            document.querySelectorAll('.filter').forEach(button => button.addEventListener('click', () => { state.filter = button.dataset.filter; render(); }));
+            els.list.addEventListener('click', event => { const summary = event.target.closest('.page-summary'); if (!summary) return; const row = summary.closest('.page-row'); const open = row.classList.toggle('open'); summary.setAttribute('aria-expanded', String(open)); });
+            els.list.addEventListener('keydown', event => { if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('.page-summary')) { event.preventDefault(); event.target.click(); } });
+        })();
+    </script>
+</body>
+</html>
