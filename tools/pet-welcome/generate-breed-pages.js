@@ -134,7 +134,8 @@ for (const species of ['dog', 'cat']) {
     fs.mkdirSync(dir, { recursive: true });
     const html = page(species, item, index + 1)
       .replace('<section class="share-card"', `${articleContent(species, item, profiles[item.breed])}<section class="share-card"`)
-      .replace('</section><section class="checklist"', `</section>${requiredSections(species, item)}<section class="checklist"`);
+      .replace('</section><section class="checklist"', '</section><section class="checklist"')
+      .replace('</section></section><section class="share-card"', `</section>${requiredSections(species, item)}</section><section class="share-card"`);
     fs.writeFileSync(path.join(dir, 'index.html'), html);
   });
 }
