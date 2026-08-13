@@ -81,6 +81,7 @@
       font: 800 clamp(.74rem, 1.5vw, 1.05rem) system-ui, sans-serif;
       letter-spacing: .13em;
     }
+    #title > .subtitle { margin-top: .45rem; }
     .action {
       min-width: 190px;
       min-height: 46px;
@@ -124,8 +125,15 @@
       border: 5px solid #667494;
       background: linear-gradient(145deg, #1e3158, #0a1124);
       box-shadow: inset 0 0 40px #050916;
+      background-image: url("assets/retro-clash/azure-sprites.png");
+      background-size: 400% 300%;
+      background-position: 0 0;
+      background-repeat: no-repeat;
     }
-    .fighter-card.p2 { background: linear-gradient(145deg, #5d242a, #160d1a); }
+    .fighter-card.p2 {
+      background-color: #160d1a;
+      background-image: url("assets/retro-clash/crimson-sprites.png");
+    }
     .fighter-card::before {
       position: absolute;
       width: 44%;
@@ -136,7 +144,7 @@
       border-radius: 45% 45% 35% 35%;
       background: #c98350;
       box-shadow: 0 -22px 0 #172039, 0 58px 0 18px #327fc1;
-      content: "";
+      content: none;
     }
     .fighter-card.p2::before { box-shadow: 0 -22px 0 #a22e28, 0 58px 0 18px #d34635; }
     .fighter-card h2 { position: absolute; inset: auto 0 10px; font-size: clamp(1.25rem, 3.5vw, 2.25rem); text-shadow: 3px 3px #000; }
@@ -186,7 +194,23 @@
       font: 700 11px system-ui, sans-serif;
       pointer-events: none;
     }
+    #rotate {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      place-items: center;
+      padding: 2rem;
+      color: #fff;
+      background: radial-gradient(circle at center, #26375e, #070a14 70%);
+      text-align: center;
+      font: 800 1rem system-ui, sans-serif;
+    }
+    #rotate b { display: block; margin-bottom: .6rem; color: var(--gold); font: italic 2.2rem Impact, sans-serif; letter-spacing: .08em; }
+    #rotate .phone { display: block; margin: 0 auto 1.4rem; font-size: 4rem; animation: turn 1.8s ease-in-out infinite; }
+    @keyframes turn { 0%, 25% { transform: rotate(0); } 65%, 100% { transform: rotate(90deg); } }
     @media (pointer: coarse) { #touch { display: flex; } #help { display: none; } }
+    @media (orientation: portrait) and (max-width: 700px) { #rotate { display: grid; } }
     @media (max-width: 620px), (max-height: 500px) {
       .screen { gap: .35rem; padding: 2.5%; }
       .logo { font-size: clamp(3rem, 13vw, 5.5rem); }
@@ -195,7 +219,7 @@
       .fighter-card { min-height: 120px; }
       .action { min-height: 38px; padding: .55rem 1.4rem .75rem; }
     }
-    @media (prefers-reduced-motion: reduce) { .action { transition: none; } #announcementText { animation: none; } }
+    @media (prefers-reduced-motion: reduce) { .action { transition: none; } #announcementText, #rotate .phone { animation: none; } }
   </style>
 </head>
 <body>
@@ -271,6 +295,7 @@
     </div>
     <div id="help" class="hidden">ESC: ポーズ</div>
   </main>
+  <aside id="rotate" aria-label="横画面の案内"><div><span class="phone" aria-hidden="true">▯</span><b>TURN TO FIGHT</b>横向きにすると対戦を開始できます</div></aside>
 
   <script>
   (() => {
@@ -288,6 +313,22 @@
     const FLOOR = 445;
     const FIXED_STEP = 1000 / 60;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    function loadImage(path) {
+      const image = new Image();
+      image.src = path;
+      return image;
+    }
+    const assets = {
+      fighters: [
+        loadImage('assets/retro-clash/azure-sprites.png'),
+        loadImage('assets/retro-clash/crimson-sprites.png')
+      ],
+      stages: [
+        loadImage('assets/retro-clash/moonlit-dojo.png'),
+        loadImage('assets/retro-clash/neon-street.png')
+      ]
+    };
 
     const input = { held: new Set(), pressed: new Set() };
     const particles = [];
@@ -651,6 +692,56 @@
         const attack = this.attack;
         const active = attack && this.stateFrame >= attack.startup && this.stateFrame < attack.startup + attack.active;
 
+        const sprite = assets.fighters[this.id];
+        if (sprite.complete && sprite.naturalWidth) {
+          let cell = 0;
+          if (this.state.startsWith('walk')) cell = 1;
+          if (this.crouching || this.state === 'block') cell = 2;
+          if (!this.grounded || this.state === 'jump') cell = 3;
+          if (attack?.special === 'wave') cell = 10;
+          else if (attack?.special === 'rising') cell = 11;
+          else if (attack?.special === 'spin') cell = 9;
+          else if (attack?.type === 'punch') cell = 4 + attack.power;
+          else if (attack?.type === 'kick') cell = 7 + attack.power;
+
+          const sourceW = sprite.naturalWidth / 4;
+          const sourceH = sprite.naturalHeight / 3;
+          const sourceX = (cell % 4) * sourceW;
+          const sourceY = Math.floor(cell / 4) * sourceH;
+          const drawW = 203;
+          const drawH = 180;
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.scale(this.facing, 1);
+          if (this.state === 'knockdown' && this.grounded) {
+            ctx.rotate(Math.PI / 2);
+            ctx.translate(-42, -8);
+          } else if (this.state === 'hurt') {
+            ctx.rotate(-.09);
+          }
+          if (attack?.special === 'spin' && active) ctx.rotate(Math.sin(this.stateFrame * .72) * .22);
+          if (this.flash && this.flash % 2) {
+            ctx.filter = 'brightness(2.2) saturate(.45)';
+          }
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(sprite, sourceX, sourceY, sourceW, sourceH, -drawW / 2, -drawH, drawW, drawH);
+          if (attack?.special === 'rising') {
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.globalAlpha = .24;
+            ctx.fillStyle = attack.color;
+            ctx.beginPath(); ctx.ellipse(0, -82, 42, 78, 0, 0, Math.PI * 2); ctx.fill();
+          }
+          ctx.restore();
+
+          if (this.combo > 1 && this.comboTimer > 0) {
+            ctx.save(); ctx.textAlign = 'center'; ctx.font = 'italic 27px Impact';
+            ctx.fillStyle = '#fff'; ctx.strokeStyle = '#151728'; ctx.lineWidth = 6;
+            ctx.strokeText(`${this.combo} HIT COMBO`, x, y - 184);
+            ctx.fillText(`${this.combo} HIT COMBO`, x, y - 184); ctx.restore();
+          }
+          return;
+        }
+
         ctx.save();
         ctx.translate(x, y + bob + crouch);
         ctx.scale(this.facing, 1);
@@ -968,7 +1059,31 @@
     // ---------------------------------------------------------------------
     // Rendering: two parallax stages, fighters, effects and arcade HUD.
     // ---------------------------------------------------------------------
+    function drawStagePlate(image, cameraX) {
+      const overscan = 42;
+      const offset = -(cameraX / (WORLD_W - VIEW_W)) * overscan;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(image, offset, 0, VIEW_W + overscan, VIEW_H);
+      const shade = ctx.createLinearGradient(0, 250, 0, FLOOR);
+      shade.addColorStop(0, '#0000');
+      shade.addColorStop(1, '#05071342');
+      ctx.fillStyle = shade;
+      ctx.fillRect(0, 245, VIEW_W, FLOOR - 245);
+    }
+
     function drawDojo(cameraX) {
+      const plate = assets.stages[0];
+      if (plate.complete && plate.naturalWidth) {
+        drawStagePlate(plate, cameraX);
+        // Slow leaves provide a second parallax layer over the generated plate.
+        ctx.fillStyle = '#c9422c';
+        for (let i = 0; i < 13; i++) {
+          const x = (i * 127 + game.animationId * (.18 + i % 3 * .05) - cameraX * .18) % (VIEW_W + 60) - 30;
+          const y = 115 + ((i * 61 + game.animationId * (.12 + i % 2 * .04)) % 300);
+          ctx.save(); ctx.translate(x, y); ctx.rotate(game.animationId * .012 + i); ctx.fillRect(-4, -2, 8, 4); ctx.restore();
+        }
+        return;
+      }
       const gradient = ctx.createLinearGradient(0, 0, 0, FLOOR);
       gradient.addColorStop(0, '#101b45'); gradient.addColorStop(.62, '#814957'); gradient.addColorStop(1, '#e18a51');
       ctx.fillStyle = gradient; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
@@ -995,6 +1110,22 @@
     }
 
     function drawCity(cameraX) {
+      const plate = assets.stages[1];
+      if (plate.complete && plate.naturalWidth) {
+        drawStagePlate(plate, cameraX);
+        // Rain and pulsing reflected light make the stage feel alive.
+        ctx.strokeStyle = '#6fdcff55';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 34; i++) {
+          const x = (i * 83 + game.animationId * 5.2 - cameraX * .1) % (VIEW_W + 90) - 45;
+          const y = (i * 47 + game.animationId * 8.5) % 480;
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 5, y + 17); ctx.stroke();
+        }
+        const pulse = .035 + Math.sin(game.animationId * .055) * .018;
+        ctx.fillStyle = `rgba(255, 25, 156, ${pulse})`;
+        ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+        return;
+      }
       const gradient = ctx.createLinearGradient(0, 0, 0, VIEW_H);
       gradient.addColorStop(0, '#0a122b'); gradient.addColorStop(1, '#2c1b3e');
       ctx.fillStyle = gradient; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
@@ -1030,8 +1161,8 @@
 
     function drawStage() {
       if (game.stage === 0) drawDojo(game.cameraX); else drawCity(game.cameraX);
-      ctx.fillStyle = '#11131a'; ctx.fillRect(0, FLOOR, VIEW_W, VIEW_H - FLOOR);
-      ctx.fillStyle = game.stage ? '#3d3d46' : '#55372e'; ctx.fillRect(0, FLOOR, VIEW_W, 5);
+      ctx.fillStyle = '#05070d28'; ctx.fillRect(0, FLOOR, VIEW_W, VIEW_H - FLOOR);
+      ctx.fillStyle = game.stage ? '#50e3ff44' : '#f3a04b55'; ctx.fillRect(0, FLOOR, VIEW_W, 3);
     }
 
     function drawProjectiles() {
