@@ -16,7 +16,15 @@
       --panel: rgba(9, 14, 31, .92);
     }
     * { box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      touch-action: none;
+      -webkit-text-size-adjust: 100%;
+      overscroll-behavior: none;
+    }
     body {
       display: grid;
       place-items: center;
@@ -41,7 +49,10 @@
       display: block;
       width: 100%;
       height: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: contain;
       image-rendering: pixelated;
+      touch-action: none;
     }
     .screen {
       position: absolute;
@@ -116,7 +127,13 @@
     .control-card b { display: block; margin-bottom: .35rem; color: var(--gold); font-size: clamp(.75rem, 1.4vw, 1rem); }
     .control-card > span { display: block; color: #dde7ff; font-size: clamp(.62rem, 1.18vw, .84rem); line-height: 1.5; }
     .key { display: inline-block; min-width: 1.55em; padding: .05em .28em; border: 1px solid #8593ad; border-bottom-width: 3px; border-radius: 3px; color: #fff; background: #26324a; text-align: center; }
-    #select { justify-content: space-evenly; }
+    #select {
+      justify-content: space-evenly;
+      background:
+        linear-gradient(#071021b8, #071021e8),
+        var(--stage-preview, url("assets/retro-clash/moonlit-dojo.png")) center / cover;
+      transition: background-image .18s ease-out;
+    }
     .select-layout { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: clamp(.7rem, 3vw, 2rem); width: min(850px, 96%); }
     .fighter-card {
       position: relative;
@@ -133,7 +150,9 @@
     .fighter-card.p2 {
       background-color: #160d1a;
       background-image: url("assets/retro-clash/crimson-sprites.png");
+      transform: scaleX(-1);
     }
+    .fighter-card.p2 h2 { transform: scaleX(-1); }
     .fighter-card::before {
       position: absolute;
       width: 44%;
@@ -149,8 +168,19 @@
     .fighter-card.p2::before { box-shadow: 0 -22px 0 #a22e28, 0 58px 0 18px #d34635; }
     .fighter-card h2 { position: absolute; inset: auto 0 10px; font-size: clamp(1.25rem, 3.5vw, 2.25rem); text-shadow: 3px 3px #000; }
     .versus-small { color: var(--gold); font-size: clamp(2rem, 6vw, 4.5rem); font-style: italic; text-shadow: 3px 3px #a52427; }
-    .stage-picker { display: flex; align-items: center; gap: .65rem; color: #eaf0ff; font: 800 clamp(.7rem, 1.4vw, .95rem) system-ui, sans-serif; }
-    .stage-picker button { width: 38px; height: 36px; border: 2px solid #7d8dab; color: white; background: #202c46; cursor: pointer; }
+    .stage-picker {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      padding: .38rem .65rem;
+      border: 2px solid #8ca1c9;
+      color: #fff;
+      background: #071020e6;
+      box-shadow: 0 0 18px #0009;
+      font: 900 clamp(.7rem, 1.4vw, .95rem) system-ui, sans-serif;
+    }
+    .stage-picker strong { min-width: 150px; color: var(--gold); }
+    .stage-picker button { width: 42px; height: 40px; border: 2px solid #9aabd0; color: white; background: #202c46; cursor: pointer; }
     .stage-picker button:focus-visible { outline: 3px solid var(--gold); }
     #vs { background: linear-gradient(112deg, #123d71 0 49.3%, #f1bd33 49.5% 50.5%, #9b2930 50.7%); }
     #vs .names { display: flex; width: min(800px, 95%); justify-content: space-between; font-size: clamp(1.2rem, 3.5vw, 2.6rem); text-shadow: 3px 3px #080a12; }
@@ -199,11 +229,46 @@
       touch-action: none;
     }
     .touch-group button.is-held { transform: translateY(3px); border-color: var(--gold); filter: brightness(1.35); box-shadow: inset 0 -1px #080d1c; }
-    .touch-move { grid-template-areas: ". u ." "l d r"; }
-    .touch-move [data-key="w"] { grid-area: u; }
-    .touch-move [data-key="a"] { grid-area: l; }
-    .touch-move [data-key="s"] { grid-area: d; }
-    .touch-move [data-key="d"] { grid-area: r; }
+    #joystick {
+      position: relative;
+      width: 118px;
+      height: 118px;
+      flex: 0 0 auto;
+      border: 2px solid #8fa3cb;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at center, #11182d 0 18%, transparent 19%),
+        conic-gradient(from 22.5deg, #33405d 0 12.5%, #1a243e 0 25%, #33405d 0 37.5%, #1a243e 0 50%, #33405d 0 62.5%, #1a243e 0 75%, #33405d 0 87.5%, #1a243e 0);
+      box-shadow: inset 0 0 24px #000c, 0 8px 18px #0009;
+      pointer-events: auto;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+    #joystick::before, #joystick::after {
+      position: absolute;
+      inset: 9px 50%;
+      width: 1px;
+      background: #a8b8da45;
+      content: "";
+    }
+    #joystick::after { transform: rotate(90deg); }
+    #joystickKnob {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 54px;
+      height: 54px;
+      translate: -50% -50%;
+      border: 2px solid #d7e2f9;
+      border-radius: 50%;
+      background: radial-gradient(circle at 36% 30%, #6d7fa4, #23304e 50%, #11172a 78%);
+      box-shadow: inset -7px -9px 12px #080b16aa, 0 7px 12px #000b;
+      pointer-events: none;
+      will-change: transform;
+    }
+    #joystick.active #joystickKnob { border-color: var(--gold); filter: brightness(1.2); }
     #pauseButton {
       position: absolute;
       left: 50%;
@@ -248,6 +313,8 @@
         background-size: 28px 28px, 28px 28px, auto;
         overflow: hidden;
       }
+      #joystick { width: min(36vw, 142px); height: min(36vw, 142px); }
+      #joystickKnob { width: min(17vw, 66px); height: min(17vw, 66px); }
       .touch-group { grid-template-columns: repeat(3, min(14vw, 64px)); gap: min(1vw, 8px); }
       .touch-group button { width: min(14vw, 64px); height: min(14vw, 64px); border-width: 2px; border-radius: 16px; font-size: clamp(.75rem, 3.2vw, 1rem); }
       .touch-move button { border-radius: 16px; font-size: 1.3rem; }
@@ -261,10 +328,16 @@
       .control-card:first-child { display: block; padding: .28rem .5rem; text-align: center; }
       .control-card:first-child > span { display: none; }
       .action { min-width: 150px; min-height: 34px; padding: .35rem 1.2rem .65rem; font-size: .82rem; }
-      .select-layout { width: 84%; gap: .4rem; }
-      .fighter-card { min-height: 104px; border-width: 3px; }
-      .fighter-card h2 { bottom: 3px; font-size: 1rem; }
-      .stage-picker { font-size: .65rem; }
+      #select { justify-content: center; gap: .18rem; padding: .7%; }
+      #select > .eyebrow, #select > .subtitle { display: none; }
+      .select-layout { width: 76%; gap: .32rem; }
+      .fighter-card { min-height: 82px; border-width: 2px; }
+      .fighter-card h2 { bottom: 2px; font-size: .82rem; }
+      .versus-small { font-size: 1.75rem; }
+      .stage-picker { gap: .35rem; padding: .12rem .28rem; font-size: .56rem; border-width: 1px; }
+      .stage-picker strong { min-width: 112px; }
+      .stage-picker button { width: 32px; height: 28px; border-width: 1px; }
+      #select .action { min-height: 28px; padding: .22rem 1.1rem .46rem; margin: 0; }
       #vs .giant-vs { font-size: 5rem; }
     }
     @media (max-width: 620px), (max-height: 500px) {
@@ -274,6 +347,19 @@
       .control-card { padding: .38rem; }
       .fighter-card { min-height: 120px; }
       .action { min-height: 38px; padding: .55rem 1.4rem .75rem; }
+    }
+    @media (pointer: coarse) and (orientation: landscape) {
+      #touch.active {
+        inset: auto 0 0;
+        height: min(42vh, 220px);
+        padding: 10px max(18px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+        background: linear-gradient(transparent, #071020cc 35%, #071020f2);
+      }
+      #joystick { width: min(26vh, 126px); height: min(26vh, 126px); }
+      #joystickKnob { width: min(12vh, 58px); height: min(12vh, 58px); }
+      .touch-group { grid-template-columns: repeat(3, min(11vh, 58px)); gap: min(1.2vh, 7px); }
+      .touch-group button { width: min(11vh, 58px); height: min(11vh, 58px); }
+      #pauseButton { bottom: max(10px, env(safe-area-inset-bottom)); }
     }
     @media (prefers-reduced-motion: reduce) { .action { transition: none; } #announcementText { animation: none; } }
   </style>
@@ -341,10 +427,7 @@
     <div id="help" class="hidden">ESC: ポーズ</div>
   </main>
   <div id="touch" aria-label="Player 1 touch controls">
-      <div class="touch-group touch-move">
-        <button type="button" data-key="w" aria-label="ジャンプ">▲</button><button type="button" data-key="a" aria-label="左移動">◀</button>
-        <button type="button" data-key="s" aria-label="しゃがむ">▼</button><button type="button" data-key="d" aria-label="右移動">▶</button>
-      </div>
+      <div id="joystick" role="application" aria-label="8方向ジョイスティック"><div id="joystickKnob"></div></div>
       <div class="touch-group">
         <button type="button" data-key="j">LP</button><button type="button" data-key="k">MP</button><button type="button" data-key="l">HP</button>
         <button type="button" data-key="u">LK</button><button type="button" data-key="i">MK</button><button type="button" data-key="o">HK</button>
@@ -1422,6 +1505,7 @@
     function setStage(delta) {
       game.stage = (game.stage + delta + stageNames.length) % stageNames.length;
       document.querySelector('#stageName').textContent = stageNames[game.stage];
+      document.querySelector('#select').style.setProperty('--stage-preview', `url("assets/retro-clash/${game.stage ? 'neon-street' : 'moonlit-dojo'}.png")`);
       audio.play('start');
     }
 
@@ -1431,6 +1515,7 @@
       input.held.clear();
       input.pressed.clear();
       cpu.releaseInputs();
+      clearJoystick();
       const button = document.querySelector('#pauseButton');
       button.textContent = paused ? 'RESUME' : 'PAUSE';
       button.setAttribute('aria-label', paused ? 'ゲームを再開' : '一時停止');
@@ -1477,6 +1562,66 @@
       event.preventDefault();
       setPaused(!game.paused);
     });
+
+    // Eight-way virtual joystick. The dead zone prevents accidental movement;
+    // diagonals map to two simultaneous keys for classic motion inputs.
+    const joystick = document.querySelector('#joystick');
+    const joystickKnob = document.querySelector('#joystickKnob');
+    const moveKeys = [controls[0].left, controls[0].right, controls[0].down, controls[0].up];
+    let joystickPointer = null;
+
+    function clearJoystick() {
+      moveKeys.forEach(key => input.held.delete(key));
+      joystickPointer = null;
+      joystick.classList.remove('active');
+      joystickKnob.style.transform = 'translate(0px, 0px)';
+    }
+
+    function moveJoystick(event) {
+      if (joystickPointer !== event.pointerId || game.paused) return;
+      event.preventDefault();
+      const rect = joystick.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const rawX = event.clientX - centerX;
+      const rawY = event.clientY - centerY;
+      const radius = rect.width * .31;
+      const distance = Math.hypot(rawX, rawY);
+      const scale = distance > radius ? radius / distance : 1;
+      const x = rawX * scale;
+      const y = rawY * scale;
+      joystickKnob.style.transform = `translate(${x}px, ${y}px)`;
+      const previous = new Set(moveKeys.filter(key => input.held.has(key)));
+      moveKeys.forEach(key => input.held.delete(key));
+      if (distance < rect.width * .13) return;
+      const threshold = .34;
+      const nx = rawX / distance;
+      const ny = rawY / distance;
+      const next = [];
+      if (nx < -threshold) next.push(controls[0].left);
+      if (nx > threshold) next.push(controls[0].right);
+      if (ny < -threshold) next.push(controls[0].up);
+      if (ny > threshold) next.push(controls[0].down);
+      next.forEach(key => {
+        input.held.add(key);
+        if (!previous.has(key)) input.pressed.add(key);
+      });
+    }
+
+    joystick.addEventListener('pointerdown', event => {
+      event.preventDefault();
+      if (game.paused) return;
+      joystickPointer = event.pointerId;
+      joystick.setPointerCapture?.(event.pointerId);
+      joystick.classList.add('active');
+      moveJoystick(event);
+      audio.ensure();
+    });
+    joystick.addEventListener('pointermove', moveJoystick);
+    joystick.addEventListener('pointerup', event => { event.preventDefault(); clearJoystick(); });
+    joystick.addEventListener('pointercancel', clearJoystick);
+    joystick.addEventListener('lostpointercapture', clearJoystick);
+
     const activePointers = new Map();
     document.querySelectorAll('[data-key]').forEach(button => {
       const key = button.dataset.key;
@@ -1511,6 +1656,16 @@
     document.querySelector('#touch').addEventListener('contextmenu', event => event.preventDefault());
     document.querySelector('#touch').addEventListener('selectstart', event => event.preventDefault());
     document.querySelector('#touch').addEventListener('dragstart', event => event.preventDefault());
+    document.addEventListener('dblclick', event => event.preventDefault(), { passive: false });
+    document.addEventListener('gesturestart', event => event.preventDefault(), { passive: false });
+    document.addEventListener('gesturechange', event => event.preventDefault(), { passive: false });
+    document.addEventListener('gestureend', event => event.preventDefault(), { passive: false });
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', event => {
+      const now = performance.now();
+      if (now - lastTouchEnd < 340) event.preventDefault();
+      lastTouchEnd = now;
+    }, { passive: false });
 
     requestAnimationFrame(frame);
   })();
