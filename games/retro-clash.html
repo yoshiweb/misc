@@ -232,13 +232,13 @@
       <p class="subtitle">FISTS · FIRE · FURY</p>
       <div class="controls-grid">
         <div class="control-card">
-          <b>PLAYER 1 — AZURE</b>
+          <b>PLAYER 1 — AZURE REN</b>
           <span><span class="key">WASD</span> 移動　<span class="key">J K L</span> 弱中強パンチ</span>
           <span><span class="key">U I O</span> 弱中強キック　後ろ入力でガード</span>
           <span>必殺: ↓↘→+P ／ →↓↘+P ／ ↓↙←+K</span>
         </div>
         <div class="control-card">
-          <b>PLAYER 2 — CRIMSON</b>
+          <b>PLAYER 2 — CRIMSON KAI</b>
           <span><span class="key">矢印</span> 移動　<span class="key">1 2 3</span> 弱中強パンチ</span>
           <span><span class="key">4 5 6</span> 弱中強キック　後ろ入力でガード</span>
           <span>必殺: ↓↘→+P ／ →↓↘+P ／ ↓↙←+K</span>
@@ -250,9 +250,9 @@
     <section id="select" class="screen hidden">
       <p class="eyebrow">Fighter & stage select</p>
       <div class="select-layout">
-        <article class="fighter-card"><h2>AZURE RYU</h2></article>
+        <article class="fighter-card"><h2>AZURE REN</h2></article>
         <div class="versus-small">VS</div>
-        <article class="fighter-card p2"><h2>CRIMSON KEN</h2></article>
+        <article class="fighter-card p2"><h2>CRIMSON KAI</h2></article>
       </div>
       <div class="stage-picker">
         <button data-stage="prev" aria-label="前のステージ">◀</button>
@@ -264,7 +264,7 @@
     </section>
 
     <section id="vs" class="screen hidden">
-      <div class="names"><span>AZURE RYU</span><span>CRIMSON KEN</span></div>
+      <div class="names"><span>AZURE REN</span><span>CRIMSON KAI</span></div>
       <div class="giant-vs">VS</div>
       <p class="eyebrow" id="vsStage">Moonlit Dojo</p>
     </section>
@@ -374,7 +374,7 @@
 
     const FIGHTER_DATA = [
       {
-        name: 'AZURE RYU', color: '#2789d3', dark: '#155184', headband: '#f2f1e7', speed: 4.25,
+        name: 'AZURE REN', color: '#2789d3', dark: '#155184', headband: '#f2f1e7', speed: 4.25,
         specials: {
           wave: { name: 'Azure Wave', damage: 12, chip: 2, speed: 7.2, color: '#54d8ff', startup: 11, recovery: 22 },
           rising: { name: 'Sky Breaker', damage: 18, chip: 3, color: '#72e7ff', startup: 3, active: 13, recovery: 25 },
@@ -382,7 +382,7 @@
         }
       },
       {
-        name: 'CRIMSON KEN', color: '#d94335', dark: '#8f2528', headband: '#f1b431', speed: 4.45,
+        name: 'CRIMSON KAI', color: '#d94335', dark: '#8f2528', headband: '#f1b431', speed: 4.45,
         specials: {
           wave: { name: 'Ember Shot', damage: 11, chip: 2, speed: 8.1, color: '#ff873b', startup: 10, recovery: 20 },
           rising: { name: 'Blazing Dragon', damage: 20, chip: 4, color: '#ffda4d', startup: 4, active: 14, recovery: 27 },
@@ -1226,8 +1226,8 @@
       ctx.strokeStyle = '#ffd447'; ctx.strokeRect(442, 11, 76, 68);
       ctx.fillStyle = '#fff'; ctx.font = '43px Impact'; ctx.textAlign = 'center';
       ctx.fillText(String(Math.ceil(game.timer)).padStart(2, '0'), 480, 61);
-      ctx.font = '19px Impact'; ctx.textAlign = 'left'; ctx.fillText('AZURE RYU', 26, 84);
-      ctx.textAlign = 'right'; ctx.fillText('CRIMSON KEN', 934, 84);
+      ctx.font = '19px Impact'; ctx.textAlign = 'left'; ctx.fillText('AZURE REN', 26, 84);
+      ctx.textAlign = 'right'; ctx.fillText('CRIMSON KAI', 934, 84);
       ctx.fillStyle = '#ffd447';
       for (let p = 0; p < 2; p++) for (let i = 0; i < game.wins[p]; i++) {
         const x = p ? 921 - i * 18 : 39 + i * 18;
