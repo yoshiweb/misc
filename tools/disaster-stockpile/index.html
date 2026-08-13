@@ -404,6 +404,63 @@
         }
 
         /**
+         * 計算結果から、最初に揃えたい備蓄品を3つだけ案内する。
+         * 商品リンクを先に並べるのではなく、必要量と選定基準を先に示して
+         * 結果の補助導線として扱う。
+         */
+        function renderFirstSteps(entries) {
+            const recommendedIds = ['water', 'portable-toilet', 'rice'];
+            const criteria = {
+                water: '1人1日3Lを目安に、保存期間と置き場所を確認。家族分を一度に運べる給水袋もあると安心です。',
+                'portable-toilet': '1人1日5回を目安に、凝固剤・袋・保管袋がまとまったものを選びます。',
+                rice: '水やお湯で戻せ、常温で保存できる主食。普段の食事に近い味を混ぜると入れ替えやすくなります。'
+            };
+            const selected = recommendedIds
+                .map(id => entries.find(entry => entry.product.id === id))
+                .filter(Boolean);
+            if (selected.length === 0) return null;
+
+            const section = createSection('まず揃えたいもの', 'shopping-basket');
+            const lead = document.createElement('p');
+            lead.className = 'text-sm text-slate-500 leading-relaxed mb-4';
+            lead.textContent = '必要量の中でも、ライフライン停止直後から使うものを先に並べています。商品を決める前に、数量と選ぶ基準をご確認ください。';
+            section.appendChild(lead);
+            Affiliate.renderPrNotice(section);
+
+            const list = document.createElement('div');
+            list.className = 'grid gap-3';
+            selected.forEach(({ product, quantity }, index) => {
+                const card = document.createElement('div');
+                card.className = 'p-4 bg-slate-50 border border-slate-200 rounded-xl';
+
+                const head = document.createElement('div');
+                head.className = 'flex flex-wrap items-baseline justify-between gap-2';
+                const title = document.createElement('p');
+                title.className = 'font-bold text-slate-800';
+                title.textContent = `${index + 1}. ${product.name}`;
+                head.appendChild(title);
+                const amount = document.createElement('span');
+                amount.className = 'text-lg font-bold text-indigo-600';
+                amount.textContent = `${quantity.toLocaleString()}${product.unit}`;
+                head.appendChild(amount);
+                card.appendChild(head);
+
+                const criterion = document.createElement('p');
+                criterion.className = 'text-sm text-slate-500 mt-1 leading-relaxed';
+                criterion.textContent = criteria[product.id] || product.note || '';
+                card.appendChild(criterion);
+
+                const actions = document.createElement('div');
+                actions.className = 'flex flex-wrap gap-2 mt-3';
+                Affiliate.storeLinks(product).forEach(link => actions.appendChild(Affiliate.storeLinkElement(link)));
+                card.appendChild(actions);
+                list.appendChild(card);
+            });
+            section.appendChild(list);
+            return section;
+        }
+
+        /**
          * 期限管理を描画する。
          *
          * 購入日を記録すると期限日と残り期間が表示され、期限が近いものが上に並ぶ。
@@ -426,9 +483,6 @@
             guide.textContent = '古いものから普段の生活で使い、使った分を買い足していく「ローリングストック」で管理すると、'
                 + '期限切れによる無駄がなくなり、非常時にも使い慣れたものを口にできます。';
             section.appendChild(guide);
-
-            // 広告であることが明瞭に分かるよう、商品リンクの直前にPR表記を置く
-            Affiliate.renderPrNotice(section);
 
             const list = document.createElement('div');
             list.className = 'space-y-2';
@@ -454,7 +508,7 @@
                 head.appendChild(badge);
                 row.appendChild(head);
 
-                // 操作行: 購入日・保存年数・記録ボタン・ストアリンク
+                // 操作行: 購入日・保存年数・記録ボタン
                 const controls = document.createElement('div');
                 controls.className = 'flex flex-wrap items-end gap-2';
 
@@ -495,10 +549,6 @@
                     setExpiry(product.id, { purchasedAt: toDateString(new Date()) });
                 });
                 controls.appendChild(todayBtn);
-
-                Affiliate.storeLinks(product).forEach(link => {
-                    controls.appendChild(Affiliate.storeLinkElement(link));
-                });
 
                 row.appendChild(controls);
 
@@ -641,9 +691,6 @@
                 + '数量の下には算出の式と、その数値の出典を記載しています。';
             section.appendChild(legend);
 
-            // 広告であることが明瞭に分かるよう、商品リンクの直前にPR表記を置く
-            Affiliate.renderPrNotice(section);
-
             // カテゴリごとにまとめる（データの並び順を保つ）
             const groups = new Map();
             entries.forEach(entry => {
@@ -711,13 +758,6 @@
                     }
                     row.appendChild(body);
 
-                    const actions = document.createElement('div');
-                    actions.className = 'shrink-0 flex flex-wrap gap-2';
-                    Affiliate.storeLinks(product).forEach(link => {
-                        actions.appendChild(Affiliate.storeLinkElement(link));
-                    });
-                    row.appendChild(actions);
-
                     list.appendChild(row);
                 });
 
@@ -751,6 +791,9 @@
             const expiries = buildExpiries(entries);
 
             elements.result.appendChild(renderSummary(members, days, expiries));
+
+            const firstSteps = renderFirstSteps(entries);
+            if (firstSteps) elements.result.appendChild(firstSteps);
 
             // 必要量を先に示し、そのあとで手持ちの入れ替え時期を管理する流れにする
             elements.result.appendChild(renderQuantities(entries, members, days));
