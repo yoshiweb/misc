@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W2L9NES4NJ"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag("js", new Date());
+        gtag("config", "G-W2L9NES4NJ");
+    </script>
+    <title>提出物パッケージャー | misc.yoshiweb.net</title>
+    <meta name="description" content="複数のファイルを提出用に整理し、名前を付けてZIPにまとめるブラウザ完結ツール。">
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <style>
+        :root {
+            color-scheme: light;
+            --ink: #172033;
+            --muted: #667085;
+            --subtle: #98a2b3;
+            --line: #e4e7ec;
+            --surface: #fff;
+            --page: #f5f7fb;
+            --primary: #3157d5;
+            --primary-dark: #2445b5;
+            --primary-soft: #eef2ff;
+            --success: #067647;
+            --success-soft: #ecfdf3;
+            --warning: #b54708;
+            --warning-soft: #fffaeb;
+            --danger: #b42318;
+            --danger-soft: #fef3f2;
+            --shadow: 0 12px 30px rgba(16, 24, 40, .07);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            background: var(--page);
+            font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+            line-height: 1.55;
+        }
+
+        button, input, select { font: inherit; }
+        button { cursor: pointer; }
+        button:disabled { cursor: not-allowed; opacity: .5; }
+        :focus-visible { outline: 3px solid rgba(49, 87, 213, .3); outline-offset: 2px; }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 22px 24px;
+        }
+
+        .brand { color: var(--ink); font-weight: 800; text-decoration: none; letter-spacing: -.02em; }
+        .brand span { color: var(--primary); }
+        .privacy-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 10px;
+            color: var(--success);
+            background: var(--success-soft);
+            border: 1px solid #abefc6;
+            border-radius: 999px;
+            font-size: .78rem;
+            font-weight: 700;
+        }
+
+        .container { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 22px 0 72px; }
+        .hero { margin-bottom: 28px; }
+        .eyebrow { margin: 0 0 8px; color: var(--primary); font-size: .78rem; font-weight: 800; letter-spacing: .12em; }
+        h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 2.7rem); letter-spacing: -.04em; }
+        .lead { max-width: 700px; margin: 10px 0 0; color: var(--muted); }
+
+        .steps {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 24px 0;
+            color: var(--subtle);
+            font-size: .83rem;
+            font-weight: 700;
+        }
+        .step { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+        .step-number { display: inline-grid; width: 26px; height: 26px; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); }
+        .step.active { color: var(--primary); }
+        .step.active .step-number { color: #fff; background: var(--primary); border-color: var(--primary); }
+        .step-line { width: 36px; height: 1px; background: var(--line); }
+
+        .workspace { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, .85fr); gap: 22px; align-items: start; }
+        .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
+        .panel-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 22px 24px 16px; border-bottom: 1px solid var(--line); }
+        h2 { margin: 0; font-size: 1.1rem; letter-spacing: -.02em; }
+        .panel-note { margin: 3px 0 0; color: var(--muted); font-size: .84rem; }
+        .panel-body { padding: 22px 24px; }
+
+        .dropzone {
+            display: grid;
+            min-height: 190px;
+            place-items: center;
+            padding: 28px;
+            text-align: center;
+            background: #fbfcff;
+            border: 1.5px dashed #9aaef3;
+            border-radius: 12px;
+            transition: background .2s, border-color .2s;
+        }
+        .dropzone.dragover { background: var(--primary-soft); border-color: var(--primary); }
+        .drop-icon { display: grid; width: 44px; height: 44px; place-items: center; margin: 0 auto 10px; color: var(--primary); background: var(--primary-soft); border-radius: 12px; font-size: 1.4rem; }
+        .dropzone strong { display: block; font-size: 1rem; }
+        .dropzone p { margin: 5px 0 15px; color: var(--muted); font-size: .85rem; }
+        .primary-button, .secondary-button, .ghost-button {
+            border: 1px solid transparent;
+            border-radius: 9px;
+            font-weight: 700;
+            transition: background .2s, border-color .2s, transform .2s;
+        }
+        .primary-button { padding: 11px 16px; color: #fff; background: var(--primary); }
+        .primary-button:hover:not(:disabled) { background: var(--primary-dark); transform: translateY(-1px); }
+        .secondary-button { padding: 9px 13px; color: var(--ink); background: #fff; border-color: var(--line); }
+        .secondary-button:hover:not(:disabled), .ghost-button:hover:not(:disabled) { background: #f8faff; border-color: #b7c4f5; }
+        .ghost-button { padding: 5px 8px; color: var(--muted); background: transparent; border-color: transparent; font-size: .82rem; }
+        .danger-button { color: var(--danger); }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+        .file-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 22px 0 10px; }
+        .file-count { color: var(--muted); font-size: .85rem; }
+        .file-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+        .file-row { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; background: #fbfcfe; border: 1px solid var(--line); border-radius: 10px; }
+        .file-type { display: grid; width: 30px; height: 30px; place-items: center; color: var(--primary); background: var(--primary-soft); border-radius: 8px; font-size: .76rem; font-weight: 800; }
+        .file-name { overflow: hidden; font-size: .88rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+        .file-meta { margin-top: 2px; color: var(--muted); font-size: .75rem; }
+        .row-actions { display: flex; gap: 2px; }
+        .icon-button { display: grid; width: 29px; height: 29px; place-items: center; color: var(--muted); background: transparent; border: 1px solid transparent; border-radius: 7px; }
+        .icon-button:hover:not(:disabled) { color: var(--primary); background: var(--primary-soft); }
+        .empty-state { padding: 20px; color: var(--muted); background: #fbfcfe; border: 1px solid var(--line); border-radius: 10px; text-align: center; font-size: .85rem; }
+
+        .field-group + .field-group { margin-top: 17px; }
+        label { display: block; margin-bottom: 6px; font-size: .84rem; font-weight: 700; }
+        .helper { margin: 5px 0 0; color: var(--muted); font-size: .76rem; }
+        input[type="text"], input[type="date"], select { width: 100%; padding: 10px 11px; color: var(--ink); background: #fff; border: 1px solid #d0d5dd; border-radius: 8px; }
+        input[type="text"]:hover, input[type="date"]:hover, select:hover { border-color: #98a2b3; }
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .check { display: flex; align-items: flex-start; gap: 9px; margin-top: 17px; color: var(--ink); font-size: .85rem; }
+        .check input { flex: 0 0 auto; width: 17px; height: 17px; margin: 2px 0 0; accent-color: var(--primary); }
+
+        .summary { position: sticky; top: 18px; }
+        .summary-list { display: grid; gap: 14px; margin: 0; }
+        .summary-item { display: flex; justify-content: space-between; gap: 16px; font-size: .85rem; }
+        .summary-item dt { color: var(--muted); }
+        .summary-item dd { max-width: 190px; margin: 0; overflow: hidden; font-weight: 700; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+        .summary-divider { height: 1px; margin: 20px 0; background: var(--line); }
+        .export-button { width: 100%; padding: 13px 16px; font-size: .95rem; }
+        .status { min-height: 20px; margin: 12px 0 0; color: var(--muted); font-size: .8rem; text-align: center; }
+        .status.success { color: var(--success); }
+        .status.error { color: var(--danger); }
+        .status.loading { color: var(--primary); }
+        .tip { margin-top: 18px; padding: 13px 14px; color: #344054; background: #f8f9fc; border-radius: 10px; font-size: .78rem; }
+        .tip strong { display: block; margin-bottom: 3px; color: var(--ink); }
+        .footer-note { margin-top: 28px; color: var(--muted); font-size: .78rem; text-align: center; }
+
+        @media (max-width: 820px) {
+            .workspace { grid-template-columns: 1fr; }
+            .summary { position: static; }
+        }
+        @media (max-width: 520px) {
+            .topbar { padding: 17px 16px; }
+            .container { width: min(100% - 24px, 1180px); padding-top: 16px; }
+            .privacy-badge { font-size: .7rem; }
+            .steps { gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+            .step-line { width: 18px; }
+            .panel-header, .panel-body { padding-left: 16px; padding-right: 16px; }
+            .two-col { grid-template-columns: 1fr; gap: 0; }
+            .file-row { grid-template-columns: 30px minmax(0, 1fr); }
+            .row-actions { grid-column: 2; justify-content: flex-end; }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <a class="brand" href="../../">misc<span>.yoshiweb.net</span></a>
+        <span class="privacy-badge"><span aria-hidden="true">✓</span> ファイルは外部へ送信されません</span>
+    </header>
+
+    <main class="container">
+        <section class="hero" aria-labelledby="page-title">
+            <p class="eyebrow">SUBMISSION PACKAGER</p>
+            <h1 id="page-title">提出物を、迷わず出せる形に。</h1>
+            <p class="lead">ファイル名・順番・不足を確認して、提出用のZIPにまとめます。すべてブラウザ内で処理するため、書類や個人情報をアップロードする必要はありません。</p>
+        </section>
+
+        <nav class="steps" aria-label="操作手順">
+            <span class="step active"><span class="step-number">1</span>ファイルを追加</span>
+            <span class="step-line" aria-hidden="true"></span>
+            <span class="step active"><span class="step-number">2</span>内容を整える</span>
+            <span class="step-line" aria-hidden="true"></span>
+            <span class="step active"><span class="step-number">3</span>ZIPで出力</span>
+        </nav>
+
+        <div class="workspace">
+            <section class="panel" aria-labelledby="files-heading">
+                <div class="panel-header">
+                    <div>
+                        <h2 id="files-heading">1. 提出するファイル</h2>
+                        <p class="panel-note">ファイルを並べ替えた順番で一覧表に記録します。</p>
+                    </div>
+                    <button class="secondary-button" id="clear-button" type="button" disabled>すべて削除</button>
+                </div>
+                <div class="panel-body">
+                    <label class="dropzone" id="dropzone" for="file-input">
+                        <span>
+                            <span class="drop-icon" aria-hidden="true">＋</span>
+                            <strong>ここにファイルをドロップ</strong>
+                            <p>PDF・画像・Officeファイルなどを追加できます</p>
+                            <span class="primary-button">ファイルを選択</span>
+                        </span>
+                    </label>
+                    <input class="visually-hidden" id="file-input" type="file" multiple>
+
+                    <div class="file-toolbar">
+                        <span class="file-count" id="file-count">ファイルはまだありません</span>
+                        <button class="ghost-button danger-button" id="remove-duplicates-button" type="button" disabled>重複を削除</button>
+                    </div>
+                    <ol class="file-list" id="file-list" aria-live="polite">
+                        <li class="empty-state">提出するファイルを追加してください。</li>
+                    </ol>
+                </div>
+            </section>
+
+            <aside class="panel summary" aria-labelledby="settings-heading">
+                <div class="panel-header">
+                    <div>
+                        <h2 id="settings-heading">2. 提出情報</h2>
+                        <p class="panel-note">ZIP名と一覧表に反映されます。</p>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="field-group">
+                        <label for="submission-title">提出物の名前 <span aria-hidden="true">*</span></label>
+                        <input id="submission-title" type="text" value="提出物" placeholder="例：2026年度_課題レポート">
+                    </div>
+                    <div class="two-col">
+                        <div class="field-group">
+                            <label for="applicant-name">氏名・担当者</label>
+                            <input id="applicant-name" type="text" placeholder="例：山田太郎">
+                        </div>
+                        <div class="field-group">
+                            <label for="submission-date">提出日</label>
+                            <input id="submission-date" type="date">
+                        </div>
+                    </div>
+                    <div class="field-group">
+                        <label for="naming-rule">ファイル名の付け方</label>
+                        <select id="naming-rule">
+                            <option value="original">元のファイル名を維持</option>
+                            <option value="numbered">01_元のファイル名 の形式</option>
+                            <option value="title-numbered">提出物名_01 の形式</option>
+                        </select>
+                        <p class="helper">元ファイル名を残すと、受け取る側が内容を確認しやすくなります。</p>
+                    </div>
+                    <label class="check" for="include-manifest">
+                        <input id="include-manifest" type="checkbox" checked>
+                        <span>提出物一覧（README.txt）を同梱する</span>
+                    </label>
+                    <label class="check" for="include-pdf">
+                        <input id="include-pdf" type="checkbox">
+                        <span>画像を1つのPDFにもまとめる</span>
+                    </label>
+
+                    <div class="summary-divider"></div>
+                    <dl class="summary-list">
+                        <div class="summary-item"><dt>ファイル数</dt><dd id="summary-count">0件</dd></div>
+                        <div class="summary-item"><dt>合計サイズ</dt><dd id="summary-size">—</dd></div>
+                        <div class="summary-item"><dt>出力ファイル</dt><dd id="summary-name">提出物.zip</dd></div>
+                    </dl>
+                    <div class="summary-divider"></div>
+                    <button class="primary-button export-button" id="export-button" type="button" disabled>提出用ZIPを作成</button>
+                    <p class="status" id="status" role="status" aria-live="polite"></p>
+                    <div class="tip"><strong>安心して使える理由</strong>選択したファイルはこのページ内だけで読み込み・圧縮します。サーバーへのアップロード処理はありません。</div>
+                </div>
+            </aside>
+        </div>
+
+        <p class="footer-note">大量のファイルでは、端末のメモリ使用量が増える場合があります。</p>
+    </main>
+
+    <script>
+        (() => {
+            const state = { files: [] };
+            const els = {
+                input: document.getElementById('file-input'),
+                dropzone: document.getElementById('dropzone'),
+                list: document.getElementById('file-list'),
+                count: document.getElementById('file-count'),
+                summaryCount: document.getElementById('summary-count'),
+                summarySize: document.getElementById('summary-size'),
+                summaryName: document.getElementById('summary-name'),
+                title: document.getElementById('submission-title'),
+                applicant: document.getElementById('applicant-name'),
+                date: document.getElementById('submission-date'),
+                naming: document.getElementById('naming-rule'),
+                manifest: document.getElementById('include-manifest'),
+                includePdf: document.getElementById('include-pdf'),
+                clear: document.getElementById('clear-button'),
+                removeDuplicates: document.getElementById('remove-duplicates-button'),
+                export: document.getElementById('export-button'),
+                status: document.getElementById('status')
+            };
+
+            const today = new Date();
+            els.date.value = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+
+            function formatBytes(bytes) {
+                if (!bytes) return '0 B';
+                const units = ['B', 'KB', 'MB', 'GB'];
+                const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+                return `${(bytes / Math.pow(1024, index)).toFixed(index ? 1 : 0)} ${units[index]}`;
+            }
+
+            function sanitize(value, fallback) {
+                const clean = value.trim().replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, ' ');
+                return clean || fallback;
+            }
+
+            function extension(name) {
+                const match = name.toLowerCase().match(/\.([a-z0-9]+)$/);
+                return match ? match[1] : 'file';
+            }
+
+            function typeLabel(file) {
+                if (file.type === 'application/pdf' || extension(file.name) === 'pdf') return 'PDF';
+                if (file.type.startsWith('image/')) return 'IMG';
+                if (file.type.includes('spreadsheet') || /\.(csv|xls|xlsx)$/i.test(file.name)) return 'SHEET';
+                if (file.type.includes('word') || /\.(doc|docx|txt)$/i.test(file.name)) return 'DOC';
+                return 'FILE';
+            }
+
+            function addFiles(fileList) {
+                const incoming = Array.from(fileList);
+                const existing = new Set(state.files.map(item => `${item.file.name}-${item.file.size}-${item.file.lastModified}`));
+                incoming.forEach(file => {
+                    const key = `${file.name}-${file.size}-${file.lastModified}`;
+                    if (!existing.has(key)) {
+                        state.files.push({ file, id: `${Date.now()}-${Math.random().toString(16).slice(2)}` });
+                        existing.add(key);
+                    }
+                });
+                els.input.value = '';
+                render();
+            }
+
+            function render() {
+                els.list.innerHTML = '';
+                if (!state.files.length) {
+                    els.list.innerHTML = '<li class="empty-state">提出するファイルを追加してください。</li>';
+                } else {
+                    state.files.forEach((item, index) => {
+                        const row = document.createElement('li');
+                        row.className = 'file-row';
+                        row.innerHTML = `
+                            <span class="file-type" aria-hidden="true">${typeLabel(item.file)}</span>
+                            <span>
+                                <span class="file-name" title="${escapeHtml(item.file.name)}">${escapeHtml(item.file.name)}</span>
+                                <span class="file-meta">${formatBytes(item.file.size)}</span>
+                            </span>
+                            <span class="row-actions">
+                                <button class="icon-button" type="button" data-action="up" data-index="${index}" aria-label="${index + 1}番目のファイルを上へ移動" ${index === 0 ? 'disabled' : ''}>↑</button>
+                                <button class="icon-button" type="button" data-action="down" data-index="${index}" aria-label="${index + 1}番目のファイルを下へ移動" ${index === state.files.length - 1 ? 'disabled' : ''}>↓</button>
+                                <button class="icon-button" type="button" data-action="remove" data-index="${index}" aria-label="${escapeHtml(item.file.name)}を削除">×</button>
+                            </span>`;
+                        els.list.appendChild(row);
+                    });
+                }
+                const total = state.files.reduce((sum, item) => sum + item.file.size, 0);
+                const duplicateCount = getDuplicateCount();
+                els.count.textContent = state.files.length ? `${state.files.length}件 · ${formatBytes(total)}` : 'ファイルはまだありません';
+                els.summaryCount.textContent = `${state.files.length}件`;
+                els.summarySize.textContent = state.files.length ? formatBytes(total) : '—';
+                els.summaryName.textContent = `${getZipBaseName()}.zip`;
+                els.clear.disabled = !state.files.length;
+                els.removeDuplicates.disabled = duplicateCount === 0;
+                els.export.disabled = !state.files.length || !sanitize(els.title.value, '');
+                if (duplicateCount) {
+                    els.count.textContent += ` · 同名 ${duplicateCount}件`;
+                }
+            }
+
+            function escapeHtml(value) {
+                return value.replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
+            }
+
+            function getDuplicateCount() {
+                const names = new Set();
+                let duplicates = 0;
+                state.files.forEach(item => {
+                    const name = item.file.name.toLowerCase();
+                    if (names.has(name)) duplicates += 1;
+                    names.add(name);
+                });
+                return duplicates;
+            }
+
+            function getZipBaseName() {
+                const title = sanitize(els.title.value, '提出物');
+                const applicant = sanitize(els.applicant.value, '');
+                const date = els.date.value ? els.date.value.replace(/-/g, '') : '';
+                return sanitize([title, applicant, date].filter(Boolean).join('_'), '提出物');
+            }
+
+            function getOutputName(item, index) {
+                const original = sanitize(item.file.name, `file_${index + 1}.${extension(item.file.name)}`);
+                if (els.naming.value === 'original') return original;
+                if (els.naming.value === 'numbered') return `${String(index + 1).padStart(2, '0')}_${original}`;
+                return `${sanitize(els.title.value, '提出物')}_${String(index + 1).padStart(2, '0')}.${extension(original)}`;
+            }
+
+            function getUniqueOutputNames() {
+                const used = new Set();
+                return state.files.map((item, index) => {
+                    const baseName = getOutputName(item, index);
+                    const dotIndex = baseName.lastIndexOf('.');
+                    const stem = dotIndex > 0 ? baseName.slice(0, dotIndex) : baseName;
+                    const suffix = dotIndex > 0 ? baseName.slice(dotIndex) : '';
+                    let name = baseName;
+                    let attempt = 2;
+                    while (used.has(name.toLowerCase())) name = `${stem}_${attempt++}${suffix}`;
+                    used.add(name.toLowerCase());
+                    return name;
+                });
+            }
+
+            function getManifest(outputNames) {
+                const lines = [
+                    '提出物一覧',
+                    '====================',
+                    `提出物: ${sanitize(els.title.value, '提出物')}`,
+                    `氏名・担当者: ${sanitize(els.applicant.value, '未入力')}`,
+                    `提出日: ${els.date.value || '未入力'}`,
+                    `作成日: ${new Date().toLocaleString('ja-JP')}`,
+                    '',
+                    'ファイル一覧',
+                    '--------------------'
+                ];
+                outputNames.forEach((name, index) => lines.push(`${String(index + 1).padStart(2, '0')}. ${name} (${formatBytes(state.files[index].file.size)})`));
+                lines.push('', 'この一覧表とファイルはブラウザ内で作成されました。');
+                return lines.join('\n');
+            }
+
+            async function createImagesPdf(imageItems) {
+                const pdf = await PDFLib.PDFDocument.create();
+                for (const item of imageItems) {
+                    const bytes = await item.file.arrayBuffer();
+                    let image;
+                    if (item.file.type === 'image/png' || /\.png$/i.test(item.file.name)) image = await pdf.embedPng(bytes);
+                    else if (item.file.type === 'image/jpeg' || /\.(jpe?g)$/i.test(item.file.name)) image = await pdf.embedJpg(bytes);
+                    else continue;
+                    const scale = Math.min(1, 595 / image.width, 842 / image.height);
+                    const page = pdf.addPage([image.width * scale, image.height * scale]);
+                    page.drawImage(image, { x: 0, y: 0, width: image.width * scale, height: image.height * scale });
+                }
+                return pdf.save();
+            }
+
+            async function exportZip() {
+                if (!state.files.length) return;
+                setStatus('ZIPを作成しています…', 'loading');
+                els.export.disabled = true;
+                try {
+                    const zip = new JSZip();
+                    const outputNames = getUniqueOutputNames();
+                    for (let index = 0; index < state.files.length; index += 1) {
+                        zip.file(outputNames[index], state.files[index].file);
+                    }
+                    if (els.manifest.checked) zip.file('README.txt', getManifest(outputNames));
+                    if (els.includePdf.checked) {
+                        const imageItems = state.files.filter(item => item.file.type.startsWith('image/') || /\.(png|jpe?g)$/i.test(item.file.name));
+                        if (!imageItems.length) throw new Error('画像ファイルがないため、PDFを作成できません。');
+                        if (typeof PDFLib === 'undefined') throw new Error('PDFライブラリを読み込めませんでした。通信状態を確認してください。');
+                        const pdfBytes = await createImagesPdf(imageItems);
+                        zip.file(`${sanitize(els.title.value, '提出物')}_画像一覧.pdf`, pdfBytes);
+                    }
+                    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `${getZipBaseName()}.zip`;
+                    link.click();
+                    setTimeout(() => URL.revokeObjectURL(url), 1000);
+                    setStatus('ZIPを作成しました。ダウンロードを確認してください。', 'success');
+                } catch (error) {
+                    setStatus(error.message || 'ZIPの作成に失敗しました。', 'error');
+                } finally {
+                    els.export.disabled = !state.files.length;
+                }
+            }
+
+            function setStatus(message, type) {
+                els.status.textContent = message;
+                els.status.className = `status ${type || ''}`;
+            }
+
+            els.input.addEventListener('change', event => addFiles(event.target.files));
+            ['dragenter', 'dragover'].forEach(eventName => els.dropzone.addEventListener(eventName, event => {
+                event.preventDefault();
+                els.dropzone.classList.add('dragover');
+            }));
+            ['dragleave', 'drop'].forEach(eventName => els.dropzone.addEventListener(eventName, event => {
+                event.preventDefault();
+                els.dropzone.classList.remove('dragover');
+            }));
+            els.dropzone.addEventListener('drop', event => addFiles(event.dataTransfer.files));
+            els.list.addEventListener('click', event => {
+                const button = event.target.closest('button[data-action]');
+                if (!button) return;
+                const index = Number(button.dataset.index);
+                const action = button.dataset.action;
+                if (action === 'remove') state.files.splice(index, 1);
+                if (action === 'up' && index > 0) [state.files[index - 1], state.files[index]] = [state.files[index], state.files[index - 1]];
+                if (action === 'down' && index < state.files.length - 1) [state.files[index + 1], state.files[index]] = [state.files[index], state.files[index + 1]];
+                render();
+            });
+            els.clear.addEventListener('click', () => { state.files.length = 0; setStatus(''); render(); });
+            els.removeDuplicates.addEventListener('click', () => {
+                const seen = new Set();
+                state.files = state.files.filter(item => {
+                    const key = item.file.name.toLowerCase();
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                });
+                render();
+            });
+            [els.title, els.applicant, els.date, els.naming].forEach(input => input.addEventListener('input', render));
+            els.includePdf.addEventListener('change', () => setStatus(''));
+            els.export.addEventListener('click', exportZip);
+            render();
+        })();
+    </script>
+</body>
+</html>

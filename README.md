@@ -14,6 +14,7 @@
 - [Video Editor](./tools/video-editor/index.html)
 - [Thumbnail Generator](./tools/thumbnail-generator/index.html)
 - [Affiliate Links Generator](./tools/affiliate-links/index.html)
+- [Submission Packager](./tools/submission-packager/index.html)
 - [PFC Calculator](./tools/pfc-calculator/index.html)
 - [Pet Growth Calendar](./tools/pet-timeline/index.html)
 - [Disaster Stockpile Simulator](./tools/disaster-stockpile/index.html)
