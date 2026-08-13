@@ -1,0 +1,1163 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#080b16">
+  <title>Retro Clash — 2D Arcade Fighter</title>
+  <style>
+    :root {
+      --ink: #fff8dc;
+      --muted: #b9c5df;
+      --gold: #ffd447;
+      --red: #e34535;
+      --blue: #2d91df;
+      --night: #080b16;
+      --panel: rgba(9, 14, 31, .92);
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body {
+      display: grid;
+      place-items: center;
+      color: var(--ink);
+      background: radial-gradient(circle at 50% 15%, #303d68, var(--night) 70%);
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", system-ui, sans-serif;
+      touch-action: none;
+      user-select: none;
+    }
+    button { font: inherit; }
+    #shell {
+      position: relative;
+      width: min(100vw, 177.7778vh);
+      max-height: 100vh;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      background: #0b1020;
+      box-shadow: 0 0 90px #000;
+      isolation: isolate;
+    }
+    #game {
+      display: block;
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+    }
+    .screen {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(.45rem, 1.8vh, 1.1rem);
+      padding: 3.5%;
+      text-align: center;
+      background:
+        linear-gradient(135deg, transparent 0 49.5%, rgba(255, 212, 71, .08) 50% 50.7%, transparent 51%),
+        radial-gradient(circle at 50% 45%, rgba(39, 61, 111, .82), rgba(5, 8, 18, .98) 72%);
+    }
+    .hidden { display: none !important; }
+    .eyebrow {
+      margin: 0;
+      color: #fff;
+      font: 800 clamp(.65rem, 1.45vw, 1rem) system-ui, sans-serif;
+      letter-spacing: .38em;
+      text-transform: uppercase;
+    }
+    h1, h2, p { margin: 0; }
+    .logo {
+      color: var(--gold);
+      font-size: clamp(3.6rem, 10.8vw, 8.8rem);
+      font-style: italic;
+      line-height: .72;
+      letter-spacing: .01em;
+      text-shadow: 5px 5px 0 #aa2629, 10px 10px 0 #060810;
+      transform: skew(-5deg) rotate(-2deg);
+    }
+    .subtitle {
+      color: #eaf0ff;
+      font: 800 clamp(.74rem, 1.5vw, 1.05rem) system-ui, sans-serif;
+      letter-spacing: .13em;
+    }
+    .action {
+      min-width: 190px;
+      min-height: 46px;
+      margin: .2rem;
+      padding: .75rem 1.8rem 1rem;
+      border: 0;
+      clip-path: polygon(7% 0, 100% 0, 93% 100%, 0 100%);
+      color: #111522;
+      background: var(--gold);
+      box-shadow: inset 0 -7px #db852c;
+      cursor: pointer;
+      font-size: clamp(.9rem, 1.8vw, 1.25rem);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      transition: filter .12s, transform .12s;
+    }
+    .action:hover, .action:focus-visible { filter: brightness(1.16); transform: scale(1.04); outline: 3px solid white; outline-offset: 3px; }
+    .action.secondary { color: var(--ink); background: #283551; box-shadow: inset 0 -7px #141c30; }
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(.5rem, 1.2vw, 1rem);
+      width: min(800px, 94%);
+    }
+    .control-card {
+      padding: clamp(.55rem, 1.4vw, .9rem);
+      border: 2px solid #63779f;
+      background: rgba(5, 10, 24, .82);
+      text-align: left;
+      font-family: system-ui, sans-serif;
+    }
+    .control-card b { display: block; margin-bottom: .35rem; color: var(--gold); font-size: clamp(.75rem, 1.4vw, 1rem); }
+    .control-card > span { display: block; color: #dde7ff; font-size: clamp(.62rem, 1.18vw, .84rem); line-height: 1.5; }
+    .key { display: inline-block; min-width: 1.55em; padding: .05em .28em; border: 1px solid #8593ad; border-bottom-width: 3px; border-radius: 3px; color: #fff; background: #26324a; text-align: center; }
+    #select { justify-content: space-evenly; }
+    .select-layout { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: clamp(.7rem, 3vw, 2rem); width: min(850px, 96%); }
+    .fighter-card {
+      position: relative;
+      min-height: clamp(155px, 30vh, 250px);
+      overflow: hidden;
+      border: 5px solid #667494;
+      background: linear-gradient(145deg, #1e3158, #0a1124);
+      box-shadow: inset 0 0 40px #050916;
+    }
+    .fighter-card.p2 { background: linear-gradient(145deg, #5d242a, #160d1a); }
+    .fighter-card::before {
+      position: absolute;
+      width: 44%;
+      aspect-ratio: .85;
+      left: 50%;
+      top: 13%;
+      translate: -50%;
+      border-radius: 45% 45% 35% 35%;
+      background: #c98350;
+      box-shadow: 0 -22px 0 #172039, 0 58px 0 18px #327fc1;
+      content: "";
+    }
+    .fighter-card.p2::before { box-shadow: 0 -22px 0 #a22e28, 0 58px 0 18px #d34635; }
+    .fighter-card h2 { position: absolute; inset: auto 0 10px; font-size: clamp(1.25rem, 3.5vw, 2.25rem); text-shadow: 3px 3px #000; }
+    .versus-small { color: var(--gold); font-size: clamp(2rem, 6vw, 4.5rem); font-style: italic; text-shadow: 3px 3px #a52427; }
+    .stage-picker { display: flex; align-items: center; gap: .65rem; color: #eaf0ff; font: 800 clamp(.7rem, 1.4vw, .95rem) system-ui, sans-serif; }
+    .stage-picker button { width: 38px; height: 36px; border: 2px solid #7d8dab; color: white; background: #202c46; cursor: pointer; }
+    .stage-picker button:focus-visible { outline: 3px solid var(--gold); }
+    #vs { background: linear-gradient(112deg, #123d71 0 49.3%, #f1bd33 49.5% 50.5%, #9b2930 50.7%); }
+    #vs .names { display: flex; width: min(800px, 95%); justify-content: space-between; font-size: clamp(1.2rem, 3.5vw, 2.6rem); text-shadow: 3px 3px #080a12; }
+    #vs .giant-vs { color: #fff; font-size: clamp(6rem, 18vw, 14rem); font-style: italic; line-height: .72; text-shadow: 7px 7px #101424; transform: rotate(-7deg); }
+    #announcement { z-index: 8; pointer-events: none; background: transparent; }
+    #announcementText {
+      color: var(--gold);
+      font-size: clamp(3.7rem, 12vw, 9.5rem);
+      font-style: italic;
+      line-height: .85;
+      text-shadow: 5px 5px #a9242c, 10px 10px #080910;
+      transform: skew(-8deg);
+      animation: slam .16s ease-out;
+    }
+    @keyframes slam { from { opacity: 0; transform: scale(2.2) skew(-8deg); } to { opacity: 1; transform: scale(1) skew(-8deg); } }
+    .result-stats { color: #dbe5ff; font: 700 .9rem system-ui, sans-serif; }
+    #touch {
+      position: absolute;
+      inset: auto 0 4px;
+      z-index: 6;
+      display: none;
+      justify-content: space-between;
+      padding: 8px;
+      pointer-events: none;
+    }
+    .touch-group { display: grid; grid-template-columns: repeat(3, 48px); gap: 6px; pointer-events: auto; }
+    .touch-group button { width: 48px; height: 42px; border: 1px solid #fff8; border-radius: 7px; color: white; background: #121a34b8; font: 800 .75rem system-ui, sans-serif; }
+    .touch-move { grid-template-areas: ". u ." "l d r"; }
+    .touch-move [data-key="w"] { grid-area: u; }
+    .touch-move [data-key="a"] { grid-area: l; }
+    .touch-move [data-key="s"] { grid-area: d; }
+    .touch-move [data-key="d"] { grid-area: r; }
+    #help {
+      position: absolute;
+      inset: auto 12px 10px auto;
+      z-index: 5;
+      padding: .35rem .6rem;
+      border: 1px solid #ffffff55;
+      color: #eef3ff;
+      background: #070b16b8;
+      font: 700 11px system-ui, sans-serif;
+      pointer-events: none;
+    }
+    @media (pointer: coarse) { #touch { display: flex; } #help { display: none; } }
+    @media (max-width: 620px), (max-height: 500px) {
+      .screen { gap: .35rem; padding: 2.5%; }
+      .logo { font-size: clamp(3rem, 13vw, 5.5rem); }
+      .controls-grid { gap: .35rem; }
+      .control-card { padding: .38rem; }
+      .fighter-card { min-height: 120px; }
+      .action { min-height: 38px; padding: .55rem 1.4rem .75rem; }
+    }
+    @media (prefers-reduced-motion: reduce) { .action { transition: none; } #announcementText { animation: none; } }
+  </style>
+</head>
+<body>
+  <main id="shell">
+    <canvas id="game" width="960" height="540" aria-label="2人対戦の2D格闘ゲーム Retro Clash"></canvas>
+
+    <section id="title" class="screen">
+      <p class="eyebrow">A two player arcade battle</p>
+      <h1 class="logo">RETRO<br>CLASH</h1>
+      <p class="subtitle">FISTS · FIRE · FURY</p>
+      <div class="controls-grid">
+        <div class="control-card">
+          <b>PLAYER 1 — AZURE</b>
+          <span><span class="key">WASD</span> 移動　<span class="key">J K L</span> 弱中強パンチ</span>
+          <span><span class="key">U I O</span> 弱中強キック　後ろ入力でガード</span>
+          <span>必殺: ↓↘→+P ／ →↓↘+P ／ ↓↙←+K</span>
+        </div>
+        <div class="control-card">
+          <b>PLAYER 2 — CRIMSON</b>
+          <span><span class="key">矢印</span> 移動　<span class="key">1 2 3</span> 弱中強パンチ</span>
+          <span><span class="key">4 5 6</span> 弱中強キック　後ろ入力でガード</span>
+          <span>必殺: ↓↘→+P ／ →↓↘+P ／ ↓↙←+K</span>
+        </div>
+      </div>
+      <button class="action" data-action="select">ENTER / START</button>
+    </section>
+
+    <section id="select" class="screen hidden">
+      <p class="eyebrow">Fighter & stage select</p>
+      <div class="select-layout">
+        <article class="fighter-card"><h2>AZURE RYU</h2></article>
+        <div class="versus-small">VS</div>
+        <article class="fighter-card p2"><h2>CRIMSON KEN</h2></article>
+      </div>
+      <div class="stage-picker">
+        <button data-stage="prev" aria-label="前のステージ">◀</button>
+        STAGE: <strong id="stageName">MOONLIT DOJO</strong>
+        <button data-stage="next" aria-label="次のステージ">▶</button>
+      </div>
+      <p class="subtitle">A / D または ← / → でステージ選択</p>
+      <button class="action" data-action="fight">FIGHT!</button>
+    </section>
+
+    <section id="vs" class="screen hidden">
+      <div class="names"><span>AZURE RYU</span><span>CRIMSON KEN</span></div>
+      <div class="giant-vs">VS</div>
+      <p class="eyebrow" id="vsStage">Moonlit Dojo</p>
+    </section>
+
+    <section id="announcement" class="screen hidden" aria-live="polite">
+      <div id="announcementText"></div>
+    </section>
+
+    <section id="result" class="screen hidden">
+      <p class="eyebrow">Match complete</p>
+      <h1 class="logo" id="winner">AZURE<br>WINS</h1>
+      <p class="result-stats" id="resultStats"></p>
+      <div>
+        <button class="action" data-action="restart">REMATCH</button>
+        <button class="action secondary" data-action="title">TITLE</button>
+      </div>
+    </section>
+
+    <div id="touch" aria-label="Player 1 touch controls">
+      <div class="touch-group touch-move">
+        <button data-key="w">▲</button><button data-key="a">◀</button>
+        <button data-key="s">▼</button><button data-key="d">▶</button>
+      </div>
+      <div class="touch-group">
+        <button data-key="j">LP</button><button data-key="k">MP</button><button data-key="l">HP</button>
+        <button data-key="u">LK</button><button data-key="i">MK</button><button data-key="o">HK</button>
+      </div>
+    </div>
+    <div id="help" class="hidden">ESC: ポーズ</div>
+  </main>
+
+  <script>
+  (() => {
+    'use strict';
+
+    // ---------------------------------------------------------------------
+    // Core constants and data. New fighters can be added by extending
+    // FIGHTER_DATA and creating another Fighter instance.
+    // ---------------------------------------------------------------------
+    const canvas = document.querySelector('#game');
+    const ctx = canvas.getContext('2d');
+    const VIEW_W = 960;
+    const VIEW_H = 540;
+    const WORLD_W = 1280;
+    const FLOOR = 445;
+    const FIXED_STEP = 1000 / 60;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    const input = { held: new Set(), pressed: new Set() };
+    const particles = [];
+    const projectiles = [];
+    const stageNames = ['MOONLIT DOJO', 'NEON CITY STREET'];
+    const controls = [
+      { left: 'a', right: 'd', down: 's', up: 'w', punch: ['j', 'k', 'l'], kick: ['u', 'i', 'o'] },
+      { left: 'arrowleft', right: 'arrowright', down: 'arrowdown', up: 'arrowup', punch: ['1', '2', '3'], kick: ['4', '5', '6'] }
+    ];
+
+    const NORMALS = {
+      standPunch: [
+        { name: 'jab', startup: 4, active: 3, recovery: 7, damage: 5, hitstun: 12, blockstun: 7, reach: 48, height: 'high' },
+        { name: 'straight', startup: 7, active: 4, recovery: 11, damage: 9, hitstun: 16, blockstun: 10, reach: 66, height: 'high' },
+        { name: 'fierce', startup: 10, active: 5, recovery: 17, damage: 14, hitstun: 21, blockstun: 12, reach: 82, height: 'high', knockback: 8 }
+      ],
+      standKick: [
+        { name: 'short', startup: 5, active: 4, recovery: 9, damage: 6, hitstun: 13, blockstun: 8, reach: 58, height: 'low' },
+        { name: 'forward', startup: 8, active: 5, recovery: 13, damage: 10, hitstun: 17, blockstun: 10, reach: 76, height: 'mid' },
+        { name: 'roundhouse', startup: 12, active: 6, recovery: 19, damage: 15, hitstun: 24, blockstun: 13, reach: 94, height: 'high', knockdown: true }
+      ],
+      crouchPunch: [
+        { name: 'low jab', startup: 3, active: 3, recovery: 7, damage: 4, hitstun: 11, blockstun: 7, reach: 44, height: 'low' },
+        { name: 'low straight', startup: 6, active: 4, recovery: 11, damage: 8, hitstun: 15, blockstun: 9, reach: 61, height: 'low' },
+        { name: 'crouch fierce', startup: 9, active: 5, recovery: 18, damage: 13, hitstun: 20, blockstun: 12, reach: 73, height: 'mid', launch: true }
+      ],
+      crouchKick: [
+        { name: 'low short', startup: 4, active: 4, recovery: 8, damage: 5, hitstun: 12, blockstun: 7, reach: 54, height: 'low' },
+        { name: 'low forward', startup: 7, active: 5, recovery: 13, damage: 9, hitstun: 16, blockstun: 10, reach: 72, height: 'low' },
+        { name: 'sweep', startup: 10, active: 5, recovery: 21, damage: 13, hitstun: 18, blockstun: 13, reach: 88, height: 'low', knockdown: true }
+      ],
+      airPunch: [
+        { name: 'jump jab', startup: 4, active: 7, recovery: 6, damage: 5, hitstun: 13, blockstun: 8, reach: 45, height: 'overhead' },
+        { name: 'jump strong', startup: 6, active: 8, recovery: 7, damage: 9, hitstun: 17, blockstun: 10, reach: 58, height: 'overhead' },
+        { name: 'jump fierce', startup: 8, active: 9, recovery: 9, damage: 14, hitstun: 22, blockstun: 12, reach: 70, height: 'overhead' }
+      ],
+      airKick: [
+        { name: 'jump short', startup: 4, active: 8, recovery: 6, damage: 6, hitstun: 14, blockstun: 8, reach: 50, height: 'overhead' },
+        { name: 'jump forward', startup: 6, active: 9, recovery: 7, damage: 10, hitstun: 18, blockstun: 10, reach: 66, height: 'overhead' },
+        { name: 'jump roundhouse', startup: 8, active: 10, recovery: 9, damage: 15, hitstun: 23, blockstun: 13, reach: 80, height: 'overhead' }
+      ]
+    };
+
+    const FIGHTER_DATA = [
+      {
+        name: 'AZURE RYU', color: '#2789d3', dark: '#155184', headband: '#f2f1e7', speed: 4.25,
+        specials: {
+          wave: { name: 'Azure Wave', damage: 12, chip: 2, speed: 7.2, color: '#54d8ff', startup: 11, recovery: 22 },
+          rising: { name: 'Sky Breaker', damage: 18, chip: 3, color: '#72e7ff', startup: 3, active: 13, recovery: 25 },
+          spin: { name: 'Cyclone Kick', damage: 14, chip: 2, color: '#b5efff', startup: 7, active: 19, recovery: 15 }
+        }
+      },
+      {
+        name: 'CRIMSON KEN', color: '#d94335', dark: '#8f2528', headband: '#f1b431', speed: 4.45,
+        specials: {
+          wave: { name: 'Ember Shot', damage: 11, chip: 2, speed: 8.1, color: '#ff873b', startup: 10, recovery: 20 },
+          rising: { name: 'Blazing Dragon', damage: 20, chip: 4, color: '#ffda4d', startup: 4, active: 14, recovery: 27 },
+          spin: { name: 'Inferno Wheel', damage: 16, chip: 3, color: '#ff6747', startup: 8, active: 21, recovery: 16 }
+        }
+      }
+    ];
+
+    const game = {
+      mode: 'title', stage: 0, round: 1, wins: [0, 0], timer: 99,
+      ready: false, roundOver: false, paused: false, freeze: 0, shake: 0,
+      lastTime: 0, accumulator: 0, cameraX: 160, audio: null, animationId: 0,
+      matchHits: [0, 0]
+    };
+
+    // ---------------------------------------------------------------------
+    // Fighter simulation: movement, state machine, move input, hurtboxes.
+    // ---------------------------------------------------------------------
+    class Fighter {
+      constructor(id) {
+        this.id = id;
+        this.data = FIGHTER_DATA[id];
+        this.keys = controls[id];
+        this.reset();
+      }
+
+      reset() {
+        this.x = this.id ? 825 : 455;
+        this.y = FLOOR;
+        this.vx = 0;
+        this.vy = 0;
+        this.facing = this.id ? -1 : 1;
+        this.health = 100;
+        this.state = 'idle';
+        this.stateFrame = 0;
+        this.attack = null;
+        this.attackConnected = false;
+        this.hitstun = 0;
+        this.blockstun = 0;
+        this.knockdown = 0;
+        this.invulnerable = 0;
+        this.inputHistory = [];
+        this.lastDirection = '5';
+        this.combo = 0;
+        this.comboTimer = 0;
+        this.flash = 0;
+      }
+
+      get grounded() { return this.y >= FLOOR; }
+      get crouching() { return this.state === 'crouch' || (this.grounded && input.held.has(this.keys.down)); }
+
+      direction() {
+        const left = input.held.has(this.keys.left);
+        const right = input.held.has(this.keys.right);
+        const down = input.held.has(this.keys.down);
+        const up = input.held.has(this.keys.up);
+        let dir = '5';
+        if (down) dir = '2';
+        if (up) dir = '8';
+        if (left) dir = down ? '1' : (up ? '7' : '4');
+        if (right) dir = down ? '3' : (up ? '9' : '6');
+        // Motions are stored relative to the direction the fighter is facing.
+        if (this.facing < 0) dir = ({ 1: '3', 3: '1', 4: '6', 6: '4', 7: '9', 9: '7' })[dir] || dir;
+        return dir;
+      }
+
+      recordDirection() {
+        const dir = this.direction();
+        if (dir !== this.lastDirection) {
+          this.inputHistory.push({ dir, frame: game.animationId });
+          this.lastDirection = dir;
+        }
+        this.inputHistory = this.inputHistory.filter(item => game.animationId - item.frame <= 38);
+      }
+
+      // Allows neutral/extra directions between the required motion directions.
+      hasMotion(sequence, windowFrames = 34) {
+        let index = sequence.length - 1;
+        const recent = this.inputHistory.filter(item => game.animationId - item.frame <= windowFrames);
+        for (let i = recent.length - 1; i >= 0 && index >= 0; i--) {
+          if (recent[i].dir === sequence[index]) index--;
+        }
+        return index < 0;
+      }
+
+      tryAttack() {
+        for (const type of ['punch', 'kick']) {
+          for (let power = 0; power < 3; power++) {
+            if (!input.pressed.has(this.keys[type][power])) continue;
+            if (type === 'punch' && this.hasMotion(['2', '3', '6'])) return this.startSpecial('wave', power);
+            if (type === 'punch' && this.hasMotion(['6', '2', '3'])) return this.startSpecial('rising', power);
+            if (type === 'kick' && this.hasMotion(['2', '1', '4'])) return this.startSpecial('spin', power);
+            return this.startNormal(type, power);
+          }
+        }
+      }
+
+      startNormal(type, power) {
+        let group = this.grounded ? (this.crouching ? 'crouch' : 'stand') : 'air';
+        const source = NORMALS[group + (type === 'punch' ? 'Punch' : 'Kick')][power];
+        this.attack = { ...source, type, power, special: null };
+        this.attackConnected = false;
+        this.state = `${group}-${type}`;
+        this.stateFrame = 0;
+        audio.play('swing', power);
+      }
+
+      startSpecial(kind, power) {
+        const base = this.data.specials[kind];
+        const scale = 1 + power * .08;
+        const move = {
+          ...base, type: kind === 'spin' ? 'kick' : 'punch', power, special: kind,
+          active: base.active || 2, damage: Math.round(base.damage * scale),
+          hitstun: kind === 'rising' ? 27 : 20, blockstun: 14,
+          reach: kind === 'spin' ? 88 : 72, height: kind === 'spin' ? 'mid' : 'high',
+          knockdown: kind !== 'wave'
+        };
+        this.attack = move;
+        this.attackConnected = false;
+        this.state = kind;
+        this.stateFrame = 0;
+        if (kind === 'rising') this.invulnerable = 7;
+        audio.play(kind === 'wave' ? 'charge' : 'voice', this.id + power);
+      }
+
+      canBlock(attacker, height) {
+        if (!this.grounded || this.attack || this.hitstun || this.knockdown) return false;
+        const awayKey = this.facing > 0 ? this.keys.left : this.keys.right;
+        if (!input.held.has(awayKey)) return false;
+        if (height === 'low' && !input.held.has(this.keys.down)) return false;
+        if (height === 'overhead' && input.held.has(this.keys.down)) return false;
+        return attacker !== this;
+      }
+
+      receiveHit(move, attacker) {
+        if (this.invulnerable > 0) return false;
+        const blocked = this.canBlock(attacker, move.height);
+        const damage = blocked ? (move.special ? move.chip : 0) : move.damage;
+        if (damage > 0) this.health = Math.max(0, this.health - damage);
+
+        if (blocked) {
+          this.state = 'block';
+          this.blockstun = move.blockstun;
+          this.vx = attacker.facing * 2.2;
+          burst(this.x - this.facing * 25, this.y - 70, '#77d8ff', 12, 'block');
+          game.freeze = 3;
+          game.shake = Math.max(game.shake, 3);
+          audio.play('block');
+        } else {
+          this.state = move.knockdown || move.launch ? 'knockdown' : 'hurt';
+          this.hitstun = move.hitstun;
+          this.vx = attacker.facing * (move.knockback || (move.knockdown ? 7 : 4.5));
+          if (move.knockdown || move.launch) {
+            this.vy = move.launch ? -11 : -7.5;
+            this.knockdown = 48;
+          }
+          this.flash = 5;
+          attacker.combo++;
+          attacker.comboTimer = 90;
+          game.matchHits[attacker.id]++;
+          burst(this.x - this.facing * 20, this.y - 67, move.color || '#ffe36c', move.damage > 14 ? 28 : 19, 'hit');
+          game.freeze = move.damage >= 15 ? 8 : 5;
+          game.shake = Math.max(game.shake, move.damage >= 15 ? 11 : 6);
+          audio.play('hit', Math.min(2, Math.floor(move.damage / 7)));
+        }
+        return true;
+      }
+
+      getHurtbox() {
+        if (this.state === 'knockdown' && this.grounded) return { x: this.x - 52, y: this.y - 28, w: 104, h: 28 };
+        const h = this.crouching ? 82 : 126;
+        return { x: this.x - 25, y: this.y - h, w: 50, h };
+      }
+
+      getHitbox() {
+        if (!this.attack || this.attack.special === 'wave') return null;
+        const a = this.attack;
+        if (this.stateFrame < a.startup || this.stateFrame >= a.startup + a.active) return null;
+        let y = this.y - 96;
+        let h = 35;
+        if (a.height === 'low') { y = this.y - 44; h = 34; }
+        if (a.height === 'mid') { y = this.y - 74; h = 42; }
+        if (a.height === 'overhead') { y = this.y - 100; h = 48; }
+        if (a.special === 'rising') { y = this.y - 135; h = 105; }
+        return {
+          x: this.facing > 0 ? this.x + 12 : this.x - a.reach - 12,
+          y, w: a.reach, h
+        };
+      }
+
+      update(opponent) {
+        this.recordDirection();
+        if (this.invulnerable > 0) this.invulnerable--;
+        if (this.flash > 0) this.flash--;
+        if (this.comboTimer > 0) this.comboTimer--;
+        else this.combo = 0;
+
+        if (this.hitstun > 0 || this.blockstun > 0) {
+          this.hitstun = Math.max(0, this.hitstun - 1);
+          this.blockstun = Math.max(0, this.blockstun - 1);
+          this.x += this.vx;
+          this.vx *= .84;
+          this.applyGravity();
+          if (!this.hitstun && !this.blockstun && !this.knockdown) this.state = 'idle';
+          return;
+        }
+
+        if (this.knockdown > 0) {
+          this.knockdown--;
+          this.x += this.vx;
+          this.vx *= .9;
+          this.applyGravity();
+          if (!this.knockdown && this.grounded) {
+            this.state = 'idle';
+            this.invulnerable = 8;
+          }
+          return;
+        }
+
+        if (this.attack) {
+          this.updateAttack(opponent);
+          this.applyGravity();
+          return;
+        }
+
+        this.tryAttack();
+        if (this.attack) return;
+
+        if (this.grounded && input.pressed.has(this.keys.up)) {
+          this.vy = -13.3;
+          this.state = 'jump';
+          this.stateFrame = 0;
+          audio.play('jump');
+        }
+
+        let direction = (input.held.has(this.keys.right) ? 1 : 0) - (input.held.has(this.keys.left) ? 1 : 0);
+        if (this.grounded && input.held.has(this.keys.down)) {
+          this.state = 'crouch';
+          direction = 0;
+        } else if (this.grounded && direction) {
+          this.x += direction * this.data.speed;
+          this.state = direction === this.facing ? 'walk-forward' : 'walk-back';
+          this.stateFrame++;
+          if (this.stateFrame % 13 === 0) dust(this.x - direction * 12);
+        } else if (this.grounded) {
+          this.state = 'idle';
+          this.stateFrame++;
+        }
+
+        if (!this.grounded) {
+          this.x += direction * 2.5;
+          this.stateFrame++;
+        }
+        this.applyGravity();
+        this.x = clamp(this.x, 55, WORLD_W - 55);
+        this.facing = this.x < opponent.x ? 1 : -1;
+      }
+
+      updateAttack(opponent) {
+        const a = this.attack;
+        this.stateFrame++;
+        if (a.special === 'wave' && this.stateFrame === a.startup) spawnProjectile(this, a);
+        if (a.special === 'rising' && this.stateFrame <= a.startup + a.active) {
+          this.vy = this.id ? -8.7 : -8.1;
+          this.x += this.facing * (this.id ? 4.1 : 3.4);
+          if (this.stateFrame % 2 === 0) trail(this.x, this.y - 70, a.color);
+        }
+        if (a.special === 'spin' && this.stateFrame >= a.startup && this.stateFrame < a.startup + a.active) {
+          this.x += this.facing * (this.id ? 4.8 : 4.1);
+          if (this.stateFrame % 3 === 0) trail(this.x, this.y - 58, a.color);
+        }
+
+        const hitbox = this.getHitbox();
+        if (hitbox && !this.attackConnected && overlaps(hitbox, opponent.getHurtbox())) {
+          this.attackConnected = opponent.receiveHit(a, this);
+        }
+
+        const total = a.startup + a.active + a.recovery;
+        if (this.stateFrame >= total || (!this.grounded && this.y >= FLOOR)) {
+          this.attack = null;
+          this.attackConnected = false;
+          this.state = this.grounded ? 'idle' : 'jump';
+          this.stateFrame = 0;
+        }
+      }
+
+      applyGravity() {
+        if (this.y < FLOOR || this.vy < 0) {
+          this.y += this.vy;
+          this.vy += .72;
+          if (this.y >= FLOOR) {
+            this.y = FLOOR;
+            this.vy = 0;
+            dust(this.x);
+            if (!this.knockdown && !this.hitstun && !this.attack) this.state = 'idle';
+          }
+        }
+      }
+
+      draw(cameraX) {
+        const x = Math.round(this.x - cameraX);
+        const y = Math.round(this.y);
+        const bob = this.state === 'idle' ? Math.sin(game.animationId * .13) * 2 : 0;
+        const walk = this.state.startsWith('walk') ? Math.sin(this.stateFrame * .45) : 0;
+        const crouch = this.crouching && !this.attack ? 25 : 0;
+        const isDown = this.state === 'knockdown' && this.grounded;
+        const attack = this.attack;
+        const active = attack && this.stateFrame >= attack.startup && this.stateFrame < attack.startup + attack.active;
+
+        ctx.save();
+        ctx.translate(x, y + bob + crouch);
+        ctx.scale(this.facing, 1);
+        if (isDown) { ctx.rotate(Math.PI / 2); ctx.translate(-42, -10); }
+        if (this.state === 'hurt') ctx.rotate(-.1);
+        if (this.flash && this.flash % 2) ctx.globalCompositeOperation = 'screen';
+
+        // Shadow
+        ctx.save();
+        ctx.scale(this.facing, 1);
+        ctx.fillStyle = '#03040a66';
+        ctx.beginPath();
+        ctx.ellipse(0, -2 - crouch, 37, 9, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Back leg / front leg, animated independently for walk and kicks.
+        const kickExtension = active && (attack.type === 'kick' || attack.special === 'spin') ? attack.reach : 0;
+        ctx.fillStyle = this.data.dark;
+        limb(-14, -43, -12 - walk * 8, 0, 15);
+        ctx.fillStyle = this.data.color;
+        if (kickExtension) {
+          const angle = attack.special === 'spin' ? Math.sin(this.stateFrame * .7) * .75 - .45 : (attack.height === 'low' ? .18 : -.52);
+          ctx.save(); ctx.translate(10, -40); ctx.rotate(angle); limb(0, 0, kickExtension, 0, 17); ctx.restore();
+        } else {
+          limb(13, -43, 13 + walk * 8, 0, 16);
+        }
+
+        // Torso / belt.
+        ctx.fillStyle = this.data.color;
+        ctx.fillRect(-29, -102, 58, 62);
+        ctx.fillStyle = '#efe9d4';
+        ctx.beginPath(); ctx.moveTo(-7, -102); ctx.lineTo(0, -72); ctx.lineTo(8, -102); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#172036';
+        ctx.fillRect(-31, -48, 62, 8);
+        ctx.fillRect(23, -42, 17, 5);
+
+        // Arms. Punches extend only during their active frames; specials pose differently.
+        let armReach = 25;
+        let armY = -84;
+        if (active && attack.type === 'punch') armReach = attack.reach;
+        if (attack?.special === 'wave') { armReach = this.stateFrame >= attack.startup - 3 ? 44 : 15; armY = -75; }
+        if (attack?.special === 'rising') { armReach = 42; armY = -122; }
+        ctx.fillStyle = this.data.dark;
+        limb(-21, -91, -37, -72, 14);
+        ctx.fillStyle = this.data.color;
+        limb(20, -91, armReach, armY, 15);
+        ctx.fillStyle = '#c98350';
+        ctx.beginPath(); ctx.arc(armReach, armY, 9, 0, Math.PI * 2); ctx.fill();
+
+        // Head, hair and headband tails.
+        ctx.fillStyle = '#c98350';
+        ctx.fillRect(-19, -134, 38, 34);
+        ctx.fillStyle = this.id ? '#9d2c28' : '#19243b';
+        ctx.beginPath(); ctx.moveTo(-22, -132); ctx.lineTo(-12, -145); ctx.lineTo(-4, -135); ctx.lineTo(5, -148); ctx.lineTo(11, -134); ctx.lineTo(22, -137); ctx.lineTo(19, -121); ctx.lineTo(-21, -121); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = this.data.headband;
+        ctx.fillRect(-21, -126, 43, 5);
+        ctx.fillRect(-34, -126, 16 + Math.sin(game.animationId * .18) * 5, 4);
+        ctx.fillStyle = '#121522';
+        ctx.fillRect(6, -116, 5, 4);
+
+        if (attack?.special === 'rising') {
+          ctx.globalAlpha = .34;
+          ctx.fillStyle = attack.color;
+          ctx.beginPath(); ctx.arc(4, -85, 52 + Math.sin(this.stateFrame) * 5, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.restore();
+
+        if (this.combo > 1 && this.comboTimer > 0) {
+          ctx.save();
+          ctx.textAlign = 'center';
+          ctx.font = 'italic 27px Impact';
+          ctx.fillStyle = '#fff';
+          ctx.strokeStyle = '#151728';
+          ctx.lineWidth = 6;
+          ctx.strokeText(`${this.combo} HIT COMBO`, x, y - 164);
+          ctx.fillText(`${this.combo} HIT COMBO`, x, y - 164);
+          ctx.restore();
+        }
+      }
+    }
+
+    const fighters = [new Fighter(0), new Fighter(1)];
+
+    // ---------------------------------------------------------------------
+    // Collision, effects and procedural audio.
+    // ---------------------------------------------------------------------
+    const audio = {
+      ensure() {
+        try {
+          if (!game.audio) game.audio = new (window.AudioContext || window.webkitAudioContext)();
+          if (game.audio.state === 'suspended') game.audio.resume();
+          return game.audio;
+        } catch { return null; }
+      },
+      play(type, strength = 0) {
+        const ac = this.ensure();
+        if (!ac) return;
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        const now = ac.currentTime;
+        osc.connect(gain); gain.connect(ac.destination);
+        const settings = {
+          swing: ['sawtooth', 105 + strength * 30, 240, .055, .09],
+          hit: ['square', 72 + strength * 15, 34, .11, .12],
+          block: ['square', 155, 92, .06, .08],
+          jump: ['triangle', 150, 310, .055, .11],
+          charge: ['sine', 95, 420, .06, .18],
+          wave: ['sawtooth', 240, 72, .07, .2],
+          voice: ['square', 125 + strength * 10, 205, .05, .14],
+          ko: ['sawtooth', 180, 42, .09, .45],
+          start: ['square', 330, 660, .055, .09]
+        }[type] || ['sine', 100, 200, .04, .1];
+        osc.type = settings[0];
+        osc.frequency.setValueAtTime(settings[1], now);
+        osc.frequency.exponentialRampToValueAtTime(settings[2], now + settings[4]);
+        gain.gain.setValueAtTime(settings[3], now);
+        gain.gain.exponentialRampToValueAtTime(.001, now + settings[4]);
+        osc.start(now); osc.stop(now + settings[4] + .02);
+      }
+    };
+
+    function overlaps(a, b) {
+      return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    }
+    function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+    function limb(x1, y1, x2, y2, width) {
+      ctx.strokeStyle = ctx.fillStyle;
+      ctx.lineWidth = width;
+      ctx.lineCap = 'square';
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    }
+    function dust(x) {
+      for (let i = 0; i < 7; i++) particles.push({
+        x: x + (Math.random() - .5) * 28, y: FLOOR - 3,
+        vx: (Math.random() - .5) * 2.2, vy: -Math.random() * 2.3,
+        life: 18 + Math.random() * 10, max: 28, color: '#d4bd8d', size: 3 + Math.random() * 5
+      });
+    }
+    function burst(x, y, color, count, type) {
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2 + Math.random() * (type === 'hit' ? 9 : 5);
+        particles.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+          life: 14 + Math.random() * 13, max: 27, color, size: type === 'hit' ? 5 : 3 });
+      }
+      particles.push({ x, y, vx: 0, vy: 0, life: 9, max: 9, color, size: 20, ring: true });
+    }
+    function trail(x, y, color) {
+      particles.push({ x, y, vx: -1, vy: 0, life: 13, max: 13, color, size: 24, ghost: true });
+    }
+    function spawnProjectile(owner, move) {
+      projectiles.push({
+        owner, x: owner.x + owner.facing * 55, y: owner.y - 70,
+        vx: owner.facing * move.speed, life: 125, radius: 17 + move.power * 2,
+        move, color: move.color
+      });
+      audio.play('wave');
+    }
+
+    function updateEffects() {
+      for (const particle of particles) {
+        particle.x += particle.vx; particle.y += particle.vy;
+        if (!particle.ring && !particle.ghost) particle.vy += .22;
+        particle.life--;
+      }
+      for (let i = particles.length - 1; i >= 0; i--) if (particles[i].life <= 0) particles.splice(i, 1);
+
+      for (const shot of projectiles) {
+        shot.x += shot.vx;
+        shot.life--;
+        const target = fighters[1 - shot.owner.id];
+        const box = { x: shot.x - shot.radius, y: shot.y - shot.radius, w: shot.radius * 2, h: shot.radius * 2 };
+        if (shot.life > 0 && overlaps(box, target.getHurtbox())) {
+          target.receiveHit(shot.move, shot.owner);
+          shot.life = 0;
+        }
+        const rival = projectiles.find(other => other !== shot && other.owner !== shot.owner && other.life > 0 && Math.abs(other.x - shot.x) < 30);
+        if (rival) { shot.life = rival.life = 0; burst(shot.x, shot.y, '#ffffff', 16, 'block'); }
+      }
+      for (let i = projectiles.length - 1; i >= 0; i--) {
+        const shot = projectiles[i];
+        if (shot.life <= 0 || shot.x < -50 || shot.x > WORLD_W + 50) projectiles.splice(i, 1);
+      }
+    }
+
+    // ---------------------------------------------------------------------
+    // Match flow and fixed-step game loop.
+    // ---------------------------------------------------------------------
+    function update() {
+      game.animationId++;
+      if (game.mode !== 'fight' || !game.ready || game.roundOver || game.paused) return;
+      if (game.freeze > 0) { game.freeze--; return; }
+
+      fighters[0].update(fighters[1]);
+      fighters[1].update(fighters[0]);
+
+      // Body collision prevents the fighters from walking through each other.
+      const separation = Math.abs(fighters[0].x - fighters[1].x);
+      if (separation < 56 && fighters.every(f => !f.knockdown)) {
+        const push = (56 - separation) / 2;
+        const direction = fighters[0].x < fighters[1].x ? 1 : -1;
+        fighters[0].x -= push * direction;
+        fighters[1].x += push * direction;
+      }
+      fighters[0].facing = fighters[0].x < fighters[1].x ? 1 : -1;
+      fighters[1].facing = -fighters[0].facing;
+      fighters.forEach(f => { f.x = clamp(f.x, 45, WORLD_W - 45); });
+
+      updateEffects();
+      const midpoint = (fighters[0].x + fighters[1].x) / 2;
+      const desiredCamera = clamp(midpoint - VIEW_W / 2, 0, WORLD_W - VIEW_W);
+      game.cameraX += (desiredCamera - game.cameraX) * .08;
+
+      if (fighters.some(f => f.health <= 0)) endRound('ko');
+    }
+
+    function endRound(reason) {
+      if (game.roundOver) return;
+      game.roundOver = true;
+      game.ready = false;
+      const winner = fighters[0].health === fighters[1].health
+        ? null
+        : (fighters[0].health > fighters[1].health ? 0 : 1);
+      if (winner !== null) game.wins[winner]++;
+      audio.play(reason === 'ko' ? 'ko' : 'start');
+      announce(winner === null ? 'DRAW' : (reason === 'time' ? 'TIME!' : 'K.O.!'), 1050, () => {
+        if (winner !== null && game.wins[winner] >= 2) {
+          setTimeout(() => showMatchResult(winner), 450);
+        } else {
+          setTimeout(() => beginRound(), 450);
+        }
+      });
+    }
+
+    function beginRound() {
+      game.round++;
+      if (game.round > 3) game.round = 3;
+      fighters.forEach(f => f.reset());
+      particles.length = 0; projectiles.length = 0;
+      game.timer = 99;
+      game.roundOver = false;
+      game.cameraX = 160;
+      announce(`ROUND ${game.round}`, 850, () => announce('FIGHT!', 600, () => {
+        game.ready = true;
+        audio.play('start');
+      }));
+    }
+
+    function startMatch() {
+      audio.ensure();
+      game.mode = 'vs';
+      game.round = 0;
+      game.wins = [0, 0];
+      game.matchHits = [0, 0];
+      game.timer = 99;
+      game.ready = false;
+      game.roundOver = false;
+      game.paused = false;
+      fighters.forEach(f => f.reset());
+      particles.length = 0; projectiles.length = 0;
+      document.querySelector('#vsStage').textContent = stageNames[game.stage];
+      showScreen('vs');
+      setTimeout(() => {
+        if (game.mode !== 'vs') return;
+        showScreen(null);
+        game.mode = 'fight';
+        document.querySelector('#help').classList.remove('hidden');
+        beginRound();
+      }, 1200);
+    }
+
+    function showMatchResult(winner) {
+      game.mode = 'result';
+      document.querySelector('#winner').innerHTML = `${winner ? 'CRIMSON' : 'AZURE'}<br>WINS`;
+      document.querySelector('#resultStats').textContent = `ROUNDS ${game.wins[0]} — ${game.wins[1]}　·　TOTAL HITS ${game.matchHits[0]} — ${game.matchHits[1]}`;
+      document.querySelector('#help').classList.add('hidden');
+      showScreen('result');
+    }
+
+    function announce(text, duration, done) {
+      const overlay = document.querySelector('#announcement');
+      const label = document.querySelector('#announcementText');
+      label.textContent = text;
+      label.style.animation = 'none';
+      void label.offsetWidth;
+      label.style.animation = '';
+      overlay.classList.remove('hidden');
+      setTimeout(() => { overlay.classList.add('hidden'); done?.(); }, duration);
+    }
+
+    function showScreen(id) {
+      ['title', 'select', 'vs', 'result'].forEach(name => {
+        document.querySelector(`#${name}`).classList.toggle('hidden', name !== id);
+      });
+    }
+
+    function frame(timestamp) {
+      const elapsed = Math.min(50, timestamp - (game.lastTime || timestamp));
+      game.lastTime = timestamp;
+      game.accumulator += elapsed;
+      if (game.mode === 'fight' && game.ready && !game.roundOver && !game.paused) {
+        game.timer = Math.max(0, game.timer - elapsed / 1000);
+        if (game.timer <= 0) endRound('time');
+      }
+      while (game.accumulator >= FIXED_STEP) {
+        update();
+        game.accumulator -= FIXED_STEP;
+      }
+      render();
+      input.pressed.clear();
+      requestAnimationFrame(frame);
+    }
+
+    // ---------------------------------------------------------------------
+    // Rendering: two parallax stages, fighters, effects and arcade HUD.
+    // ---------------------------------------------------------------------
+    function drawDojo(cameraX) {
+      const gradient = ctx.createLinearGradient(0, 0, 0, FLOOR);
+      gradient.addColorStop(0, '#101b45'); gradient.addColorStop(.62, '#814957'); gradient.addColorStop(1, '#e18a51');
+      ctx.fillStyle = gradient; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+      ctx.fillStyle = '#ffedb5'; ctx.beginPath(); ctx.arc(765 - cameraX * .08, 102, 54, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#161d38';
+      for (let i = -1; i < 13; i++) {
+        const x = i * 105 - (cameraX * .22 % 105);
+        ctx.fillRect(x, 190 + (i % 3) * 17, 73, 220);
+        ctx.beginPath(); ctx.moveTo(x - 14, 205); ctx.lineTo(x + 37, 148 + (i % 2) * 12); ctx.lineTo(x + 88, 205); ctx.fill();
+      }
+      // Animated lanterns and spectators add life without reducing readability.
+      for (let i = 0; i < 7; i++) {
+        const x = 95 + i * 150 - cameraX * .48;
+        const sway = Math.sin(game.animationId * .025 + i) * 3;
+        ctx.strokeStyle = '#2b1a22'; ctx.beginPath(); ctx.moveTo(x, 190); ctx.lineTo(x + sway, 260); ctx.stroke();
+        ctx.fillStyle = i % 2 ? '#ef3f35' : '#f4bc38'; ctx.fillRect(x - 11 + sway, 255, 22, 31);
+      }
+      ctx.fillStyle = '#463028'; ctx.fillRect(0, 376, VIEW_W, 164);
+      ctx.strokeStyle = '#b47c52'; ctx.lineWidth = 2;
+      for (let x = -100; x < VIEW_W + 120; x += 62) {
+        const shifted = x - (cameraX * .8 % 62);
+        ctx.beginPath(); ctx.moveTo(shifted, 376); ctx.lineTo(shifted + 34, VIEW_H); ctx.stroke();
+      }
+    }
+
+    function drawCity(cameraX) {
+      const gradient = ctx.createLinearGradient(0, 0, 0, VIEW_H);
+      gradient.addColorStop(0, '#0a122b'); gradient.addColorStop(1, '#2c1b3e');
+      ctx.fillStyle = gradient; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+      ctx.fillStyle = '#132039';
+      for (let i = -1; i < 12; i++) {
+        const x = i * 118 - (cameraX * .18 % 118);
+        const top = 62 + (i % 4) * 31;
+        ctx.fillRect(x, top, 96, 330);
+        for (let row = 0; row < 5; row++) for (let col = 0; col < 3; col++) {
+          const on = ((i + row + col + Math.floor(game.animationId / 100)) % 5) !== 0;
+          ctx.fillStyle = on ? '#ffd65a' : '#25324a';
+          ctx.fillRect(x + 14 + col * 25, top + 30 + row * 42, 11, 17);
+        }
+        ctx.fillStyle = '#132039';
+      }
+      const signs = [
+        { x: 100, y: 210, w: 125, h: 50, color: '#1bd3e8', text: 'ARCADE' },
+        { x: 575, y: 155, w: 92, h: 70, color: '#ff3d80', text: 'FIGHT' },
+        { x: 950, y: 240, w: 130, h: 45, color: '#ffd242', text: '夜市' }
+      ];
+      for (const sign of signs) {
+        const x = sign.x - cameraX * .55;
+        ctx.globalAlpha = .72 + Math.sin(game.animationId * .08 + sign.x) * .18;
+        ctx.strokeStyle = sign.color; ctx.lineWidth = 5; ctx.strokeRect(x, sign.y, sign.w, sign.h);
+        ctx.fillStyle = sign.color; ctx.font = '24px Impact'; ctx.textAlign = 'center'; ctx.fillText(sign.text, x + sign.w / 2, sign.y + sign.h * .66);
+      }
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#26262c'; ctx.fillRect(0, 373, VIEW_W, 167);
+      ctx.fillStyle = '#d52945'; ctx.fillRect(0, 407, VIEW_W, 5);
+      ctx.fillStyle = '#51515a';
+      for (let x = -120; x < VIEW_W + 120; x += 115) ctx.fillRect(x - (cameraX * .82 % 115), 470, 65, 5);
+    }
+
+    function drawStage() {
+      if (game.stage === 0) drawDojo(game.cameraX); else drawCity(game.cameraX);
+      ctx.fillStyle = '#11131a'; ctx.fillRect(0, FLOOR, VIEW_W, VIEW_H - FLOOR);
+      ctx.fillStyle = game.stage ? '#3d3d46' : '#55372e'; ctx.fillRect(0, FLOOR, VIEW_W, 5);
+    }
+
+    function drawProjectiles() {
+      for (const shot of projectiles) {
+        const x = shot.x - game.cameraX;
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.shadowColor = shot.color; ctx.shadowBlur = 24;
+        ctx.fillStyle = shot.color;
+        ctx.beginPath(); ctx.arc(x, shot.y, shot.radius + Math.sin(game.animationId * .5) * 3, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = .35; ctx.beginPath(); ctx.arc(x - Math.sign(shot.vx) * 20, shot.y, shot.radius * .75, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function drawParticles() {
+      for (const p of particles) {
+        const x = p.x - game.cameraX;
+        const alpha = clamp(p.life / p.max, 0, 1);
+        ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = p.color; ctx.strokeStyle = p.color;
+        if (p.ring) {
+          ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(x, p.y, p.size * (1.5 - alpha), 0, Math.PI * 2); ctx.stroke();
+        } else if (p.ghost) {
+          ctx.globalCompositeOperation = 'lighter'; ctx.beginPath(); ctx.arc(x, p.y, p.size * alpha, 0, Math.PI * 2); ctx.fill();
+        } else {
+          ctx.translate(x, p.y); ctx.rotate(Math.atan2(p.vy, p.vx)); ctx.fillRect(-p.size / 2, -2, p.size * 1.8, 4);
+        }
+        ctx.restore();
+      }
+    }
+
+    function drawHud() {
+      const p1 = fighters[0].health / 100;
+      const p2 = fighters[1].health / 100;
+      ctx.save();
+      ctx.fillStyle = '#070a12dd';
+      ctx.fillRect(20, 17, 392, 48); ctx.fillRect(548, 17, 392, 48);
+      ctx.fillStyle = '#59202b';
+      ctx.fillRect(26, 23, 380, 36); ctx.fillRect(554, 23, 380, 36);
+      ctx.fillStyle = p1 < .25 ? '#ef4338' : '#f1c93e'; ctx.fillRect(26, 23, 380 * p1, 36);
+      ctx.fillStyle = p2 < .25 ? '#ef4338' : '#f1c93e'; ctx.fillRect(934 - 380 * p2, 23, 380 * p2, 36);
+      ctx.strokeStyle = '#fff3'; ctx.lineWidth = 2; ctx.strokeRect(20, 17, 392, 48); ctx.strokeRect(548, 17, 392, 48);
+      ctx.fillStyle = '#101522'; ctx.fillRect(442, 11, 76, 68);
+      ctx.strokeStyle = '#ffd447'; ctx.strokeRect(442, 11, 76, 68);
+      ctx.fillStyle = '#fff'; ctx.font = '43px Impact'; ctx.textAlign = 'center';
+      ctx.fillText(String(Math.ceil(game.timer)).padStart(2, '0'), 480, 61);
+      ctx.font = '19px Impact'; ctx.textAlign = 'left'; ctx.fillText('AZURE RYU', 26, 84);
+      ctx.textAlign = 'right'; ctx.fillText('CRIMSON KEN', 934, 84);
+      ctx.fillStyle = '#ffd447';
+      for (let p = 0; p < 2; p++) for (let i = 0; i < game.wins[p]; i++) {
+        const x = p ? 921 - i * 18 : 39 + i * 18;
+        ctx.beginPath(); ctx.moveTo(x, 96); ctx.lineTo(x + 7, 103); ctx.lineTo(x, 110); ctx.lineTo(x - 7, 103); ctx.closePath(); ctx.fill();
+      }
+      if (game.paused) {
+        ctx.fillStyle = '#050812cc'; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+        ctx.fillStyle = '#ffd447'; ctx.font = 'italic 70px Impact'; ctx.textAlign = 'center'; ctx.fillText('PAUSED', VIEW_W / 2, VIEW_H / 2);
+        ctx.fillStyle = '#fff'; ctx.font = '18px system-ui'; ctx.fillText('ESCで再開', VIEW_W / 2, VIEW_H / 2 + 38);
+      }
+      ctx.restore();
+    }
+
+    function render() {
+      ctx.save();
+      if (!reducedMotion.matches && game.shake > .2) {
+        ctx.translate((Math.random() - .5) * game.shake, (Math.random() - .5) * game.shake);
+        game.shake *= .78;
+      } else game.shake = 0;
+      drawStage();
+      drawProjectiles();
+      fighters.forEach(f => f.draw(game.cameraX));
+      drawParticles();
+      if (game.mode === 'fight') drawHud();
+      ctx.restore();
+    }
+
+    // ---------------------------------------------------------------------
+    // Keyboard, buttons and optional Player 1 touch controls.
+    // ---------------------------------------------------------------------
+    function setStage(delta) {
+      game.stage = (game.stage + delta + stageNames.length) % stageNames.length;
+      document.querySelector('#stageName').textContent = stageNames[game.stage];
+      audio.play('start');
+    }
+
+    document.addEventListener('keydown', event => {
+      const key = event.key.toLowerCase();
+      if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'w', 'a', 's', 'd'].includes(key)) event.preventDefault();
+      if (!input.held.has(key)) input.pressed.add(key);
+      input.held.add(key);
+      audio.ensure();
+
+      if (game.mode === 'title' && (key === 'enter' || key === ' ')) {
+        game.mode = 'select'; showScreen('select');
+      } else if (game.mode === 'select') {
+        if (['a', 'arrowleft'].includes(key)) setStage(-1);
+        if (['d', 'arrowright'].includes(key)) setStage(1);
+        if (key === 'enter' || key === ' ') startMatch();
+      } else if (game.mode === 'fight' && key === 'escape' && !game.roundOver) {
+        game.paused = !game.paused;
+      } else if (game.mode === 'result' && key === 'enter') startMatch();
+    });
+    document.addEventListener('keyup', event => input.held.delete(event.key.toLowerCase()));
+    window.addEventListener('blur', () => { input.held.clear(); if (game.mode === 'fight' && game.ready) game.paused = true; });
+
+    document.querySelectorAll('[data-action]').forEach(button => {
+      button.addEventListener('click', () => {
+        audio.ensure();
+        const action = button.dataset.action;
+        if (action === 'select') { game.mode = 'select'; showScreen('select'); }
+        if (action === 'fight' || action === 'restart') startMatch();
+        if (action === 'title') { game.mode = 'title'; document.querySelector('#help').classList.add('hidden'); showScreen('title'); }
+      });
+    });
+    document.querySelectorAll('[data-stage]').forEach(button => button.addEventListener('click', () => setStage(button.dataset.stage === 'next' ? 1 : -1)));
+    document.querySelectorAll('[data-key]').forEach(button => {
+      const key = button.dataset.key;
+      const press = event => { event.preventDefault(); if (!input.held.has(key)) input.pressed.add(key); input.held.add(key); audio.ensure(); };
+      const release = event => { event.preventDefault(); input.held.delete(key); };
+      button.addEventListener('pointerdown', press);
+      button.addEventListener('pointerup', release);
+      button.addEventListener('pointercancel', release);
+      button.addEventListener('pointerleave', release);
+    });
+
+    requestAnimationFrame(frame);
+  })();
+  </script>
+</body>
+</html>
