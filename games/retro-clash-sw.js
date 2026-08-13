@@ -1,7 +1,7 @@
 'use strict';
 
 const CACHE_PREFIX = 'retro-clash-';
-const CACHE_NAME = `${CACHE_PREFIX}v2`;
+const CACHE_NAME = `${CACHE_PREFIX}v3`;
 const APP_SHELL = [
   './retro-clash.html',
   './retro-clash.webmanifest',

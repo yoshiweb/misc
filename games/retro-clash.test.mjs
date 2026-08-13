@@ -131,7 +131,7 @@ test('portrait title presents the key visual without duplicate content covering 
   assert.match(html, /#title \{[\s\S]*?justify-content: flex-end;[\s\S]*?key-visual\.png[\s\S]*?center \/ cover no-repeat;/);
   assert.match(html, /#title > \.logo,[\s\S]*?#title > \.controls-grid \{ display: none; \}/);
   assert.match(html, /#title > \.action \{[\s\S]*?min-height: 38px;[\s\S]*?drop-shadow/);
-  assert.match(serviceWorker, /CACHE_NAME = `\$\{CACHE_PREFIX\}v2`/);
+  assert.match(serviceWorker, /CACHE_NAME = `\$\{CACHE_PREFIX\}v3`/);
 });
 
 test('touch movement uses an eight-way joystick instead of direction buttons', () => {
@@ -142,6 +142,30 @@ test('touch movement uses an eight-way joystick instead of direction buttons', (
   assert.match(html, /const threshold = \.34/);
   assert.match(html, /joystick\.addEventListener\('pointermove'/);
   assert.doesNotMatch(html, /data-key="[wasd]"/);
+});
+
+test('easy touch mode is the default and uses only the joystick for combat', () => {
+  assert.match(html, /id="touch" class="easy-mode"/);
+  assert.match(html, /easyControls: true/);
+  assert.match(html, /data-control-mode="easy" aria-pressed="true"/);
+  assert.match(html, /#touch\.easy-mode \.touch-group \{ display: none; \}/);
+  assert.match(html, /TAP 連撃 · 敵へFLICK 攻撃 · 逆へHOLD 防御/);
+  assert.match(html, /function finishEasyGesture\(/);
+  assert.match(html, /maxDistance < rect\.width \* \.16/);
+  assert.match(html, /const toward = Math\.sign\(x\) === fighter\.facing/);
+  assert.match(html, /special = y < -rect\.height \* \.17 \? 'rising'/);
+  assert.match(html, /processEasyAction\(\);/);
+  assert.match(html, /easyActionQueue\.length >= 3/);
+  assert.match(html, /easyActionQueue\.length = 0/);
+});
+
+test('classic touch controls remain available as an explicit option', () => {
+  assert.match(html, /data-control-mode="classic" aria-pressed="false"/);
+  assert.match(html, /function setControlMode\(mode\)/);
+  assert.match(html, /touch\.classList\.toggle\('easy-mode', game\.easyControls\)/);
+  for (const key of ['j', 'k', 'l', 'u', 'i', 'o']) {
+    assert.match(html, new RegExp(`data-key="${key}"`));
+  }
 });
 
 test('mobile zoom is blocked and stage selection has visual feedback', () => {
