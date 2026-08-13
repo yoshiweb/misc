@@ -13,6 +13,7 @@
     </script>
     <title>動画納品チェッカー | misc.yoshiweb.net</title>
     <meta name="description" content="動画の容量・解像度・画角・尺・音声・黒画面をブラウザ内で確認する納品前チェックツール。">
+    <script src="../../assets/affiliate.js?v=9"></script>
     <style>
         :root {
             color-scheme: light;
@@ -200,6 +201,7 @@
                     <div class="checks" id="checks" aria-live="polite">
                         <p class="empty">動画を選択するとチェックを開始します。</p>
                     </div>
+                    <div id="gear-suggestions" hidden></div>
                     <button class="secondary-button report-button" id="report-button" type="button" disabled>チェック結果を保存</button>
                     <div class="notice"><strong>判定について</strong>ブラウザで確認できないコーデック・正確なFPS・音量ピークなどは、別途ffprobeや編集ソフトでも確認してください。</div>
                 </div>
@@ -220,7 +222,7 @@
             const state = { file: null, objectUrl: '', metadata: null, checks: [] };
             const els = {
                 input: document.getElementById('file-input'), dropzone: document.getElementById('dropzone'), video: document.getElementById('video'), preview: document.getElementById('preview'),
-                fileName: document.getElementById('file-name'), fileSize: document.getElementById('file-size'), clear: document.getElementById('clear-button'), profile: document.getElementById('profile'), maxSize: document.getElementById('max-size'),
+                fileName: document.getElementById('file-name'), fileSize: document.getElementById('file-size'), clear: document.getElementById('clear-button'), profile: document.getElementById('profile'), maxSize: document.getElementById('max-size'), gear: document.getElementById('gear-suggestions'),
                 overall: document.getElementById('overall'), score: document.getElementById('score'), overallTitle: document.getElementById('overall-title'), overallMessage: document.getElementById('overall-message'), checks: document.getElementById('checks'), report: document.getElementById('report-button')
             };
 
@@ -325,8 +327,8 @@
 
             function renderChecks() {
                 state.checks = makeChecks();
-                if (!state.file) { els.checks.innerHTML = '<p class="empty">動画を選択するとチェックを開始します。</p>'; els.score.textContent = '—'; els.score.className = 'score'; els.overallTitle.textContent = '動画を選択してください'; els.overallMessage.textContent = 'チェック結果がここに表示されます。'; return; }
-                if (!state.metadata) { els.checks.innerHTML = '<p class="empty">動画のメタデータを読み込んでいます…</p>'; els.score.textContent = '…'; els.score.className = 'score'; els.overallTitle.textContent = '解析中です'; els.overallMessage.textContent = '動画の長さ・画角・黒画面を確認しています。'; return; }
+                if (!state.file) { els.checks.innerHTML = '<p class="empty">動画を選択するとチェックを開始します。</p>'; els.gear.hidden = true; els.score.textContent = '—'; els.score.className = 'score'; els.overallTitle.textContent = '動画を選択してください'; els.overallMessage.textContent = 'チェック結果がここに表示されます。'; return; }
+                if (!state.metadata) { els.checks.innerHTML = '<p class="empty">動画のメタデータを読み込んでいます…</p>'; els.gear.hidden = true; els.score.textContent = '…'; els.score.className = 'score'; els.overallTitle.textContent = '解析中です'; els.overallMessage.textContent = '動画の長さ・画角・黒画面を確認しています。'; return; }
                 els.checks.innerHTML = state.checks.map(item => `<div class="check-row ${item.status}"><span class="check-icon" aria-hidden="true">${item.status === 'pass' ? '✓' : item.status === 'fail' ? '!' : item.status === 'warn' ? '△' : '?'}</span><span><span class="check-name">${item.name}</span><span class="check-detail">${item.detail}</span></span><span class="check-result">${item.result}</span></div>`).join('');
                 const fails = state.checks.filter(item => item.status === 'fail').length;
                 const warnings = state.checks.filter(item => item.status === 'warn' || item.status === 'unknown').length;
@@ -335,6 +337,25 @@
                 els.score.className = `score ${fails ? 'fail' : warnings ? 'warn' : 'pass'}`;
                 els.overallTitle.textContent = fails ? '納品前に修正が必要です' : warnings ? '大きな問題はありませんが要確認です' : '基本仕様を満たしています';
                 els.overallMessage.textContent = fails ? `${fails}項目が仕様外です。` : warnings ? `${warnings}項目はブラウザ上での確認・判定に制限があります。` : '選択したプリセットのチェックを通過しました。';
+                renderGearSuggestions();
+            }
+
+            function renderGearSuggestions() {
+                const needs = [];
+                const has = id => state.checks.some(item => item.name === id && item.status !== 'pass');
+                const products = {
+                    light: { name: '撮影用ライト', note: '暗さや影を改善したいとき。まず光を安定させると、映像の見え方が変わります。', searchKeyword: 'スマホ 撮影ライト' },
+                    tripod: { name: 'スマホ三脚・スタンド', note: '画角や手ブレを整えたいとき。固定撮影の基本です。', searchKeyword: 'スマホ 三脚 スタンド' },
+                    mic: { name: 'ワイヤレスマイク', note: '音声トラックや聞き取りやすさを確認したいとき。端子の対応を確認してください。', searchKeyword: 'スマホ ワイヤレスマイク' }
+                };
+                if (state.checks.some(item => item.name === '解像度' && item.status === 'fail')) needs.push(products.light);
+                if (state.checks.some(item => item.name === '画角' && item.status === 'fail')) needs.push(products.tripod);
+                if (state.checks.some(item => item.name === '音声トラック' && item.status !== 'pass')) needs.push(products.mic);
+                if (!needs.length) { els.gear.hidden = true; return; }
+                els.gear.hidden = false;
+                els.gear.innerHTML = '<div style="margin-top:18px;padding:13px 14px;background:#f8f9fc;border-radius:10px;font-size:.78rem"><strong style="display:block;margin-bottom:4px">次に改善するなら</strong><span style="color:#667085">チェック結果に関係する道具だけを表示しています。今ある環境で試してから検討してください。</span><div id="gear-list" style="display:grid;gap:8px;margin-top:10px"></div><p style="margin:10px 0 0;color:#667085;font-size:.72rem">商品リンクは選択肢を探すためのものです。アフィリエイト広告を利用しています。</p></div>';
+                const list = els.gear.querySelector('#gear-list');
+                needs.forEach(product => { const card=document.createElement('div'); card.style.cssText='padding:10px;background:#fff;border:1px solid #e4e7ec;border-radius:8px'; const title=document.createElement('strong'); title.textContent=product.name; card.appendChild(title); const note=document.createElement('p'); note.style.cssText='margin:2px 0 7px;color:#667085;font-size:.74rem'; note.textContent=product.note; card.appendChild(note); const links=document.createElement('div'); links.style.cssText='display:flex;gap:6px;flex-wrap:wrap'; Affiliate.storeLinks(product).forEach(link=>links.appendChild(Affiliate.storeLinkElement(link))); card.appendChild(links); list.appendChild(card); });
             }
 
             function reportText() {

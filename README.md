@@ -18,6 +18,8 @@
 - [Submission Packager](./tools/submission-packager/index.html)
 - [Local Site Auditor](./tools/site-auditor/index.html)
 - [Public Image Cleaner](./tools/public-image-cleaner/index.html)
+- [Checklist Maker](./tools/checklist-maker/index.html)
+- [Shooting Setup Diagnosis](./tools/shooting-setup-diagnosis/index.html)
 - [PFC Calculator](./tools/pfc-calculator/index.html)
 - [Pet Growth Calendar](./tools/pet-timeline/index.html)
 - [Disaster Stockpile Simulator](./tools/disaster-stockpile/index.html)
