@@ -173,16 +173,47 @@
       z-index: 6;
       display: none;
       justify-content: space-between;
+      align-items: end;
       padding: 8px;
       pointer-events: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: none;
     }
     .touch-group { display: grid; grid-template-columns: repeat(3, 48px); gap: 6px; pointer-events: auto; }
-    .touch-group button { width: 48px; height: 42px; border: 1px solid #fff8; border-radius: 7px; color: white; background: #121a34b8; font: 800 .75rem system-ui, sans-serif; }
+    .touch-group button, #pauseButton {
+      width: 48px;
+      height: 44px;
+      padding: 0;
+      border: 1px solid #fff8;
+      border-radius: 9px;
+      color: white;
+      background: linear-gradient(#253150, #10162a);
+      box-shadow: inset 0 -4px #080d1c, 0 3px 10px #0008;
+      font: 900 .75rem system-ui, sans-serif;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: none;
+    }
+    .touch-group button.is-held { transform: translateY(3px); border-color: var(--gold); filter: brightness(1.35); box-shadow: inset 0 -1px #080d1c; }
     .touch-move { grid-template-areas: ". u ." "l d r"; }
     .touch-move [data-key="w"] { grid-area: u; }
     .touch-move [data-key="a"] { grid-area: l; }
     .touch-move [data-key="s"] { grid-area: d; }
     .touch-move [data-key="d"] { grid-area: r; }
+    #pauseButton {
+      position: absolute;
+      left: 50%;
+      bottom: 8px;
+      width: 84px;
+      translate: -50%;
+      pointer-events: auto;
+      color: var(--gold);
+      letter-spacing: .08em;
+    }
     #help {
       position: absolute;
       inset: auto 12px 10px auto;
@@ -194,23 +225,48 @@
       font: 700 11px system-ui, sans-serif;
       pointer-events: none;
     }
-    #rotate {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      display: none;
-      place-items: center;
-      padding: 2rem;
-      color: #fff;
-      background: radial-gradient(circle at center, #26375e, #070a14 70%);
-      text-align: center;
-      font: 800 1rem system-ui, sans-serif;
+    @media (pointer: coarse) { #touch.active { display: flex; } #help { display: none; } }
+    @media (orientation: portrait) and (max-width: 700px) {
+      body { display: block; background: #070a14; }
+      #shell {
+        width: 100vw;
+        height: 56.25vw;
+        max-height: none;
+        aspect-ratio: 16 / 9;
+        box-shadow: 0 5px 24px #000;
+      }
+      #touch.active {
+        position: fixed;
+        inset: 56.25vw 0 0;
+        display: flex;
+        align-items: center;
+        padding: max(18px, 4vh) 12px max(24px, env(safe-area-inset-bottom));
+        background:
+          linear-gradient(90deg, #17234444 1px, transparent 1px),
+          linear-gradient(#17234444 1px, transparent 1px),
+          radial-gradient(circle at 50% 0, #1f2f55, #070a14 72%);
+        background-size: 28px 28px, 28px 28px, auto;
+        overflow: hidden;
+      }
+      .touch-group { grid-template-columns: repeat(3, min(14vw, 64px)); gap: min(1vw, 8px); }
+      .touch-group button { width: min(14vw, 64px); height: min(14vw, 64px); border-width: 2px; border-radius: 16px; font-size: clamp(.75rem, 3.2vw, 1rem); }
+      .touch-move button { border-radius: 16px; font-size: 1.3rem; }
+      #pauseButton { top: 18px; bottom: auto; width: 100px; height: 42px; }
+      #help { display: none !important; }
+      .screen { gap: .18rem; padding: 1.5%; }
+      .eyebrow, #title > .subtitle { display: none; }
+      .logo { font-size: clamp(2.55rem, 13vw, 4.5rem); }
+      .controls-grid { grid-template-columns: 1fr; width: 78%; }
+      .control-card { display: none; }
+      .control-card:first-child { display: block; padding: .28rem .5rem; text-align: center; }
+      .control-card:first-child > span { display: none; }
+      .action { min-width: 150px; min-height: 34px; padding: .35rem 1.2rem .65rem; font-size: .82rem; }
+      .select-layout { width: 84%; gap: .4rem; }
+      .fighter-card { min-height: 104px; border-width: 3px; }
+      .fighter-card h2 { bottom: 3px; font-size: 1rem; }
+      .stage-picker { font-size: .65rem; }
+      #vs .giant-vs { font-size: 5rem; }
     }
-    #rotate b { display: block; margin-bottom: .6rem; color: var(--gold); font: italic 2.2rem Impact, sans-serif; letter-spacing: .08em; }
-    #rotate .phone { display: block; margin: 0 auto 1.4rem; font-size: 4rem; animation: turn 1.8s ease-in-out infinite; }
-    @keyframes turn { 0%, 25% { transform: rotate(0); } 65%, 100% { transform: rotate(90deg); } }
-    @media (pointer: coarse) { #touch { display: flex; } #help { display: none; } }
-    @media (orientation: portrait) and (max-width: 700px) { #rotate { display: grid; } }
     @media (max-width: 620px), (max-height: 500px) {
       .screen { gap: .35rem; padding: 2.5%; }
       .logo { font-size: clamp(3rem, 13vw, 5.5rem); }
@@ -219,15 +275,15 @@
       .fighter-card { min-height: 120px; }
       .action { min-height: 38px; padding: .55rem 1.4rem .75rem; }
     }
-    @media (prefers-reduced-motion: reduce) { .action { transition: none; } #announcementText, #rotate .phone { animation: none; } }
+    @media (prefers-reduced-motion: reduce) { .action { transition: none; } #announcementText { animation: none; } }
   </style>
 </head>
 <body>
   <main id="shell">
-    <canvas id="game" width="960" height="540" aria-label="2人対戦の2D格闘ゲーム Retro Clash"></canvas>
+    <canvas id="game" width="960" height="540" aria-label="CPUと対戦する2D格闘ゲーム Retro Clash"></canvas>
 
     <section id="title" class="screen">
-      <p class="eyebrow">A two player arcade battle</p>
+      <p class="eyebrow">A one player arcade battle</p>
       <h1 class="logo">RETRO<br>CLASH</h1>
       <p class="subtitle">FISTS · FIRE · FURY</p>
       <div class="controls-grid">
@@ -238,10 +294,9 @@
           <span>必殺: ↓↘→+P ／ →↓↘+P ／ ↓↙←+K</span>
         </div>
         <div class="control-card">
-          <b>PLAYER 2 — CRIMSON KAI</b>
-          <span><span class="key">矢印</span> 移動　<span class="key">1 2 3</span> 弱中強パンチ</span>
-          <span><span class="key">4 5 6</span> 弱中強キック　後ろ入力でガード</span>
-          <span>必殺: ↓↘→+P ／ →↓↘+P ／ ↓↙←+K</span>
+          <b>CPU — CRIMSON KAI</b>
+          <span>間合い、ガード、通常技、必殺技を使うCPUファイター</span>
+          <span>Azure Renを操作して2ラウンド先取せよ</span>
         </div>
       </div>
       <button class="action" data-action="select">ENTER / START</button>
@@ -264,7 +319,7 @@
     </section>
 
     <section id="vs" class="screen hidden">
-      <div class="names"><span>AZURE REN</span><span>CRIMSON KAI</span></div>
+      <div class="names"><span>AZURE REN</span><span>CRIMSON KAI · CPU</span></div>
       <div class="giant-vs">VS</div>
       <p class="eyebrow" id="vsStage">Moonlit Dojo</p>
     </section>
@@ -283,19 +338,19 @@
       </div>
     </section>
 
-    <div id="touch" aria-label="Player 1 touch controls">
-      <div class="touch-group touch-move">
-        <button data-key="w">▲</button><button data-key="a">◀</button>
-        <button data-key="s">▼</button><button data-key="d">▶</button>
-      </div>
-      <div class="touch-group">
-        <button data-key="j">LP</button><button data-key="k">MP</button><button data-key="l">HP</button>
-        <button data-key="u">LK</button><button data-key="i">MK</button><button data-key="o">HK</button>
-      </div>
-    </div>
     <div id="help" class="hidden">ESC: ポーズ</div>
   </main>
-  <aside id="rotate" aria-label="横画面の案内"><div><span class="phone" aria-hidden="true">▯</span><b>TURN TO FIGHT</b>横向きにすると対戦を開始できます</div></aside>
+  <div id="touch" aria-label="Player 1 touch controls">
+      <div class="touch-group touch-move">
+        <button type="button" data-key="w" aria-label="ジャンプ">▲</button><button type="button" data-key="a" aria-label="左移動">◀</button>
+        <button type="button" data-key="s" aria-label="しゃがむ">▼</button><button type="button" data-key="d" aria-label="右移動">▶</button>
+      </div>
+      <div class="touch-group">
+        <button type="button" data-key="j">LP</button><button type="button" data-key="k">MP</button><button type="button" data-key="l">HP</button>
+        <button type="button" data-key="u">LK</button><button type="button" data-key="i">MK</button><button type="button" data-key="o">HK</button>
+      </div>
+      <button id="pauseButton" type="button" aria-label="一時停止">PAUSE</button>
+  </div>
 
   <script>
   (() => {
@@ -395,7 +450,7 @@
       mode: 'title', stage: 0, round: 1, wins: [0, 0], timer: 99,
       ready: false, roundOver: false, paused: false, freeze: 0, shake: 0,
       lastTime: 0, accumulator: 0, cameraX: 160, audio: null, animationId: 0,
-      matchHits: [0, 0]
+      matchHits: [0, 0], cpuEnabled: true
     };
 
     // ---------------------------------------------------------------------
@@ -829,6 +884,105 @@
     const fighters = [new Fighter(0), new Fighter(1)];
 
     // ---------------------------------------------------------------------
+    // CPU opponent. Decisions are intentionally delayed and probabilistic,
+    // so Crimson feels reactive without reading every player input instantly.
+    // ---------------------------------------------------------------------
+    class CPUController {
+      constructor() {
+        this.keys = controls[1];
+        this.controlKeys = [this.keys.left, this.keys.right, this.keys.down, this.keys.up, ...this.keys.punch, ...this.keys.kick];
+        this.reset();
+      }
+
+      reset() {
+        this.decisionDelay = 18;
+        this.actionFrames = 0;
+        this.intent = 'idle';
+        this.guardLow = false;
+        this.releaseInputs();
+      }
+
+      releaseInputs() {
+        for (const key of this.controlKeys) {
+          input.held.delete(key);
+          input.pressed.delete(key);
+        }
+      }
+
+      hold(key) { input.held.add(key); }
+
+      update(self, opponent) {
+        this.releaseInputs();
+        if (!game.cpuEnabled || !game.ready || game.roundOver || game.paused) return;
+        if (self.hitstun || self.blockstun || self.knockdown || self.attack) return;
+
+        const distance = Math.abs(opponent.x - self.x);
+        const away = self.facing > 0 ? this.keys.left : this.keys.right;
+        const toward = self.facing > 0 ? this.keys.right : this.keys.left;
+        const incomingShot = projectiles.some(shot => shot.owner.id === 0 && Math.abs(shot.x - self.x) < 185 && shot.vx * (self.x - shot.x) > 0);
+        const threatened = opponent.attack && distance < (opponent.attack.reach || 72) + 68;
+
+        // Keep an existing movement or guard intent for several frames.
+        if (this.actionFrames > 0) {
+          this.actionFrames--;
+          if (this.intent === 'approach') this.hold(toward);
+          if (this.intent === 'retreat' || this.intent === 'guard') this.hold(away);
+          if (this.intent === 'guard' && this.guardLow) this.hold(this.keys.down);
+          return;
+        }
+
+        if (this.decisionDelay-- > 0) return;
+        const pressure = 1 + (100 - self.health) / 180;
+        this.decisionDelay = Math.max(7, Math.round((12 + Math.random() * 13) / pressure));
+
+        if (incomingShot) {
+          if (Math.random() < .68) {
+            this.intent = 'guard'; this.guardLow = false; this.actionFrames = 24; this.hold(away);
+          } else {
+            self.startSpecial('wave', Math.floor(Math.random() * 3));
+          }
+          return;
+        }
+
+        if (threatened && Math.random() < .62) {
+          this.intent = 'guard';
+          this.guardLow = opponent.attack.height === 'low' || Math.random() < .28;
+          this.actionFrames = 14 + Math.floor(Math.random() * 14);
+          this.hold(away);
+          if (this.guardLow) this.hold(this.keys.down);
+          return;
+        }
+
+        if (!opponent.grounded && distance < 135 && Math.random() < .72) {
+          self.startSpecial('rising', Math.random() < .55 ? 1 : 2);
+          return;
+        }
+
+        if (distance > 285) {
+          if (Math.random() < .34) self.startSpecial('wave', Math.floor(Math.random() * 3));
+          else { this.intent = 'approach'; this.actionFrames = 18 + Math.floor(Math.random() * 22); this.hold(toward); }
+          return;
+        }
+
+        if (distance > 125) {
+          const roll = Math.random();
+          if (roll < .25) self.startSpecial('spin', Math.floor(Math.random() * 3));
+          else if (roll < .48) self.startNormal('kick', 1 + Math.floor(Math.random() * 2));
+          else { this.intent = 'approach'; this.actionFrames = 10 + Math.floor(Math.random() * 16); this.hold(toward); }
+          return;
+        }
+
+        const closeRoll = Math.random();
+        if (closeRoll < .18) self.startSpecial('rising', Math.floor(Math.random() * 3));
+        else if (closeRoll < .58) self.startNormal('punch', Math.floor(Math.random() * 3));
+        else if (closeRoll < .88) self.startNormal('kick', Math.floor(Math.random() * 3));
+        else { this.intent = 'retreat'; this.actionFrames = 12; this.hold(away); }
+      }
+    }
+
+    const cpu = new CPUController();
+
+    // ---------------------------------------------------------------------
     // Collision, effects and procedural audio.
     // ---------------------------------------------------------------------
     const audio = {
@@ -938,6 +1092,7 @@
       if (game.mode !== 'fight' || !game.ready || game.roundOver || game.paused) return;
       if (game.freeze > 0) { game.freeze--; return; }
 
+      cpu.update(fighters[1], fighters[0]);
       fighters[0].update(fighters[1]);
       fighters[1].update(fighters[0]);
 
@@ -991,6 +1146,7 @@
       game.round++;
       if (game.round > 3) game.round = 3;
       fighters.forEach(f => f.reset());
+      cpu.reset();
       particles.length = 0; projectiles.length = 0;
       game.timer = 99;
       game.roundOver = false;
@@ -1011,7 +1167,10 @@
       game.ready = false;
       game.roundOver = false;
       game.paused = false;
+      document.querySelector('#pauseButton').textContent = 'PAUSE';
+      document.querySelector('#pauseButton').classList.remove('is-held');
       fighters.forEach(f => f.reset());
+      cpu.reset();
       particles.length = 0; projectiles.length = 0;
       document.querySelector('#vsStage').textContent = stageNames[game.stage];
       showScreen('vs');
@@ -1019,6 +1178,7 @@
         if (game.mode !== 'vs') return;
         showScreen(null);
         game.mode = 'fight';
+        document.querySelector('#touch').classList.add('active');
         document.querySelector('#help').classList.remove('hidden');
         beginRound();
       }, 1200);
@@ -1029,6 +1189,7 @@
       document.querySelector('#winner').innerHTML = `${winner ? 'CRIMSON' : 'AZURE'}<br>WINS`;
       document.querySelector('#resultStats').textContent = `ROUNDS ${game.wins[0]} — ${game.wins[1]}　·　TOTAL HITS ${game.matchHits[0]} — ${game.matchHits[1]}`;
       document.querySelector('#help').classList.add('hidden');
+      document.querySelector('#touch').classList.remove('active');
       showScreen('result');
     }
 
@@ -1227,7 +1388,7 @@
       ctx.fillStyle = '#fff'; ctx.font = '43px Impact'; ctx.textAlign = 'center';
       ctx.fillText(String(Math.ceil(game.timer)).padStart(2, '0'), 480, 61);
       ctx.font = '19px Impact'; ctx.textAlign = 'left'; ctx.fillText('AZURE REN', 26, 84);
-      ctx.textAlign = 'right'; ctx.fillText('CRIMSON KAI', 934, 84);
+      ctx.textAlign = 'right'; ctx.fillText('CRIMSON KAI · CPU', 934, 84);
       ctx.fillStyle = '#ffd447';
       for (let p = 0; p < 2; p++) for (let i = 0; i < game.wins[p]; i++) {
         const x = p ? 921 - i * 18 : 39 + i * 18;
@@ -1236,7 +1397,7 @@
       if (game.paused) {
         ctx.fillStyle = '#050812cc'; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
         ctx.fillStyle = '#ffd447'; ctx.font = 'italic 70px Impact'; ctx.textAlign = 'center'; ctx.fillText('PAUSED', VIEW_W / 2, VIEW_H / 2);
-        ctx.fillStyle = '#fff'; ctx.font = '18px system-ui'; ctx.fillText('ESCで再開', VIEW_W / 2, VIEW_H / 2 + 38);
+        ctx.fillStyle = '#fff'; ctx.font = '18px system-ui'; ctx.fillText('RESUMEボタンで再開', VIEW_W / 2, VIEW_H / 2 + 38);
       }
       ctx.restore();
     }
@@ -1264,6 +1425,19 @@
       audio.play('start');
     }
 
+    function setPaused(paused) {
+      if (game.mode !== 'fight' || game.roundOver) return;
+      game.paused = paused;
+      input.held.clear();
+      input.pressed.clear();
+      cpu.releaseInputs();
+      const button = document.querySelector('#pauseButton');
+      button.textContent = paused ? 'RESUME' : 'PAUSE';
+      button.setAttribute('aria-label', paused ? 'ゲームを再開' : '一時停止');
+      button.classList.toggle('is-held', paused);
+      if (!paused) audio.ensure();
+    }
+
     document.addEventListener('keydown', event => {
       const key = event.key.toLowerCase();
       if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' ', 'w', 'a', 's', 'd'].includes(key)) event.preventDefault();
@@ -1278,11 +1452,11 @@
         if (['d', 'arrowright'].includes(key)) setStage(1);
         if (key === 'enter' || key === ' ') startMatch();
       } else if (game.mode === 'fight' && key === 'escape' && !game.roundOver) {
-        game.paused = !game.paused;
+        setPaused(!game.paused);
       } else if (game.mode === 'result' && key === 'enter') startMatch();
     });
     document.addEventListener('keyup', event => input.held.delete(event.key.toLowerCase()));
-    window.addEventListener('blur', () => { input.held.clear(); if (game.mode === 'fight' && game.ready) game.paused = true; });
+    window.addEventListener('blur', () => { input.held.clear(); if (game.mode === 'fight' && game.ready) setPaused(true); });
 
     document.querySelectorAll('[data-action]').forEach(button => {
       button.addEventListener('click', () => {
@@ -1290,19 +1464,53 @@
         const action = button.dataset.action;
         if (action === 'select') { game.mode = 'select'; showScreen('select'); }
         if (action === 'fight' || action === 'restart') startMatch();
-        if (action === 'title') { game.mode = 'title'; document.querySelector('#help').classList.add('hidden'); showScreen('title'); }
+        if (action === 'title') {
+          game.mode = 'title';
+          document.querySelector('#help').classList.add('hidden');
+          document.querySelector('#touch').classList.remove('active');
+          showScreen('title');
+        }
       });
     });
     document.querySelectorAll('[data-stage]').forEach(button => button.addEventListener('click', () => setStage(button.dataset.stage === 'next' ? 1 : -1)));
+    document.querySelector('#pauseButton').addEventListener('click', event => {
+      event.preventDefault();
+      setPaused(!game.paused);
+    });
+    const activePointers = new Map();
     document.querySelectorAll('[data-key]').forEach(button => {
       const key = button.dataset.key;
-      const press = event => { event.preventDefault(); if (!input.held.has(key)) input.pressed.add(key); input.held.add(key); audio.ensure(); };
-      const release = event => { event.preventDefault(); input.held.delete(key); };
+      const press = event => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (game.paused) return;
+        button.setPointerCapture?.(event.pointerId);
+        activePointers.set(event.pointerId, { key, button });
+        button.classList.add('is-held');
+        if (!input.held.has(key)) input.pressed.add(key);
+        input.held.add(key);
+        audio.ensure();
+      };
+      const release = event => {
+        event.preventDefault();
+        event.stopPropagation();
+        const active = activePointers.get(event.pointerId);
+        if (active) {
+          input.held.delete(active.key);
+          active.button.classList.remove('is-held');
+          activePointers.delete(event.pointerId);
+        } else {
+          input.held.delete(key);
+          button.classList.remove('is-held');
+        }
+      };
       button.addEventListener('pointerdown', press);
       button.addEventListener('pointerup', release);
       button.addEventListener('pointercancel', release);
-      button.addEventListener('pointerleave', release);
     });
+    document.querySelector('#touch').addEventListener('contextmenu', event => event.preventDefault());
+    document.querySelector('#touch').addEventListener('selectstart', event => event.preventDefault());
+    document.querySelector('#touch').addEventListener('dragstart', event => event.preventDefault());
 
     requestAnimationFrame(frame);
   })();

@@ -39,11 +39,37 @@ test('all required game-flow screens and actions are present', () => {
   assert.match(html, /best|game\.wins\[winner\] >= 2|game\.wins\[winner\]>=2/i);
 });
 
-test('both keyboard layouts expose six attacks and four directions', () => {
+test('player controls expose six attacks while the CPU retains internal controls', () => {
   assert.match(html, /left: 'a', right: 'd', down: 's', up: 'w'/);
   assert.match(html, /punch: \['j', 'k', 'l'\], kick: \['u', 'i', 'o'\]/);
   assert.match(html, /left: 'arrowleft', right: 'arrowright', down: 'arrowdown', up: 'arrowup'/);
   assert.match(html, /punch: \['1', '2', '3'\], kick: \['4', '5', '6'\]/);
+});
+
+test('single-player CPU manages range, defense, normals, and all three specials', () => {
+  assert.match(html, /class CPUController/);
+  assert.match(html, /game\.cpuEnabled/);
+  assert.match(html, /incomingShot/);
+  assert.match(html, /threatened/);
+  assert.match(html, /distance > 285/);
+  assert.match(html, /distance > 125/);
+  assert.match(html, /self\.startNormal\('punch'/);
+  assert.match(html, /self\.startNormal\('kick'/);
+  for (const move of ['wave', 'rising', 'spin']) {
+    assert.match(html, new RegExp(`self\\.startSpecial\\('${move}'`));
+  }
+});
+
+test('portrait touch layout provides safe controls and an in-game resume action', () => {
+  assert.match(html, /@media \(orientation: portrait\) and \(max-width: 700px\)/);
+  assert.match(html, /inset: 56\.25vw 0 0/);
+  assert.match(html, /id="pauseButton"/);
+  assert.match(html, /function setPaused\(/);
+  assert.match(html, /RESUMEボタンで再開/);
+  assert.match(html, /-webkit-touch-callout: none/);
+  assert.match(html, /addEventListener\('contextmenu'/);
+  assert.match(html, /addEventListener\('selectstart'/);
+  assert.doesNotMatch(html, /id="rotate"/);
 });
 
 test('quarter-circle, dragon-punch, and reverse-quarter-circle motions are wired', () => {
