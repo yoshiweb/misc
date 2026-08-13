@@ -4,6 +4,8 @@ import { test } from 'node:test';
 
 const gameUrl = new URL('./retro-clash.html', import.meta.url);
 const html = await readFile(gameUrl, 'utf8');
+const manifest = JSON.parse(await readFile(new URL('./retro-clash.webmanifest', import.meta.url), 'utf8'));
+const serviceWorker = await readFile(new URL('./retro-clash-sw.js', import.meta.url), 'utf8');
 
 function inlineScript(source) {
   const marker = "'use strict';";
@@ -43,6 +45,43 @@ test('share metadata uses the production key visual and GA4 tracks the game loop
   assert.ok(keyVisual.width >= 1200 && keyVisual.height >= 630);
   const ogp = await readFile(new URL('../assets/images/ogp/retro-clash.jpg', import.meta.url));
   assert.equal(ogp.subarray(0, 3).toString('hex'), 'ffd8ff');
+});
+
+test('PWA manifest provides installable icons and fullscreen game launch', async () => {
+  assert.match(html, /rel="manifest" href="retro-clash\.webmanifest"/);
+  assert.match(html, /rel="apple-touch-icon" href="assets\/retro-clash\/icon-192\.png"/);
+  assert.equal(manifest.start_url, './retro-clash.html?source=pwa');
+  assert.equal(manifest.scope, './');
+  assert.equal(manifest.display, 'fullscreen');
+  assert.equal(manifest.orientation, 'any');
+  assert.deepEqual(manifest.icons.map(icon => icon.sizes), ['192x192', '512x512', '512x512']);
+  assert.equal(manifest.icons.at(-1).purpose, 'maskable');
+  for (const icon of manifest.icons) {
+    const metadata = await pngMetadata(`./${icon.src}`);
+    const size = Number(icon.sizes.split('x')[0]);
+    assert.equal(metadata.width, size);
+    assert.equal(metadata.height, size);
+  }
+});
+
+test('service worker caches the complete game shell without intercepting other games', () => {
+  assert.match(html, /navigator\.serviceWorker\.register\('retro-clash-sw\.js', \{ scope: '\.\/' \}\)/);
+  for (const asset of [
+    'retro-clash.html', 'retro-clash.webmanifest', 'azure-sprites.png',
+    'crimson-sprites.png', 'moonlit-dojo.png', 'neon-street.png',
+    'key-visual.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png'
+  ]) {
+    assert.ok(serviceWorker.includes(asset), `service worker should cache ${asset}`);
+  }
+  assert.match(serviceWorker, /if \(!isGamePage && !isGameAsset && !isManifest\) return/);
+  assert.doesNotThrow(() => new Function(serviceWorker));
+});
+
+test('PWA install prompt has a visible in-game action and analytics', () => {
+  assert.match(html, /id="installButton"/);
+  assert.match(html, /beforeinstallprompt/);
+  assert.match(html, /installPrompt\.prompt\(\)/);
+  assert.match(html, /track\('pwa_installed'\)/);
 });
 
 test('all required game-flow screens and actions are present', () => {

@@ -4,6 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta name="theme-color" content="#080b16">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Retro Clash">
+  <link rel="manifest" href="retro-clash.webmanifest">
+  <link rel="apple-touch-icon" href="assets/retro-clash/icon-192.png">
   <meta name="description" content="Azure Renを操り、CPUのCrimson Kaiと戦う本格2Dアーケード格闘ゲーム。スマホのジョイスティックとキーボードに対応。">
   <link rel="canonical" href="https://misc.yoshiweb.net/games/retro-clash.html">
   <meta property="og:type" content="website">
@@ -416,6 +422,7 @@
         </div>
       </div>
       <button class="action" data-action="select">ENTER / START</button>
+      <button id="installButton" class="action secondary hidden" type="button">INSTALL APP</button>
     </section>
 
     <section id="select" class="screen hidden">
@@ -481,6 +488,7 @@
     const FLOOR = 445;
     const FIXED_STEP = 1000 / 60;
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let installPrompt = null;
 
     // Keep analytics optional: gameplay continues normally when GA is blocked.
     function track(eventName, parameters = {}) {
@@ -1618,6 +1626,27 @@
       setPaused(!game.paused);
     });
 
+    // Browsers expose the native install prompt only after PWA criteria pass.
+    const installButton = document.querySelector('#installButton');
+    window.addEventListener('beforeinstallprompt', event => {
+      event.preventDefault();
+      installPrompt = event;
+      installButton.classList.remove('hidden');
+    });
+    installButton.addEventListener('click', async () => {
+      if (!installPrompt) return;
+      installPrompt.prompt();
+      const choice = await installPrompt.userChoice;
+      track('pwa_install_prompt', { outcome: choice.outcome });
+      installPrompt = null;
+      installButton.classList.add('hidden');
+    });
+    window.addEventListener('appinstalled', () => {
+      installPrompt = null;
+      installButton.classList.add('hidden');
+      track('pwa_installed');
+    });
+
     // Eight-way virtual joystick. The dead zone prevents accidental movement;
     // diagonals map to two simultaneous keys for classic motion inputs.
     const joystick = document.querySelector('#joystick');
@@ -1723,6 +1752,13 @@
     }, { passive: false });
 
     requestAnimationFrame(frame);
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('retro-clash-sw.js', { scope: './' })
+          .catch(error => console.warn('Retro Clash offline mode unavailable:', error));
+      });
+    }
   })();
   </script>
 </body>
