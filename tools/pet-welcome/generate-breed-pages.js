@@ -132,10 +132,15 @@ for (const species of ['dog', 'cat']) {
   flatten(species).forEach((item, index) => {
     const dir = path.join(base, species, slugs[item.breed]);
     fs.mkdirSync(dir, { recursive: true });
+    const practical = requiredSections(species, item)
+      .replaceAll('class="practical-guide responsibility"', 'class="card practical-guide responsibility" style="margin-top:20px"')
+      .replaceAll('class="practical-guide', 'class="card practical-guide" style="margin-top:20px')
+      .replaceAll('<h3>', '<h2>')
+      .replaceAll('</h3>', '</h2>');
     const html = page(species, item, index + 1)
       .replace('<section class="share-card"', `${articleContent(species, item, profiles[item.breed])}<section class="share-card"`)
       .replace('</section><section class="checklist"', '</section><section class="checklist"')
-      .replace('</section></section><section class="share-card"', `</section>${requiredSections(species, item)}</section><section class="share-card"`);
+      .replace('</section></section><section class="share-card"', `</section></section>${practical}<section class="share-card"`);
     fs.writeFileSync(path.join(dir, 'index.html'), html);
   });
 }
