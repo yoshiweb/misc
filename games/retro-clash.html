@@ -357,7 +357,25 @@
       #pauseButton { top: 18px; bottom: auto; width: 100px; height: 42px; }
       #help { display: none !important; }
       .screen { gap: .18rem; padding: 1.5%; }
-      .eyebrow, #title > .subtitle { display: none; }
+      #title {
+        justify-content: flex-end;
+        padding: 0 0 3.5%;
+        background:
+          linear-gradient(0deg, rgba(4, 7, 16, .72), transparent 36%),
+          url("assets/retro-clash/key-visual.png") center / cover no-repeat;
+      }
+      /* The artwork already contains the game logo and fighters. Removing the
+         duplicate title/control cards lets the key visual read as a poster. */
+      #title > .eyebrow,
+      #title > .logo,
+      #title > .subtitle,
+      #title > .controls-grid { display: none; }
+      #title > .action {
+        min-width: 170px;
+        min-height: 38px;
+        margin: 0;
+        filter: drop-shadow(0 5px 7px #000b);
+      }
       .logo { font-size: clamp(2.55rem, 13vw, 4.5rem); }
       .controls-grid { grid-template-columns: 1fr; width: 78%; }
       .control-card { display: none; }

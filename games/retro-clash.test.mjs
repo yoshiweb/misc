@@ -127,6 +127,13 @@ test('portrait touch layout provides safe controls and an in-game resume action'
   assert.doesNotMatch(html, /id="rotate"/);
 });
 
+test('portrait title presents the key visual without duplicate content covering it', () => {
+  assert.match(html, /#title \{[\s\S]*?justify-content: flex-end;[\s\S]*?key-visual\.png[\s\S]*?center \/ cover no-repeat;/);
+  assert.match(html, /#title > \.logo,[\s\S]*?#title > \.controls-grid \{ display: none; \}/);
+  assert.match(html, /#title > \.action \{[\s\S]*?min-height: 38px;[\s\S]*?drop-shadow/);
+  assert.match(serviceWorker, /CACHE_NAME = `\$\{CACHE_PREFIX\}v2`/);
+});
+
 test('touch movement uses an eight-way joystick instead of direction buttons', () => {
   assert.match(html, /id="joystick"/);
   assert.match(html, /id="joystickKnob"/);
