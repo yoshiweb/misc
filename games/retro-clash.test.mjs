@@ -72,6 +72,26 @@ test('portrait touch layout provides safe controls and an in-game resume action'
   assert.doesNotMatch(html, /id="rotate"/);
 });
 
+test('touch movement uses an eight-way joystick instead of direction buttons', () => {
+  assert.match(html, /id="joystick"/);
+  assert.match(html, /id="joystickKnob"/);
+  assert.match(html, /function moveJoystick\(/);
+  assert.match(html, /distance < rect\.width \* \.13/);
+  assert.match(html, /const threshold = \.34/);
+  assert.match(html, /joystick\.addEventListener\('pointermove'/);
+  assert.doesNotMatch(html, /data-key="[wasd]"/);
+});
+
+test('mobile zoom is blocked and stage selection has visual feedback', () => {
+  assert.match(html, /touch-action: none/);
+  assert.match(html, /addEventListener\('dblclick'/);
+  assert.match(html, /addEventListener\('gesturestart'/);
+  assert.match(html, /now - lastTouchEnd < 340/);
+  assert.match(html, /--stage-preview/);
+  assert.match(html, /neon-street/);
+  assert.match(html, /\.fighter-card\.p2[\s\S]*?transform: scaleX\(-1\)/);
+});
+
 test('quarter-circle, dragon-punch, and reverse-quarter-circle motions are wired', () => {
   assert.match(html, /hasMotion\(\['2', '3', '6'\]\)/);
   assert.match(html, /hasMotion\(\['6', '2', '3'\]\)/);
