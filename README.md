@@ -17,6 +17,7 @@
 - [Affiliate Links Generator](./tools/affiliate-links/index.html)
 - [Submission Packager](./tools/submission-packager/index.html)
 - [Local Site Auditor](./tools/site-auditor/index.html)
+- [Public Image Cleaner](./tools/public-image-cleaner/index.html)
 - [PFC Calculator](./tools/pfc-calculator/index.html)
 - [Pet Growth Calendar](./tools/pet-timeline/index.html)
 - [Disaster Stockpile Simulator](./tools/disaster-stockpile/index.html)
