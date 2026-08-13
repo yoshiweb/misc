@@ -136,7 +136,14 @@ for (const species of ['dog', 'cat']) {
       .replaceAll('class="practical-guide responsibility"', 'class="card practical-guide responsibility" style="margin-top:20px"')
       .replaceAll('class="practical-guide', 'class="card practical-guide" style="margin-top:20px')
       .replaceAll('<h3>', '<h2>')
-      .replaceAll('</h3>', '</h2>');
+      .replaceAll('</h3>', '</h2>')
+      .replace('<h2>必要な手続きと確認先</h2>', '<p class="eyebrow">PROCEDURES</p><h2>必要な手続きと確認先</h2>')
+      .replace('<h2>将来かかる費用の目安</h2>', '<p class="eyebrow" style="color:#047857">LIFETIME COST GUIDE</p><h2>将来かかる費用の目安</h2>')
+      .replace('<h2>最初にそろえたいもの</h2>', '<p class="eyebrow" style="color:#047857">STARTER ITEMS</p><h2>最初にそろえたいもの</h2>')
+      .replace('<h2>命を迎えるということ</h2>', '<h2 style="color:#f8fafc">命を迎えるということ</h2>')
+      .replace('<section class="card practical-guide responsibility" style="margin-top:20px">', '<section class="card practical-guide responsibility" style="margin-top:20px;background:#1e293b;border-color:#1e293b;color:#cbd5e1">')
+      .replace(/(<section class="card practical-guide responsibility"[\s\S]*?<h2 style="color:#f8fafc">命を迎えるということ<\/h2><p)>/,
+        '$1 style="color:#cbd5e1">');
     const html = page(species, item, index + 1)
       .replace('<section class="share-card"', `${articleContent(species, item, profiles[item.breed])}<section class="share-card"`)
       .replace('</section><section class="checklist"', '</section><section class="checklist"')
