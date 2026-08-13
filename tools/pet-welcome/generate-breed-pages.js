@@ -94,6 +94,13 @@ function articleContent(species, item, profile) {
   const family = `${item.breed}との暮らしが向いているかは、見た目や憧れよりも、毎日続けられる時間と環境で決まります。${isDog ? '散歩やトレーニングを担当できる人がいるか、雨の日や忙しい日にも代替手段があるか' : '毎日の遊びとトイレ掃除ができるか、長時間の留守番や来客時にも安心できる場所を用意できるか'}を家族で話し合います。旅行、引っ越し、出産、転職、介護など生活が変わったときの預け先も、迎える前に候補を調べておきましょう。`;
   return `<section class="article-body" aria-labelledby="guide-title"><div class="article-intro"><p class="eyebrow">LIVING GUIDE</p><h2 id="guide-title">${esc(item.breed)}との暮らしを具体的に考える</h2><p>${esc(item.breed)}を飼う前に知っておきたいのは、性格のイメージだけではありません。毎日の運動、住環境、手入れ、健康管理、家族の役割まで、迎えた後の生活を想像しておくことが大切です。ここでは${kind}種としての一般的な傾向を出発点に、準備の考え方を整理します。</p></div><section><h3>運動・遊び・コミュニケーション</h3><p>${esc(exercise)}</p></section><section><h3>住まいと毎日の生活</h3><p>${esc(home)}</p></section><section><h3>手入れを無理なく習慣にする</h3><p>${esc(care)}</p></section><section><h3>健康情報と動物病院</h3><p>${esc(health)}</p></section><section><h3>どんな家庭に向いているか</h3><p>${esc(family)}</p></section><section class="checklist"><h3>迎える前のチェックリスト</h3><ul><li>飼育できる住居で、家族全員が迎えることに同意している</li><li>毎日の世話・運動・掃除を担当する人と、代替担当を決めている</li><li>初期費用、毎月の費用、急な医療費を無理なく用意できる</li><li>迎え先から健康記録や食事・生活リズムを受け取れる</li><li>留守番、旅行、災害、飼い主の入院時の預け先を考えている</li></ul></section></section>`;
 }
+function requiredSections(species, item) {
+  const kind = species === 'dog' ? '犬' : '猫';
+  const supplies = species === 'dog'
+    ? '年齢に合うフードと食器、トイレ用品、安心して休める場所、キャリー、首輪・リード、迷子対策、散歩用品、ブラシ、歯みがき用品を優先します。大型犬になる犬種では、成長後のサイズに合うサークルや寝床を買い直す費用も見込んでおきます。'
+    : '年齢に合うフードと食器、猫用トイレと猫砂、キャリー、爪とぎ、隠れ場所、上下運動できる家具、ブラシ、迷子対策を優先します。体格や好みによってトイレやキャリーを買い替える可能性も考えます。';
+  return `<section class="practical-guide"><h3>必要な手続きと確認先</h3><p>${kind}を迎える前に、迎え先から健康記録、ワクチン・駆虫歴、マイクロチップ情報、現在のフードや生活リズムを受け取ります。販売業者やブリーダーから購入する場合は、登録の有無、対面での説明、契約書と健康状態の説明を確認します。マイクロチップの変更登録、${species === 'dog' ? '犬の市区町村登録と狂犬病予防注射、' : ''}自治体の飼育ルールは、お住まいの地域の窓口と公式サイトで確認してください。<br><a href="https://www.env.go.jp/nature/dobutsu/aigo/pickup/owner.html" target="_blank" rel="noopener noreferrer">環境省：飼い主の方やこれからペットを飼う方へ</a>　<a href="https://www.env.go.jp/nature/dobutsu/aigo/pickup/chip.html" target="_blank" rel="noopener noreferrer">環境省：マイクロチップ登録</a></p></section><section class="practical-guide"><h3>将来かかる費用の目安</h3><p>初期費用は、迎え入れ費用とは別に、用品・初回受診・ワクチン・登録などを見込みます。毎月はフード、トイレ用品、予防、ケア、保険などがかかり、年齢や体格、地域、健康状態で大きく変わります。${kind}の種類だけで金額を決めず、急な診療、手術、介護、飼い主の入院や引っ越しにも備え、年間予算と緊急用の貯蓄を家族で決めておきましょう。費用試算は、当サイトの<a href="../../../">迎え入れ準備ノート</a>でも確認できます。</p></section><section class="practical-guide"><h3>最初にそろえたいもの</h3><p>${supplies}迎えた直後にすべてを完璧に揃えるより、まず安全・食事・排泄・休息・移動に必要なものを準備し、実際の体格や好みに合わせて追加します。誤食しやすい小物、コード、植物、薬品は先に片づけ、使い方を家族で共有しましょう。</p></section><section class="practical-guide responsibility"><h3>命を迎えるということ</h3><p>${item.breed}は、かわいい時期だけでなく、病気や老いを含めた一生を家族と暮らす存在です。毎日の世話をする人、代わりに支える人、留守番や旅行のときの預け先を決め、生活が変わっても最後まで飼い続けられるかを考えます。迷ったときに「今は飼わない」と判断することも、命に責任を持つための大切な選択です。</p></section>`;
+}
 function page(species, item, number) {
   const kind = species === 'dog' ? '犬' : '猫';
   const slug = slugs[item.breed];
@@ -125,7 +132,9 @@ for (const species of ['dog', 'cat']) {
   flatten(species).forEach((item, index) => {
     const dir = path.join(base, species, slugs[item.breed]);
     fs.mkdirSync(dir, { recursive: true });
-    const html = page(species, item, index + 1).replace('<section class="share-card"', `${articleContent(species, item, profiles[item.breed])}<section class="share-card"`);
+    const html = page(species, item, index + 1)
+      .replace('<section class="share-card"', `${articleContent(species, item, profiles[item.breed])}<section class="share-card"`)
+      .replace('</section><section class="checklist"', `</section>${requiredSections(species, item)}<section class="checklist"`);
     fs.writeFileSync(path.join(dir, 'index.html'), html);
   });
 }
