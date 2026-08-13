@@ -54,12 +54,21 @@
         .source-link { color:#4338ca; font-weight:700; text-decoration:underline; text-underline-offset:.2em; }
         .step { position:relative; padding-left:1.5rem; }
         .step::before { content:''; position:absolute; left:0; top:.4rem; width:.75rem; height:.75rem; border-radius:9999px; background:var(--dot,#94a3b8); box-shadow:0 0 0 5px var(--ring,#f1f5f9); }
+        .pet-product-card { align-items:flex-start; }
         @media (max-width:640px) {
             body { padding:.75rem; }
             .hero-card { display:flex; flex-direction:column; }
             .hero-copy { padding:1.75rem 1.5rem 1.5rem; }
             .hero-image { min-height:13rem; max-height:16rem; }
             .section-card { border-radius:1rem; }
+            .pet-product-section { padding:1rem; }
+            .pet-product-section > h2 { align-items:flex-start; margin-bottom:.75rem; font-size:1rem; }
+            .pet-product-section > h2 svg { flex:0 0 auto; margin-top:.15rem; }
+            .pet-product-card { display:grid!important; grid-template-columns:4.5rem minmax(0,1fr); gap:.75rem; padding:.75rem; }
+            .pet-product-card > img,.pet-product-card > [aria-hidden="true"] { grid-column:1; width:4.5rem; height:3.5rem; }
+            .pet-product-card > .min-w-0 { grid-column:2; min-width:0; }
+            .pet-product-card > .shrink-0:last-child { grid-column:1/-1; width:100%; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+            .pet-product-card > .shrink-0 a { display:inline-flex; align-items:center; justify-content:center; min-height:2.75rem; text-align:center; }
         }
     </style>
     <script src="../../assets/seo-schema.js" defer></script>
@@ -170,9 +179,10 @@
             <p class="mt-5 border-t border-slate-100 pt-4 text-sm leading-7 text-slate-500">犬種・猫種を選ぶと、このページ内で費用試算が更新されます。詳しい準備ページは、試算結果のリンクまたは一覧から開けます。各ページは独立したURLなので、ブックマークや共有にも使えます。<a class="source-link" href="breeds/">犬種・猫種別ページ一覧を見る</a></p>
         </section>
 
-        <section class="section-card mb-6 p-5 sm:p-7" aria-labelledby="starter-items-title">
-            <div class="mb-5 border-b border-slate-100 pb-4"><p class="mb-1 text-xs font-bold tracking-widest text-emerald-700">STARTER ITEMS</p><h2 id="starter-items-title" class="text-xl font-bold text-slate-800">最初にそろえたいもの</h2><p class="mt-2 text-sm leading-7 text-slate-500">チェックリストで未確認の項目に対応する、最初の1週間に使いやすいものを優先して表示します。必要性と選ぶ基準を先に確認してください。</p></div>
-            <div id="starter-items" class="grid gap-3 sm:grid-cols-2"></div>
+        <section class="section-card pet-product-section mb-6 p-5 sm:p-7" aria-labelledby="starter-items-title">
+            <h2 id="starter-items-title" class="mb-4 flex items-center gap-2 text-lg font-bold text-slate-800"><i data-lucide="shopping-bag" class="h-5 w-5 text-indigo-600"></i>最初にそろえたいもの</h2>
+            <p class="mb-3 text-sm text-slate-500">チェックリストで未確認の項目に対応する、迎える準備に必要なグッズです。必要性と選ぶ基準を先に確認してください。</p>
+            <div id="starter-items" class="pet-product-list space-y-2"></div>
             <div id="pet-disclosure" class="mt-4 border-t border-slate-100 pt-3"></div>
         </section>
 
@@ -200,17 +210,14 @@
         function renderStarterItems() {
             const species = selectedCostSpecies();
             const ids = species === 'dog' ? ['crate', 'dog-toilet-tray', 'bowl', 'carrier'] : ['crate', 'cat-litter-box', 'bowl', 'carrier'];
-            const checked = new Set(checks.filter(input => !input.checked).map(input => input.dataset.check));
             const products = ids.map(id => Affiliate.getProducts('pet').find(product => product.id === id)).filter(Boolean).filter(product => product.species.includes(species));
             const list = document.getElementById('starter-items');
             list.replaceChildren();
             Affiliate.renderPrNotice(list);
             products.forEach(product => {
-                const card = document.createElement('article');
-                card.className = 'rounded-xl border border-slate-200 bg-slate-50 p-4';
-                const name = document.createElement('h3'); name.className = 'font-bold text-slate-800'; name.textContent = product.name; card.appendChild(name);
-                const note = document.createElement('p'); note.className = 'mt-1 text-sm leading-6 text-slate-500'; note.textContent = product.note || ''; card.appendChild(note);
-                const actions = document.createElement('div'); actions.className = 'mt-3 flex flex-wrap gap-2'; Affiliate.storeLinks(product).forEach(link => actions.appendChild(Affiliate.storeLinkElement(link))); card.appendChild(actions); list.appendChild(card);
+                const card = Affiliate.productCard(product, { imageVariant: species });
+                card.classList.add('pet-product-card');
+                list.appendChild(card);
             });
         }
         document.getElementById('reset-checklist').addEventListener('click', () => { checks.forEach(input => { input.checked = false; }); saveChecks(); renderStarterItems(); });
