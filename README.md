@@ -12,6 +12,7 @@
 - [PNG to WEBP Converter](./tools/png2webp/index.html)
 - [WEBP to PNG Converter](./tools/webp2png/index.html)
 - [Video Editor](./tools/video-editor/index.html)
+- [Video Delivery Checker](./tools/video-delivery-checker/index.html)
 - [Thumbnail Generator](./tools/thumbnail-generator/index.html)
 - [Affiliate Links Generator](./tools/affiliate-links/index.html)
 - [Submission Packager](./tools/submission-packager/index.html)

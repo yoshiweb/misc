@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W2L9NES4NJ"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag("js", new Date());
+        gtag("config", "G-W2L9NES4NJ");
+    </script>
+    <title>動画納品チェッカー | misc.yoshiweb.net</title>
+    <meta name="description" content="動画の容量・解像度・画角・尺・音声・黒画面をブラウザ内で確認する納品前チェックツール。">
+    <style>
+        :root {
+            color-scheme: light;
+            --ink: #182230;
+            --muted: #667085;
+            --subtle: #98a2b3;
+            --line: #e4e7ec;
+            --surface: #fff;
+            --page: #f5f7fb;
+            --primary: #3157d5;
+            --primary-dark: #2445b5;
+            --primary-soft: #eef2ff;
+            --success: #067647;
+            --success-soft: #ecfdf3;
+            --warning: #b54708;
+            --warning-soft: #fffaeb;
+            --danger: #b42318;
+            --danger-soft: #fef3f2;
+            --shadow: 0 12px 30px rgba(16, 24, 40, .07);
+        }
+
+        * { box-sizing: border-box; }
+        body { margin: 0; color: var(--ink); background: var(--page); font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif; line-height: 1.55; }
+        button, input, select { font: inherit; }
+        button { cursor: pointer; }
+        button:disabled { cursor: not-allowed; opacity: .5; }
+        :focus-visible { outline: 3px solid rgba(49, 87, 213, .3); outline-offset: 2px; }
+
+        .topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; max-width: 1180px; margin: 0 auto; padding: 22px 24px; }
+        .brand { color: var(--ink); font-weight: 800; text-decoration: none; letter-spacing: -.02em; }
+        .brand span { color: var(--primary); }
+        .privacy-badge { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; color: var(--success); background: var(--success-soft); border: 1px solid #abefc6; border-radius: 999px; font-size: .78rem; font-weight: 700; }
+        .container { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 22px 0 72px; }
+        .hero { margin-bottom: 28px; }
+        .eyebrow { margin: 0 0 8px; color: var(--primary); font-size: .78rem; font-weight: 800; letter-spacing: .12em; }
+        h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 2.7rem); letter-spacing: -.04em; }
+        .lead { max-width: 700px; margin: 10px 0 0; color: var(--muted); }
+
+        .workspace { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, .9fr); gap: 22px; align-items: start; }
+        .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
+        .panel-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 22px 24px 16px; border-bottom: 1px solid var(--line); }
+        h2 { margin: 0; font-size: 1.1rem; letter-spacing: -.02em; }
+        .panel-note { margin: 3px 0 0; color: var(--muted); font-size: .84rem; }
+        .panel-body { padding: 22px 24px; }
+
+        .dropzone { display: grid; min-height: 210px; place-items: center; padding: 28px; text-align: center; background: #fbfcff; border: 1.5px dashed #9aaef3; border-radius: 12px; transition: background .2s, border-color .2s; }
+        .dropzone.dragover { background: var(--primary-soft); border-color: var(--primary); }
+        .drop-icon { display: grid; width: 48px; height: 48px; place-items: center; margin: 0 auto 10px; color: var(--primary); background: var(--primary-soft); border-radius: 13px; font-size: 1.5rem; }
+        .dropzone strong { display: block; font-size: 1rem; }
+        .dropzone p { margin: 5px 0 15px; color: var(--muted); font-size: .85rem; }
+        .primary-button, .secondary-button, .ghost-button { border: 1px solid transparent; border-radius: 9px; font-weight: 700; transition: background .2s, border-color .2s, transform .2s; }
+        .primary-button { padding: 11px 16px; color: #fff; background: var(--primary); }
+        .primary-button:hover:not(:disabled) { background: var(--primary-dark); transform: translateY(-1px); }
+        .secondary-button { padding: 9px 13px; color: var(--ink); background: #fff; border-color: var(--line); }
+        .secondary-button:hover:not(:disabled), .ghost-button:hover:not(:disabled) { background: #f8faff; border-color: #b7c4f5; }
+        .ghost-button { padding: 5px 8px; color: var(--muted); background: transparent; border-color: transparent; font-size: .82rem; }
+        .danger-button { color: var(--danger); }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+        .preview { display: none; margin-top: 18px; overflow: hidden; background: #0f172a; border-radius: 12px; }
+        .preview.visible { display: block; }
+        video { display: block; width: 100%; max-height: 390px; background: #0f172a; }
+        .video-caption { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 13px; color: #d0d5dd; font-size: .78rem; }
+        .video-caption strong { overflow: hidden; color: #fff; text-overflow: ellipsis; white-space: nowrap; }
+
+        .profile-row { display: flex; align-items: end; gap: 12px; margin-bottom: 18px; }
+        .field { flex: 1; }
+        label { display: block; margin-bottom: 6px; font-size: .84rem; font-weight: 700; }
+        select, input[type="text"] { width: 100%; padding: 10px 11px; color: var(--ink); background: #fff; border: 1px solid #d0d5dd; border-radius: 8px; }
+        .helper { margin: 5px 0 0; color: var(--muted); font-size: .76rem; }
+
+        .overall { display: flex; align-items: center; gap: 15px; padding: 16px; background: #f8f9fc; border: 1px solid var(--line); border-radius: 12px; }
+        .score { display: grid; width: 58px; height: 58px; flex: 0 0 auto; place-items: center; color: var(--muted); background: #eaecf0; border-radius: 50%; font-size: 1.15rem; font-weight: 800; }
+        .score.pass { color: var(--success); background: #d1fadf; }
+        .score.warn { color: var(--warning); background: #fef0c7; }
+        .score.fail { color: var(--danger); background: #fee4e2; }
+        .overall h3 { margin: 0; font-size: 1rem; }
+        .overall p { margin: 3px 0 0; color: var(--muted); font-size: .8rem; }
+
+        .checks { display: grid; gap: 9px; margin-top: 17px; }
+        .check-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; }
+        .check-icon { display: grid; width: 25px; height: 25px; place-items: center; border-radius: 50%; font-weight: 800; }
+        .check-row.pass .check-icon { color: var(--success); background: var(--success-soft); }
+        .check-row.warn .check-icon { color: var(--warning); background: var(--warning-soft); }
+        .check-row.fail .check-icon { color: var(--danger); background: var(--danger-soft); }
+        .check-row.unknown .check-icon { color: var(--muted); background: #f2f4f7; }
+        .check-name { font-size: .86rem; font-weight: 700; }
+        .check-detail { margin-top: 2px; color: var(--muted); font-size: .76rem; }
+        .check-result { font-size: .76rem; font-weight: 800; white-space: nowrap; }
+        .pass .check-result { color: var(--success); }
+        .warn .check-result { color: var(--warning); }
+        .fail .check-result { color: var(--danger); }
+        .unknown .check-result { color: var(--muted); }
+        .report-button { width: 100%; margin-top: 18px; }
+        .notice { margin-top: 17px; padding: 13px 14px; color: #344054; background: #f8f9fc; border-radius: 10px; font-size: .78rem; }
+        .notice strong { display: block; margin-bottom: 3px; color: var(--ink); }
+        .empty { color: var(--muted); text-align: center; }
+        .footer-note { margin-top: 28px; color: var(--muted); font-size: .78rem; text-align: center; }
+
+        @media (max-width: 850px) { .workspace { grid-template-columns: 1fr; } }
+        @media (max-width: 520px) {
+            .topbar { padding: 17px 16px; }
+            .container { width: min(100% - 24px, 1180px); padding-top: 16px; }
+            .privacy-badge { font-size: .7rem; }
+            .panel-header, .panel-body { padding-left: 16px; padding-right: 16px; }
+            .profile-row { display: block; }
+            .profile-row .field + .field { margin-top: 12px; }
+            .check-row { grid-template-columns: 28px minmax(0, 1fr); }
+            .check-result { grid-column: 2; }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <a class="brand" href="../../">misc<span>.yoshiweb.net</span></a>
+        <span class="privacy-badge"><span aria-hidden="true">✓</span> 動画は外部へ送信されません</span>
+    </header>
+
+    <main class="container">
+        <section class="hero" aria-labelledby="page-title">
+            <p class="eyebrow">VIDEO DELIVERY CHECKER</p>
+            <h1 id="page-title">納品前の動画を、ひと目で確認。</h1>
+            <p class="lead">容量・解像度・画角・尺・音声・黒画面をブラウザ内でチェックします。差し戻しになりやすい項目を、提出前にまとめて確認できます。</p>
+        </section>
+
+        <div class="workspace">
+            <section class="panel" aria-labelledby="video-heading">
+                <div class="panel-header">
+                    <div>
+                        <h2 id="video-heading">1. 動画を選択</h2>
+                        <p class="panel-note">MP4・WebM・MOVなど、ブラウザが再生できる動画に対応。</p>
+                    </div>
+                    <button class="secondary-button" id="clear-button" type="button" disabled>クリア</button>
+                </div>
+                <div class="panel-body">
+                    <label class="dropzone" id="dropzone" for="file-input">
+                        <span>
+                            <span class="drop-icon" aria-hidden="true">▶</span>
+                            <strong>ここに動画をドロップ</strong>
+                            <p>動画ファイルはこの端末内だけで読み込みます</p>
+                            <span class="primary-button">動画を選択</span>
+                        </span>
+                    </label>
+                    <input class="visually-hidden" id="file-input" type="file" accept="video/*">
+                    <div class="preview" id="preview">
+                        <video id="video" controls playsinline></video>
+                        <div class="video-caption"><strong id="file-name">—</strong><span id="file-size">—</span></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel" aria-labelledby="result-heading">
+                <div class="panel-header">
+                    <div>
+                        <h2 id="result-heading">2. 納品チェック</h2>
+                        <p class="panel-note">用途を選ぶと、推奨仕様に合わせて判定します。</p>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="profile-row">
+                        <div class="field">
+                            <label for="profile">納品先のプリセット</label>
+                            <select id="profile">
+                                <option value="shorts">Shorts / TikTok / Reels</option>
+                                <option value="youtube">YouTube（横長）</option>
+                                <option value="story">ストーリーズ（縦長）</option>
+                                <option value="custom">カスタム条件</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="max-size">容量上限</label>
+                            <select id="max-size">
+                                <option value="none">指定なし</option>
+                                <option value="100">100 MB</option>
+                                <option value="500">500 MB</option>
+                                <option value="2048">2 GB</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overall" id="overall">
+                        <div class="score" id="score">—</div>
+                        <div><h3 id="overall-title">動画を選択してください</h3><p id="overall-message">チェック結果がここに表示されます。</p></div>
+                    </div>
+                    <div class="checks" id="checks" aria-live="polite">
+                        <p class="empty">動画を選択するとチェックを開始します。</p>
+                    </div>
+                    <button class="secondary-button report-button" id="report-button" type="button" disabled>チェック結果を保存</button>
+                    <div class="notice"><strong>判定について</strong>ブラウザで確認できないコーデック・正確なFPS・音量ピークなどは、別途ffprobeや編集ソフトでも確認してください。</div>
+                </div>
+            </section>
+        </div>
+
+        <p class="footer-note">ローカル処理のため、長い動画や大容量ファイルでは解析に時間がかかる場合があります。</p>
+    </main>
+
+    <script>
+        (() => {
+            const profiles = {
+                shorts: { name: 'Shorts / TikTok / Reels', ratio: 9 / 16, ratioLabel: '9:16前後', minWidth: 720, minHeight: 1280, maxSeconds: 180, minSeconds: 1 },
+                youtube: { name: 'YouTube（横長）', ratio: 16 / 9, ratioLabel: '16:9', minWidth: 1280, minHeight: 720, maxSeconds: 43200, minSeconds: 1 },
+                story: { name: 'ストーリーズ（縦長）', ratio: 9 / 16, ratioLabel: '9:16前後', minWidth: 720, minHeight: 1280, maxSeconds: 60, minSeconds: 1 },
+                custom: { name: 'カスタム条件', ratio: null, ratioLabel: '指定なし', minWidth: 0, minHeight: 0, maxSeconds: Infinity, minSeconds: 0 }
+            };
+            const state = { file: null, objectUrl: '', metadata: null, checks: [] };
+            const els = {
+                input: document.getElementById('file-input'), dropzone: document.getElementById('dropzone'), video: document.getElementById('video'), preview: document.getElementById('preview'),
+                fileName: document.getElementById('file-name'), fileSize: document.getElementById('file-size'), clear: document.getElementById('clear-button'), profile: document.getElementById('profile'), maxSize: document.getElementById('max-size'),
+                overall: document.getElementById('overall'), score: document.getElementById('score'), overallTitle: document.getElementById('overall-title'), overallMessage: document.getElementById('overall-message'), checks: document.getElementById('checks'), report: document.getElementById('report-button')
+            };
+
+            function formatBytes(bytes) { if (!bytes) return '0 B'; const units = ['B', 'KB', 'MB', 'GB']; const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1); return `${(bytes / Math.pow(1024, index)).toFixed(index ? 1 : 0)} ${units[index]}`; }
+            function formatDuration(seconds) { if (!Number.isFinite(seconds)) return '—'; const total = Math.round(seconds); return `${Math.floor(total / 60)}分${String(total % 60).padStart(2, '0')}秒`; }
+            function escapeHtml(value) { return value.replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char])); }
+            function setStatus() { renderChecks(); }
+
+            function selectFile(file) {
+                if (!file || !file.type.startsWith('video/')) { window.alert('動画ファイルを選択してください。'); return; }
+                if (state.objectUrl) URL.revokeObjectURL(state.objectUrl);
+                state.file = file;
+                state.objectUrl = URL.createObjectURL(file);
+                state.metadata = null;
+                state.checks = [];
+                els.video.src = state.objectUrl;
+                els.fileName.textContent = file.name;
+                els.fileSize.textContent = formatBytes(file.size);
+                els.preview.classList.add('visible');
+                els.clear.disabled = false;
+                els.report.disabled = true;
+                els.video.addEventListener('loadedmetadata', analyze, { once: true });
+                els.video.load();
+                renderChecks();
+            }
+
+            async function analyze() {
+                if (!state.file) return;
+                const video = els.video;
+                state.metadata = { width: video.videoWidth, height: video.videoHeight, duration: video.duration, hasAudio: detectAudio(video) };
+                renderChecks();
+                const blackResult = await inspectBlackFrames();
+                if (!state.metadata) return;
+                state.metadata.black = blackResult;
+                renderChecks();
+                els.report.disabled = false;
+            }
+
+            function detectAudio(video) {
+                if (typeof video.mozHasAudio === 'boolean') return video.mozHasAudio;
+                if (typeof video.webkitAudioDecodedByteCount === 'number') return video.webkitAudioDecodedByteCount > 0;
+                if (video.audioTracks && typeof video.audioTracks.length === 'number') return video.audioTracks.length > 0;
+                return null;
+            }
+
+            async function inspectBlackFrames() {
+                const duration = state.metadata.duration;
+                if (!Number.isFinite(duration) || duration <= 0) return null;
+                const canvas = document.createElement('canvas');
+                const width = Math.min(160, state.metadata.width);
+                const height = Math.max(1, Math.round(width * state.metadata.height / state.metadata.width));
+                canvas.width = width; canvas.height = height;
+                const context = canvas.getContext('2d', { willReadFrequently: true });
+                const points = [...new Set([0.1, Math.max(.1, duration / 2), Math.max(.1, duration - .1)].map(point => Math.min(point, Math.max(0, duration - .05))))];
+                const originalTime = els.video.currentTime;
+                let blackCount = 0;
+                for (const point of points) {
+                    await seekVideo(point);
+                    try { context.drawImage(els.video, 0, 0, width, height); } catch { continue; }
+                    const pixels = context.getImageData(0, 0, width, height).data;
+                    let luminance = 0;
+                    for (let i = 0; i < pixels.length; i += 16) luminance += (pixels[i] * .2126 + pixels[i + 1] * .7152 + pixels[i + 2] * .0722);
+                    const average = luminance / Math.ceil(pixels.length / 16);
+                    if (average < 8) blackCount += 1;
+                }
+                try { await seekVideo(Math.min(originalTime, Math.max(0, duration - .05))); } catch {}
+                return { sampled: points.length, blackCount };
+            }
+
+            function seekVideo(time) {
+                return new Promise(resolve => {
+                    const done = () => { els.video.removeEventListener('seeked', done); resolve(); };
+                    els.video.addEventListener('seeked', done, { once: true });
+                    els.video.currentTime = time;
+                });
+            }
+
+            function check(name, detail, status, result) { return { name, detail, status, result }; }
+
+            function makeChecks() {
+                if (!state.file || !state.metadata) return [];
+                const m = state.metadata;
+                const profile = profiles[els.profile.value];
+                const ratio = m.width / m.height;
+                const ratioDiff = profile.ratio ? Math.abs(ratio - profile.ratio) / profile.ratio : 0;
+                const ratioPass = !profile.ratio || ratioDiff <= .03;
+                const resolutionPass = m.width >= profile.minWidth && m.height >= profile.minHeight;
+                const durationPass = m.duration >= profile.minSeconds && m.duration <= profile.maxSeconds;
+                const sizeLimit = els.maxSize.value === 'none' ? Infinity : Number(els.maxSize.value) * 1024 * 1024;
+                const sizePass = state.file.size <= sizeLimit;
+                const audioStatus = m.hasAudio === null ? 'unknown' : (m.hasAudio ? 'pass' : 'warn');
+                const blackStatus = !m.black ? 'unknown' : (m.black.blackCount === 0 ? 'pass' : 'warn');
+                return [
+                    check('解像度', `${m.width} × ${m.height}px ／ 推奨 ${profile.minWidth || '—'}px以上`, resolutionPass ? 'pass' : 'fail', resolutionPass ? 'OK' : '不足'),
+                    check('画角', `${ratio.toFixed(2)} ／ 推奨 ${profile.ratioLabel}`, ratioPass ? 'pass' : 'fail', ratioPass ? 'OK' : '要確認'),
+                    check('動画の尺', `${formatDuration(m.duration)} ／ 上限 ${Number.isFinite(profile.maxSeconds) ? formatDuration(profile.maxSeconds) : 'なし'}`, durationPass ? 'pass' : 'fail', durationPass ? 'OK' : '範囲外'),
+                    check('ファイル容量', `${formatBytes(state.file.size)} ／ 上限 ${Number.isFinite(sizeLimit) ? formatBytes(sizeLimit) : 'なし'}`, sizePass ? 'pass' : 'fail', sizePass ? 'OK' : '超過'),
+                    check('音声トラック', m.hasAudio === null ? 'このブラウザでは判定できません。再生して音声を確認してください。' : (m.hasAudio ? '音声トラックあり' : '音声トラックが見つかりません'), audioStatus, m.hasAudio === null ? '要確認' : (m.hasAudio ? 'あり' : 'なし')),
+                    check('黒画面サンプル', !m.black ? 'サンプル検査を実行できませんでした。' : `${m.black.sampled}箇所を確認 ／ 黒画面 ${m.black.blackCount}箇所`, blackStatus, !m.black ? '要確認' : (m.black.blackCount ? '要確認' : 'OK'))
+                ];
+            }
+
+            function renderChecks() {
+                state.checks = makeChecks();
+                if (!state.file) { els.checks.innerHTML = '<p class="empty">動画を選択するとチェックを開始します。</p>'; els.score.textContent = '—'; els.score.className = 'score'; els.overallTitle.textContent = '動画を選択してください'; els.overallMessage.textContent = 'チェック結果がここに表示されます。'; return; }
+                if (!state.metadata) { els.checks.innerHTML = '<p class="empty">動画のメタデータを読み込んでいます…</p>'; els.score.textContent = '…'; els.score.className = 'score'; els.overallTitle.textContent = '解析中です'; els.overallMessage.textContent = '動画の長さ・画角・黒画面を確認しています。'; return; }
+                els.checks.innerHTML = state.checks.map(item => `<div class="check-row ${item.status}"><span class="check-icon" aria-hidden="true">${item.status === 'pass' ? '✓' : item.status === 'fail' ? '!' : item.status === 'warn' ? '△' : '?'}</span><span><span class="check-name">${item.name}</span><span class="check-detail">${item.detail}</span></span><span class="check-result">${item.result}</span></div>`).join('');
+                const fails = state.checks.filter(item => item.status === 'fail').length;
+                const warnings = state.checks.filter(item => item.status === 'warn' || item.status === 'unknown').length;
+                const score = Math.round((state.checks.filter(item => item.status === 'pass').length / state.checks.length) * 100);
+                els.score.textContent = `${score}`;
+                els.score.className = `score ${fails ? 'fail' : warnings ? 'warn' : 'pass'}`;
+                els.overallTitle.textContent = fails ? '納品前に修正が必要です' : warnings ? '大きな問題はありませんが要確認です' : '基本仕様を満たしています';
+                els.overallMessage.textContent = fails ? `${fails}項目が仕様外です。` : warnings ? `${warnings}項目はブラウザ上での確認・判定に制限があります。` : '選択したプリセットのチェックを通過しました。';
+            }
+
+            function reportText() {
+                const profile = profiles[els.profile.value];
+                const lines = ['動画納品チェック結果', '====================', `ファイル名: ${state.file.name}`, `容量: ${formatBytes(state.file.size)}`, `納品先: ${profile.name}`, `確認日時: ${new Date().toLocaleString('ja-JP')}`, '', 'チェック項目', '--------------------'];
+                state.checks.forEach(item => lines.push(`${item.status === 'pass' ? '[OK]' : item.status === 'fail' ? '[NG]' : '[確認]'} ${item.name}: ${item.result} — ${item.detail}`));
+                lines.push('', '注: コーデック・正確なFPS・音量ピークはブラウザの制約により未検査です。');
+                return lines.join('\n');
+            }
+
+            function downloadReport() { const blob = new Blob([reportText()], { type: 'text/plain;charset=utf-8' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = `${state.file.name.replace(/\.[^.]+$/, '')}_納品チェック.txt`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
+
+            els.input.addEventListener('change', event => selectFile(event.target.files[0]));
+            ['dragenter', 'dragover'].forEach(name => els.dropzone.addEventListener(name, event => { event.preventDefault(); els.dropzone.classList.add('dragover'); }));
+            ['dragleave', 'drop'].forEach(name => els.dropzone.addEventListener(name, event => { event.preventDefault(); els.dropzone.classList.remove('dragover'); }));
+            els.dropzone.addEventListener('drop', event => selectFile(event.dataTransfer.files[0]));
+            els.clear.addEventListener('click', () => { if (state.objectUrl) URL.revokeObjectURL(state.objectUrl); state.file = null; state.objectUrl = ''; state.metadata = null; state.checks = []; els.video.removeAttribute('src'); els.video.load(); els.preview.classList.remove('visible'); els.clear.disabled = true; els.report.disabled = true; renderChecks(); });
+            els.profile.addEventListener('change', setStatus);
+            els.maxSize.addEventListener('change', setStatus);
+            els.report.addEventListener('click', downloadReport);
+            renderChecks();
+        })();
+    </script>
+</body>
+</html>
