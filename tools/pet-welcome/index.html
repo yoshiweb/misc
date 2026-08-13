@@ -166,6 +166,7 @@
                 <p class="mt-1">費用は、年齢・体格・健康状態・地域・暮らし方で変わります。毎年の支出だけでなく、急な治療、介護、災害、飼い主の入院や引っ越しにも備え、家族で無理なく続けられるかを考えましょう。</p>
                 <p class="mt-2 text-xs text-emerald-800">参考：<a class="source-link text-xs" href="https://mag.anicom-sompo.co.jp/30951" target="_blank" rel="noopener noreferrer">アニコム損保「2025年のペットにかけた年間支出調査」</a>。このページの試算は独自の参考モデルです。</p>
             </div>
+            <p class="mt-5 border-t border-slate-100 pt-4 text-sm leading-7 text-slate-500">犬種・猫種ごとの詳しい準備ページは、選択後にそのまま開けます。各ページは独立したURLなので、ブックマークや共有にも使えます。<a class="source-link" href="breeds/">犬種・猫種別ページ一覧を見る</a></p>
         </section>
 
         <section class="section-card mb-6 p-5 sm:p-7" aria-labelledby="starter-items-title">
@@ -240,6 +241,9 @@
                 '大型の猫': { years: 14, annual: [22, 34], reserve: [80, 180], initial: [15, 35] }
             }
         };
+        const BREED_SLUGS = {
+            'チワワ':'chihuahua','トイ・プードル':'toy-poodle','ポメラニアン':'pomeranian','ヨークシャー・テリア':'yorkshire-terrier','マルチーズ':'maltese','パピヨン':'papillon','ミニチュア・ピンシャー':'miniature-pinscher','イタリアン・グレーハウンド':'italian-greyhound','柴犬':'shiba-inu','ミニチュア・ダックスフンド':'miniature-dachshund','シー・ズー':'shih-tzu','ミニチュア・シュナウザー':'miniature-schnauzer','ジャック・ラッセル・テリア':'jack-russell-terrier','フレンチ・ブルドッグ':'french-bulldog','パグ':'pug','ビーグル':'beagle','キャバリア・キング・チャールズ・スパニエル':'cavalier-king-charles-spaniel','ウェルシュ・コーギー・ペンブローク':'welsh-corgi-pembroke','ボーダー・コリー':'border-collie','シェットランド・シープドッグ':'shetland-sheepdog','アメリカン・コッカー・スパニエル':'american-cocker-spaniel','日本スピッツ':'japanese-spitz','ウィペット':'whippet','甲斐犬':'kai-ken','紀州犬':'kishu-ken','ゴールデン・レトリーバー':'golden-retriever','ラブラドール・レトリーバー':'labrador-retriever','バーニーズ・マウンテン・ドッグ':'bernese-mountain-dog','ジャーマン・シェパード・ドッグ':'german-shepherd','シベリアン・ハスキー':'siberian-husky','ドーベルマン':'dobermann','グレート・ピレニーズ':'great-pyrenees','秋田犬':'akita','ボルゾイ':'borzoi','シャム':'siamese','オリエンタル・ショートヘア':'oriental-shorthair','シンガプーラ':'singapura','コーニッシュレックス':'cornish-rex','デボンレックス':'devon-rex','日本猫・雑種':'domestic-cat','アメリカン・ショートヘア':'american-shorthair','スコティッシュフォールド':'scottish-fold','マンチカン':'munchkin','ロシアンブルー':'russian-blue','ブリティッシュ・ショートヘア':'british-shorthair','ペルシャ':'persian','ベンガル':'bengal','アビシニアン':'abyssinian','ソマリ':'somali','エキゾチックショートヘア':'exotic-shorthair','メインクーン':'maine-coon','ノルウェージャン・フォレスト・キャット':'norwegian-forest-cat','ラグドール':'ragdoll','サイベリアン':'siberian','ラガマフィン':'ragamuffin'
+        };
         const costSpeciesInputs = [...document.querySelectorAll('input[name="cost-species"]')];
         const costBreed = document.getElementById('cost-breed');
         const costBreedLabel = document.getElementById('cost-breed-label');
@@ -280,8 +284,9 @@
             const reserve = model.reserve;
             const lifetime = [initial[0] + annual[0] * model.years + reserve[0], initial[1] + annual[1] * model.years + reserve[1]];
             const selectedLabel = selectedBreed === 'other' ? '犬種・猫種未選択' : selectedBreed;
+            const breedLink = selectedBreed === 'other' ? '' : `<a class="source-link text-xs" href="breeds/${species}/${BREED_SLUGS[selectedBreed]}/">${selectedLabel}の準備ページを開く →</a>`;
             costResult.innerHTML = `
-                <div class="mb-3 flex flex-wrap items-center justify-between gap-2"><p class="text-sm font-bold text-slate-700">${selectedLabel}（${sizeLabel}）の試算</p><p class="text-xs text-slate-500">試算年数：約${model.years}年</p></div>
+                <div class="mb-3 flex flex-wrap items-center justify-between gap-2"><p class="text-sm font-bold text-slate-700">${selectedLabel}（${sizeLabel}）の試算</p><span class="flex items-center gap-3"><p class="text-xs text-slate-500">試算年数：約${model.years}年</p>${breedLink}</span></div>
                 <div class="grid gap-3 sm:grid-cols-4">
                     <div class="rounded-xl border border-slate-100 bg-slate-50 p-4"><p class="text-xs font-bold text-slate-500">初期費用</p><p class="mt-2 text-lg font-bold text-slate-800">${formatCostMan(initial[0])}〜${formatCostMan(initial[1])}</p><p class="mt-1 text-xs text-slate-500">用品・初回医療</p></div>
                     <div class="rounded-xl border border-slate-100 bg-slate-50 p-4"><p class="text-xs font-bold text-slate-500">年間費用</p><p class="mt-2 text-lg font-bold text-slate-800">${formatCostMan(annual[0])}〜${formatCostMan(annual[1])}</p><p class="mt-1 text-xs text-slate-500">食事・予防・生活</p></div>
@@ -291,7 +296,14 @@
         }
 
         costSpeciesInputs.forEach(input => input.addEventListener('change', rebuildCostBreeds));
-        costBreed.addEventListener('change', updateCostEstimate);
+        costBreed.addEventListener('change', () => {
+            const species = selectedCostSpecies();
+            if (costBreed.value !== 'other' && BREED_SLUGS[costBreed.value]) {
+                window.location.href = `breeds/${species}/${BREED_SLUGS[costBreed.value]}/`;
+                return;
+            }
+            updateCostEstimate();
+        });
         rebuildCostBreeds();
         costSpeciesInputs.forEach(input => input.addEventListener('change', renderStarterItems));
         renderStarterItems();
