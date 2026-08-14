@@ -239,9 +239,60 @@
       letter-spacing: .06em;
     }
     .mode-picker button[aria-pressed="true"] { border-color: #fff4; color: #121522; background: var(--gold); }
-    #vs { background: linear-gradient(112deg, #123d71 0 49.3%, #f1bd33 49.5% 50.5%, #9b2930 50.7%); }
-    #vs .names { display: flex; width: min(800px, 95%); justify-content: space-between; font-size: clamp(1.2rem, 3.5vw, 2.6rem); text-shadow: 3px 3px #080a12; }
-    #vs .giant-vs { color: #fff; font-size: clamp(6rem, 18vw, 14rem); font-style: italic; line-height: .72; text-shadow: 7px 7px #101424; transform: rotate(-7deg); }
+    #vs {
+      justify-content: space-between;
+      padding: 4.2% 4.8% 3.5%;
+      background:
+        linear-gradient(90deg, #03122c3d, #02040a0d 36% 64%, #2b070c3d),
+        linear-gradient(0deg, #02040acc, transparent 36%),
+        var(--vs-visual, url("assets/retro-clash/versus-dojo.jpg")) center / cover no-repeat;
+    }
+    #vs .names {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+      gap: 18%;
+      font-size: clamp(1rem, 3.2vw, 2.25rem);
+      text-align: left;
+      text-shadow: 3px 3px #080a12;
+    }
+    #vs .names span {
+      display: grid;
+      min-width: 30%;
+      padding: .28em .52em .36em;
+      border-top: 3px solid #79d9ff;
+      background: linear-gradient(90deg, #06152de6, #06152d4d);
+    }
+    #vs .names span:last-child { border-color: #ff7968; background: linear-gradient(270deg, #2b090de6, #2b090d4d); text-align: right; }
+    #vs .names small { color: #b9c7df; font: 800 .36em system-ui, sans-serif; letter-spacing: .2em; }
+    #vs .giant-vs {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      z-index: 1;
+      translate: -50% -50%;
+      padding: .06em .15em .12em .08em;
+      border-block: 3px solid var(--gold);
+      color: #fff;
+      background: #050812b8;
+      font-size: clamp(5.5rem, 16vw, 12rem);
+      font-style: italic;
+      line-height: .72;
+      text-shadow: 7px 7px #101424;
+      transform: skew(-7deg) rotate(-4deg);
+    }
+    #vsStage {
+      position: relative;
+      z-index: 1;
+      padding: .42em .85em;
+      border: 1px solid #ffd447aa;
+      color: #fff;
+      background: #050812d9;
+      letter-spacing: .28em;
+    }
+    #vsStage small { margin-right: .7em; color: var(--gold); font-size: .72em; letter-spacing: .16em; }
     #announcement { z-index: 8; pointer-events: none; background: transparent; }
     #announcementText {
       color: var(--gold);
@@ -258,8 +309,8 @@
       align-items: flex-end;
       padding: 4% 5%;
       background:
-        linear-gradient(90deg, #061126f2 0 34%, #060812d9 58%, #2b090df2),
-        url("assets/retro-clash/key-visual.png") center / cover;
+        linear-gradient(90deg, #061126e6 0 36%, #050814c7 58%, #19070bd9),
+        var(--result-visual, url("assets/retro-clash/victory-dojo.jpg")) center / cover no-repeat;
     }
     #result::before {
       position: absolute;
@@ -492,7 +543,11 @@
       .mode-picker > span { display: none; }
       .mode-picker button { min-width: 70px; min-height: 25px; font-size: .58rem; }
       #select .action { min-height: 28px; padding: .22rem 1.1rem .46rem; margin: 0; }
-      #vs .giant-vs { font-size: 5rem; }
+      #vs { padding: 3% 3.5% 2.5%; }
+      #vs .names { gap: 24%; font-size: clamp(.72rem, 3vw, 1rem); }
+      #vs .names span { padding: .22em .42em .28em; border-top-width: 2px; }
+      #vs .giant-vs { font-size: clamp(4.2rem, 15vw, 5.5rem); border-block-width: 2px; }
+      #vsStage { padding: .3em .62em; font-size: .55rem; }
       #result { padding: 3% 4%; }
       #resultFighter { left: 0; bottom: -7%; width: 43%; height: 103%; }
       #resultFighter.crimson { left: 0; }
@@ -578,9 +633,12 @@
     </section>
 
     <section id="vs" class="screen hidden">
-      <div class="names"><span>AZURE REN</span><span>CRIMSON KAI · CPU</span></div>
-      <div class="giant-vs">VS</div>
-      <p class="eyebrow" id="vsStage">Moonlit Dojo</p>
+      <div class="names">
+        <span><small>PLAYER 1</small>AZURE REN</span>
+        <span><small>CPU</small>CRIMSON KAI</span>
+      </div>
+      <div class="giant-vs" aria-hidden="true">VS</div>
+      <p class="eyebrow" id="vsStage"><small>STAGE</small>MOONLIT DOJO</p>
     </section>
 
     <section id="announcement" class="screen hidden" aria-live="polite">
@@ -660,6 +718,11 @@
     const particles = [];
     const projectiles = [];
     const stageNames = ['MOONLIT DOJO', 'NEON CITY STREET'];
+    const presentationVisuals = [
+      { versus: 'assets/retro-clash/versus-dojo.jpg', victory: 'assets/retro-clash/victory-dojo.jpg' },
+      { versus: 'assets/retro-clash/versus-neon.jpg', victory: 'assets/retro-clash/victory-neon.jpg' }
+    ];
+    const presentationPreloads = new Map();
     const controls = [
       { left: 'a', right: 'd', down: 's', up: 'w', punch: ['j', 'k', 'l'], kick: ['u', 'i', 'o'] },
       { left: 'arrowleft', right: 'arrowright', down: 'arrowdown', up: 'arrowup', punch: ['1', '2', '3'], kick: ['4', '5', '6'] }
@@ -1467,7 +1530,10 @@
         stage_name: stageNames[game.stage],
         control_type: matchMedia('(pointer: coarse)').matches ? 'touch' : 'keyboard'
       });
-      document.querySelector('#vsStage').textContent = stageNames[game.stage];
+      const presentation = presentationVisuals[game.stage];
+      document.querySelector('#vs').style.setProperty('--vs-visual', `url("${presentation.versus}")`);
+      document.querySelector('#result').style.setProperty('--result-visual', `url("${presentation.victory}")`);
+      document.querySelector('#vsStage').innerHTML = `<small>STAGE</small>${stageNames[game.stage]}`;
       showScreen('vs');
       setTimeout(() => {
         if (game.mode !== 'vs') return;
@@ -1730,11 +1796,18 @@
       game.stage = (game.stage + delta + stageNames.length) % stageNames.length;
       document.querySelector('#stageName').textContent = stageNames[game.stage];
       document.querySelector('#select').style.setProperty('--stage-preview', `url("assets/retro-clash/${game.stage ? 'neon-street' : 'moonlit-dojo'}.png")`);
+      preloadPresentation(game.stage);
       track('select_content', {
         content_type: 'game_stage',
         item_id: game.stage ? 'neon_city_street' : 'moonlit_dojo'
       });
       audio.play('start');
+    }
+
+    function preloadPresentation(stage) {
+      for (const path of Object.values(presentationVisuals[stage])) {
+        if (!presentationPreloads.has(path)) presentationPreloads.set(path, loadImage(path));
+      }
     }
 
     function setPaused(paused) {
@@ -1759,7 +1832,7 @@
       audio.ensure();
 
       if (game.mode === 'title' && (key === 'enter' || key === ' ')) {
-        game.mode = 'select'; showScreen('select');
+        game.mode = 'select'; preloadPresentation(game.stage); showScreen('select');
       } else if (game.mode === 'select') {
         if (['a', 'arrowleft'].includes(key)) setStage(-1);
         if (['d', 'arrowright'].includes(key)) setStage(1);
@@ -1775,7 +1848,7 @@
       button.addEventListener('click', () => {
         audio.ensure();
         const action = button.dataset.action;
-        if (action === 'select') { game.mode = 'select'; showScreen('select'); }
+        if (action === 'select') { game.mode = 'select'; preloadPresentation(game.stage); showScreen('select'); }
         if (action === 'fight' || action === 'restart') startMatch();
         if (action === 'title') {
           game.mode = 'title';

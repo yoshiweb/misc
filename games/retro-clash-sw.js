@@ -1,7 +1,7 @@
 'use strict';
 
 const CACHE_PREFIX = 'retro-clash-';
-const CACHE_NAME = `${CACHE_PREFIX}v4`;
+const CACHE_NAME = `${CACHE_PREFIX}v5`;
 const APP_SHELL = [
   './retro-clash.html',
   './retro-clash.webmanifest',
@@ -13,6 +13,10 @@ const APP_SHELL = [
   './assets/retro-clash/moonlit-dojo.png',
   './assets/retro-clash/neon-street.png',
   './assets/retro-clash/key-visual.png',
+  './assets/retro-clash/versus-dojo.jpg',
+  './assets/retro-clash/versus-neon.jpg',
+  './assets/retro-clash/victory-dojo.jpg',
+  './assets/retro-clash/victory-neon.jpg',
   './assets/retro-clash/icon-192.png',
   './assets/retro-clash/icon-512.png',
   './assets/retro-clash/icon-maskable-512.png'

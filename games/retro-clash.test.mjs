@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
+import { inflateSync } from 'node:zlib';
 
 const gameUrl = new URL('./retro-clash.html', import.meta.url);
 const html = await readFile(gameUrl, 'utf8');
@@ -25,6 +26,107 @@ async function pngMetadata(relativePath) {
     height: bytes.readUInt32BE(20),
     colorType: bytes[25]
   };
+}
+
+async function jpegMetadata(relativePath) {
+  const bytes = await readFile(new URL(relativePath, import.meta.url));
+  assert.equal(bytes.subarray(0, 3).toString('hex'), 'ffd8ff');
+  for (let offset = 2; offset < bytes.length - 9;) {
+    if (bytes[offset] !== 0xff) { offset++; continue; }
+    const marker = bytes[offset + 1];
+    if (marker === 0xc0 || marker === 0xc2) {
+      return {
+        width: bytes.readUInt16BE(offset + 7),
+        height: bytes.readUInt16BE(offset + 5),
+        components: bytes[offset + 9]
+      };
+    }
+    if (marker === 0xd8 || marker === 0xd9) { offset += 2; continue; }
+    offset += 2 + bytes.readUInt16BE(offset + 2);
+  }
+  assert.fail(`${relativePath} has no JPEG size marker`);
+}
+
+async function pngRgba(relativePath) {
+  const bytes = await readFile(new URL(relativePath, import.meta.url));
+  const width = bytes.readUInt32BE(16);
+  const height = bytes.readUInt32BE(20);
+  assert.equal(bytes[24], 8, `${relativePath} must use 8-bit channels`);
+  assert.equal(bytes[25], 6, `${relativePath} must be RGBA`);
+  const idat = [];
+  for (let offset = 8; offset < bytes.length;) {
+    const length = bytes.readUInt32BE(offset);
+    const type = bytes.subarray(offset + 4, offset + 8).toString();
+    if (type === 'IDAT') idat.push(bytes.subarray(offset + 8, offset + 8 + length));
+    offset += length + 12;
+  }
+  const raw = inflateSync(Buffer.concat(idat));
+  const stride = width * 4;
+  const rgba = Buffer.alloc(stride * height);
+  const paeth = (a, b, c) => {
+    const p = a + b - c;
+    const pa = Math.abs(p - a);
+    const pb = Math.abs(p - b);
+    const pc = Math.abs(p - c);
+    return pa <= pb && pa <= pc ? a : (pb <= pc ? b : c);
+  };
+  for (let y = 0; y < height; y++) {
+    const filter = raw[y * (stride + 1)];
+    const source = y * (stride + 1) + 1;
+    const target = y * stride;
+    for (let x = 0; x < stride; x++) {
+      const value = raw[source + x];
+      const left = x >= 4 ? rgba[target + x - 4] : 0;
+      const up = y ? rgba[target + x - stride] : 0;
+      const upperLeft = y && x >= 4 ? rgba[target + x - stride - 4] : 0;
+      const predictor = filter === 0 ? 0
+        : filter === 1 ? left
+          : filter === 2 ? up
+            : filter === 3 ? Math.floor((left + up) / 2)
+              : paeth(left, up, upperLeft);
+      rgba[target + x] = (value + predictor) & 255;
+    }
+  }
+  return { width, height, rgba };
+}
+
+function alphaComponentCount(image, cell) {
+  const col = cell % 4;
+  const row = Math.floor(cell / 4);
+  const x0 = Math.round(col * image.width / 4);
+  const x1 = Math.round((col + 1) * image.width / 4);
+  const y0 = Math.round(row * image.height / 3);
+  const y1 = Math.round((row + 1) * image.height / 3);
+  const width = x1 - x0;
+  const height = y1 - y0;
+  const seen = new Uint8Array(width * height);
+  let components = 0;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const start = y * width + x;
+      if (seen[start] || image.rgba[((y0 + y) * image.width + x0 + x) * 4 + 3] === 0) continue;
+      components++;
+      const stack = [start];
+      seen[start] = 1;
+      while (stack.length) {
+        const point = stack.pop();
+        const px = point % width;
+        const py = Math.floor(point / width);
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            const nx = px + dx;
+            const ny = py + dy;
+            if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+            const next = ny * width + nx;
+            if (seen[next] || image.rgba[((y0 + ny) * image.width + x0 + nx) * 4 + 3] === 0) continue;
+            seen[next] = 1;
+            stack.push(next);
+          }
+        }
+      }
+    }
+  }
+  return components;
 }
 
 test('the game JavaScript parses and only loads the GA4 measurement script', () => {
@@ -70,7 +172,9 @@ test('service worker caches the complete game shell without intercepting other g
     'retro-clash.html', 'retro-clash.webmanifest', 'azure-sprites.png',
     'crimson-sprites.png', 'azure-portrait.png', 'crimson-portrait.png',
     'knockdown-sprites.png', 'moonlit-dojo.png', 'neon-street.png',
-    'key-visual.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png'
+    'key-visual.png', 'versus-dojo.jpg', 'versus-neon.jpg',
+    'victory-dojo.jpg', 'victory-neon.jpg',
+    'icon-192.png', 'icon-512.png', 'icon-maskable-512.png'
   ]) {
     assert.ok(serviceWorker.includes(asset), `service worker should cache ${asset}`);
   }
@@ -132,7 +236,7 @@ test('portrait title presents the key visual without duplicate content covering 
   assert.match(html, /#title \{[\s\S]*?justify-content: flex-end;[\s\S]*?key-visual\.png[\s\S]*?center \/ cover no-repeat;/);
   assert.match(html, /#title > \.logo,[\s\S]*?#title > \.controls-grid \{ display: none; \}/);
   assert.match(html, /#title > \.action \{[\s\S]*?min-height: 38px;[\s\S]*?drop-shadow/);
-  assert.match(serviceWorker, /CACHE_NAME = `\$\{CACHE_PREFIX\}v4`/);
+  assert.match(serviceWorker, /CACHE_NAME = `\$\{CACHE_PREFIX\}v5`/);
 });
 
 test('touch movement uses an eight-way joystick instead of direction buttons', () => {
@@ -196,12 +300,21 @@ test('specials use complete sprite cells and knockdowns use dedicated artwork', 
   assert.equal(knockdown.colorType, 6);
 });
 
+test('every runtime sprite cell contains only one connected fighter silhouette', async () => {
+  for (const fighter of ['azure', 'crimson']) {
+    const sprite = await pngRgba(`./assets/retro-clash/${fighter}-sprites.png`);
+    for (let cell = 0; cell < 12; cell++) {
+      assert.equal(alphaComponentCount(sprite, cell), 1, `${fighter} cell ${cell} contains a detached body fragment`);
+    }
+  }
+});
+
 test('fighter portraits preserve aspect ratio and power the winner presentation', async () => {
   assert.match(html, /src="assets\/retro-clash\/azure-portrait\.png"/);
   assert.match(html, /src="assets\/retro-clash\/crimson-portrait\.png"/);
   assert.match(html, /id="resultFighter"/);
   assert.match(html, /resultFighter\.classList\.toggle\('crimson', winner === 1\)/);
-  assert.match(html, /#result[\s\S]*?key-visual\.png/);
+  assert.match(html, /#result[\s\S]*?victory-dojo\.jpg/);
   assert.match(html, /id="resultRounds"/);
   assert.match(html, /id="resultHits"/);
   assert.match(html, /\.result-actions \{ display: flex/);
@@ -210,6 +323,21 @@ test('fighter portraits preserve aspect ratio and power the winner presentation'
     const portrait = await pngMetadata(`./assets/retro-clash/${name}-portrait.png`);
     assert.deepEqual(portrait, { width: 480, height: 360, colorType: 6 });
   }
+});
+
+test('stage-specific pre-fight and victory visuals are wired into match flow', async () => {
+  for (const name of ['versus-dojo', 'versus-neon', 'victory-dojo', 'victory-neon']) {
+    assert.match(html, new RegExp(`assets/retro-clash/${name}\\.jpg`));
+    const visual = await jpegMetadata(`./assets/retro-clash/${name}.jpg`);
+    assert.deepEqual(visual, { width: 1672, height: 941, components: 3 });
+  }
+  assert.match(html, /const presentationVisuals = \[/);
+  assert.match(html, /--vs-visual/);
+  assert.match(html, /--result-visual/);
+  assert.match(html, /presentationVisuals\[game\.stage\]/);
+  assert.match(html, /function preloadPresentation\(stage\)/);
+  assert.match(html, /presentationPreloads\.set\(path, loadImage\(path\)\)/);
+  assert.match(html, /<small>STAGE<\/small>/);
 });
 
 test('quarter-circle, dragon-punch, and reverse-quarter-circle motions are wired', () => {
