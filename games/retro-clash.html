@@ -178,17 +178,14 @@
       border: 5px solid #667494;
       background: linear-gradient(145deg, #1e3158, #0a1124);
       box-shadow: inset 0 0 40px #050916;
-      background-image: url("assets/retro-clash/azure-sprites.png");
-      background-size: 400% 300%;
-      background-position: 0 0;
-      background-repeat: no-repeat;
+      display: grid;
+      place-items: center;
     }
     .fighter-card.p2 {
       background-color: #160d1a;
-      background-image: url("assets/retro-clash/crimson-sprites.png");
-      transform: scaleX(-1);
     }
-    .fighter-card.p2 h2 { transform: scaleX(-1); }
+    .fighter-card img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+    .fighter-card.p2 img { transform: scaleX(-1); }
     .fighter-card::before {
       position: absolute;
       width: 44%;
@@ -202,7 +199,7 @@
       content: none;
     }
     .fighter-card.p2::before { box-shadow: 0 -22px 0 #a22e28, 0 58px 0 18px #d34635; }
-    .fighter-card h2 { position: absolute; inset: auto 0 10px; font-size: clamp(1.25rem, 3.5vw, 2.25rem); text-shadow: 3px 3px #000; }
+    .fighter-card h2 { position: absolute; inset: auto 0 10px; z-index: 1; font-size: clamp(1.25rem, 3.5vw, 2.25rem); text-shadow: 3px 3px #000; }
     .versus-small { color: var(--gold); font-size: clamp(2rem, 6vw, 4.5rem); font-style: italic; text-shadow: 3px 3px #a52427; }
     .stage-picker {
       display: flex;
@@ -256,7 +253,36 @@
       animation: slam .16s ease-out;
     }
     @keyframes slam { from { opacity: 0; transform: scale(2.2) skew(-8deg); } to { opacity: 1; transform: scale(1) skew(-8deg); } }
-    .result-stats { color: #dbe5ff; font: 700 .9rem system-ui, sans-serif; }
+    #result {
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, #061126e6, #060812a8 48%, #2b090de6),
+        url("assets/retro-clash/key-visual.png") center / cover;
+    }
+    #result::before {
+      position: absolute;
+      inset: -30%;
+      background: conic-gradient(from 0deg, transparent, #ffd44722, transparent 16%);
+      content: "";
+      animation: victory-ray 10s linear infinite;
+    }
+    @keyframes victory-ray { to { transform: rotate(360deg); } }
+    #resultFighter {
+      position: absolute;
+      left: 8%;
+      bottom: -5%;
+      width: 38%;
+      height: 86%;
+      object-fit: contain;
+      object-position: center bottom;
+      image-rendering: pixelated;
+      filter: drop-shadow(0 0 18px #248ee0aa) drop-shadow(14px 16px 0 #02040a88);
+    }
+    #resultFighter.crimson { left: auto; right: 8%; transform: scaleX(-1); filter: drop-shadow(0 0 18px #e34535aa) drop-shadow(-14px 16px 0 #02040a88); }
+    .result-copy { position: relative; z-index: 1; display: grid; justify-items: center; gap: .55rem; margin-left: 28%; }
+    #resultFighter.crimson + .result-copy { margin: 0 28% 0 0; }
+    #result .logo { font-size: clamp(3.4rem, 9vw, 7.6rem); line-height: .78; }
+    .result-stats { padding: .45rem .8rem; border-block: 1px solid #ffd44788; color: #fff; background: #060a16c9; font: 800 .9rem system-ui, sans-serif; }
     #touch {
       position: absolute;
       inset: auto 0 4px;
@@ -464,7 +490,7 @@
       .touch-group button { width: min(11vh, 58px); height: min(11vh, 58px); }
       #pauseButton { bottom: max(10px, env(safe-area-inset-bottom)); }
     }
-    @media (prefers-reduced-motion: reduce) { .action { transition: none; } #announcementText { animation: none; } }
+    @media (prefers-reduced-motion: reduce) { .action { transition: none; } #announcementText, #result::before { animation: none; } }
   </style>
 </head>
 <body>
@@ -495,9 +521,9 @@
     <section id="select" class="screen hidden">
       <p class="eyebrow">Fighter & stage select</p>
       <div class="select-layout">
-        <article class="fighter-card"><h2>AZURE REN</h2></article>
+        <article class="fighter-card"><img src="assets/retro-clash/azure-portrait.png" alt=""><h2>AZURE REN</h2></article>
         <div class="versus-small">VS</div>
-        <article class="fighter-card p2"><h2>CRIMSON KAI</h2></article>
+        <article class="fighter-card p2"><img src="assets/retro-clash/crimson-portrait.png" alt=""><h2>CRIMSON KAI</h2></article>
       </div>
       <div class="stage-picker">
         <button data-stage="prev" aria-label="前のステージ">◀</button>
@@ -524,12 +550,15 @@
     </section>
 
     <section id="result" class="screen hidden">
-      <p class="eyebrow">Match complete</p>
-      <h1 class="logo" id="winner">AZURE<br>WINS</h1>
-      <p class="result-stats" id="resultStats"></p>
-      <div>
-        <button class="action" data-action="restart">REMATCH</button>
-        <button class="action secondary" data-action="title">TITLE</button>
+      <img id="resultFighter" src="assets/retro-clash/azure-portrait.png" alt="勝者 Azure Ren">
+      <div class="result-copy">
+        <p class="eyebrow">Match complete · Champion</p>
+        <h1 class="logo" id="winner">AZURE<br>WINS</h1>
+        <p class="result-stats" id="resultStats"></p>
+        <div>
+          <button class="action" data-action="restart">REMATCH</button>
+          <button class="action secondary" data-action="title">TITLE</button>
+        </div>
       </div>
     </section>
 
@@ -582,7 +611,8 @@
       stages: [
         loadImage('assets/retro-clash/moonlit-dojo.png'),
         loadImage('assets/retro-clash/neon-street.png')
-      ]
+      ],
+      knockdown: loadImage('assets/retro-clash/knockdown-sprites.png')
     };
 
     const input = { held: new Set(), pressed: new Set() };
@@ -948,14 +978,29 @@
         const attack = this.attack;
         const active = attack && this.stateFrame >= attack.startup && this.stateFrame < attack.startup + attack.active;
 
+        if (isDown && assets.knockdown.complete && assets.knockdown.naturalWidth) {
+          const sourceW = assets.knockdown.naturalWidth / 2;
+          const sourceH = assets.knockdown.naturalHeight;
+          ctx.save();
+          ctx.translate(x, y + 4);
+          const nativeFacing = this.id ? -1 : 1;
+          ctx.scale(this.facing / nativeFacing, 1);
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(assets.knockdown, this.id * sourceW, 0, sourceW, sourceH, -112, -70, 224, 112);
+          ctx.restore();
+          return;
+        }
+
         const sprite = assets.fighters[this.id];
         if (sprite.complete && sprite.naturalWidth) {
           let cell = 0;
           if (this.state.startsWith('walk')) cell = 1;
           if (this.crouching || this.state === 'block') cell = 2;
           if (!this.grounded || this.state === 'jump') cell = 3;
-          if (attack?.special === 'wave') cell = 10;
-          else if (attack?.special === 'rising') cell = 11;
+          // Use fully-contained cells for specials. The original edge cells
+          // contain cropped limbs/effects and are not safe for runtime poses.
+          if (attack?.special === 'wave') cell = 6;
+          else if (attack?.special === 'rising') cell = 3;
           else if (attack?.special === 'spin') cell = 9;
           else if (attack?.type === 'punch') cell = 4 + attack.power;
           else if (attack?.type === 'kick') cell = 7 + attack.power;
@@ -970,10 +1015,7 @@
           ctx.save();
           ctx.translate(x, y + (this.state === 'idle' ? bob : Math.abs(gait) * 2));
           ctx.scale(this.facing * (1 + gait * .018), 1);
-          if (this.state === 'knockdown' && this.grounded) {
-            ctx.rotate(Math.PI / 2);
-            ctx.translate(-42, -8);
-          } else if (this.state === 'hurt') {
+          if (this.state === 'hurt') {
             ctx.rotate(-.09);
           }
           if (attack?.special === 'spin' && active) ctx.rotate(Math.sin(this.stateFrame * .72) * .22);
@@ -1403,6 +1445,10 @@
         player_rounds: game.wins[0],
         cpu_rounds: game.wins[1]
       });
+      const resultFighter = document.querySelector('#resultFighter');
+      resultFighter.src = `assets/retro-clash/${winner ? 'crimson' : 'azure'}-portrait.png`;
+      resultFighter.alt = `勝者 ${winner ? 'Crimson Kai' : 'Azure Ren'}`;
+      resultFighter.classList.toggle('crimson', winner === 1);
       document.querySelector('#winner').innerHTML = `${winner ? 'CRIMSON' : 'AZURE'}<br>WINS`;
       document.querySelector('#resultStats').textContent = `ROUNDS ${game.wins[0]} — ${game.wins[1]}　·　TOTAL HITS ${game.matchHits[0]} — ${game.matchHits[1]}`;
       document.querySelector('#help').classList.add('hidden');

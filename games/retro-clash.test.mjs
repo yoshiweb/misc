@@ -68,7 +68,8 @@ test('service worker caches the complete game shell without intercepting other g
   assert.match(html, /navigator\.serviceWorker\.register\('retro-clash-sw\.js', \{ scope: '\.\/' \}\)/);
   for (const asset of [
     'retro-clash.html', 'retro-clash.webmanifest', 'azure-sprites.png',
-    'crimson-sprites.png', 'moonlit-dojo.png', 'neon-street.png',
+    'crimson-sprites.png', 'azure-portrait.png', 'crimson-portrait.png',
+    'knockdown-sprites.png', 'moonlit-dojo.png', 'neon-street.png',
     'key-visual.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png'
   ]) {
     assert.ok(serviceWorker.includes(asset), `service worker should cache ${asset}`);
@@ -131,7 +132,7 @@ test('portrait title presents the key visual without duplicate content covering 
   assert.match(html, /#title \{[\s\S]*?justify-content: flex-end;[\s\S]*?key-visual\.png[\s\S]*?center \/ cover no-repeat;/);
   assert.match(html, /#title > \.logo,[\s\S]*?#title > \.controls-grid \{ display: none; \}/);
   assert.match(html, /#title > \.action \{[\s\S]*?min-height: 38px;[\s\S]*?drop-shadow/);
-  assert.match(serviceWorker, /CACHE_NAME = `\$\{CACHE_PREFIX\}v3`/);
+  assert.match(serviceWorker, /CACHE_NAME = `\$\{CACHE_PREFIX\}v4`/);
 });
 
 test('touch movement uses an eight-way joystick instead of direction buttons', () => {
@@ -175,7 +176,33 @@ test('mobile zoom is blocked and stage selection has visual feedback', () => {
   assert.match(html, /now - lastTouchEnd < 340/);
   assert.match(html, /--stage-preview/);
   assert.match(html, /neon-street/);
-  assert.match(html, /\.fighter-card\.p2[\s\S]*?transform: scaleX\(-1\)/);
+  assert.match(html, /\.fighter-card img \{[^}]*object-fit: contain/);
+  assert.match(html, /\.fighter-card\.p2 img \{ transform: scaleX\(-1\); \}/);
+});
+
+test('specials use complete sprite cells and knockdowns use dedicated artwork', async () => {
+  assert.match(html, /attack\?\.special === 'wave'\) cell = 6/);
+  assert.match(html, /attack\?\.special === 'rising'\) cell = 3/);
+  assert.match(html, /attack\?\.special === 'spin'\) cell = 9/);
+  assert.doesNotMatch(html, /attack\?\.special === 'wave'\) cell = 10/);
+  assert.match(html, /assets\.knockdown/);
+  assert.match(html, /if \(isDown && assets\.knockdown\.complete/);
+  assert.match(html, /ctx\.scale\(this\.facing \/ nativeFacing, 1\)/);
+  const knockdown = await pngMetadata('./assets/retro-clash/knockdown-sprites.png');
+  assert.ok(knockdown.width >= 1600 && knockdown.height >= 800);
+  assert.equal(knockdown.colorType, 6);
+});
+
+test('fighter portraits preserve aspect ratio and power the winner presentation', async () => {
+  assert.match(html, /src="assets\/retro-clash\/azure-portrait\.png"/);
+  assert.match(html, /src="assets\/retro-clash\/crimson-portrait\.png"/);
+  assert.match(html, /id="resultFighter"/);
+  assert.match(html, /resultFighter\.classList\.toggle\('crimson', winner === 1\)/);
+  assert.match(html, /#result[\s\S]*?key-visual\.png/);
+  for (const name of ['azure', 'crimson']) {
+    const portrait = await pngMetadata(`./assets/retro-clash/${name}-portrait.png`);
+    assert.deepEqual(portrait, { width: 480, height: 360, colorType: 6 });
+  }
 });
 
 test('quarter-circle, dragon-punch, and reverse-quarter-circle motions are wired', () => {
