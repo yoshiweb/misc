@@ -255,8 +255,10 @@
     @keyframes slam { from { opacity: 0; transform: scale(2.2) skew(-8deg); } to { opacity: 1; transform: scale(1) skew(-8deg); } }
     #result {
       overflow: hidden;
+      align-items: flex-end;
+      padding: 4% 5%;
       background:
-        linear-gradient(90deg, #061126e6, #060812a8 48%, #2b090de6),
+        linear-gradient(90deg, #061126f2 0 34%, #060812d9 58%, #2b090df2),
         url("assets/retro-clash/key-visual.png") center / cover;
     }
     #result::before {
@@ -269,20 +271,45 @@
     @keyframes victory-ray { to { transform: rotate(360deg); } }
     #resultFighter {
       position: absolute;
-      left: 8%;
-      bottom: -5%;
-      width: 38%;
-      height: 86%;
+      left: 2%;
+      bottom: -2%;
+      width: 43%;
+      height: 92%;
       object-fit: contain;
       object-position: center bottom;
       image-rendering: pixelated;
       filter: drop-shadow(0 0 18px #248ee0aa) drop-shadow(14px 16px 0 #02040a88);
     }
-    #resultFighter.crimson { left: auto; right: 8%; transform: scaleX(-1); filter: drop-shadow(0 0 18px #e34535aa) drop-shadow(-14px 16px 0 #02040a88); }
-    .result-copy { position: relative; z-index: 1; display: grid; justify-items: center; gap: .55rem; margin-left: 28%; }
-    #resultFighter.crimson + .result-copy { margin: 0 28% 0 0; }
-    #result .logo { font-size: clamp(3.4rem, 9vw, 7.6rem); line-height: .78; }
-    .result-stats { padding: .45rem .8rem; border-block: 1px solid #ffd44788; color: #fff; background: #060a16c9; font: 800 .9rem system-ui, sans-serif; }
+    #resultFighter.crimson { left: 2%; filter: drop-shadow(0 0 18px #e34535aa) drop-shadow(14px 16px 0 #02040a88); }
+    .result-copy {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      justify-items: stretch;
+      gap: clamp(.35rem, 1.8vh, .8rem);
+      width: 58%;
+      text-align: left;
+    }
+    #result .eyebrow { color: #e8edfa; font-size: clamp(.58rem, 1.35vw, .9rem); letter-spacing: .26em; }
+    #result .logo {
+      font-size: clamp(2.6rem, 8vw, 6.8rem);
+      line-height: .76;
+      transform-origin: left center;
+    }
+    .result-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      border-block: 1px solid #ffd44799;
+      color: #fff;
+      background: #060a16d9;
+      font-family: system-ui, sans-serif;
+    }
+    .result-stats > span { display: grid; gap: .05rem; padding: clamp(.32rem, 1.35vh, .65rem) clamp(.5rem, 1.5vw, 1rem); }
+    .result-stats > span + span { border-left: 1px solid #ffd44755; }
+    .result-stats small { color: #c4cde0; font-size: clamp(.48rem, 1.05vw, .7rem); font-weight: 800; letter-spacing: .12em; }
+    .result-stats strong { color: #fff; font-size: clamp(.8rem, 2vw, 1.35rem); line-height: 1.05; }
+    .result-actions { display: flex; gap: clamp(.35rem, 1vw, .7rem); }
+    .result-actions .action { flex: 1 1 0; min-width: 0; margin: 0; }
     #touch {
       position: absolute;
       inset: auto 0 4px;
@@ -466,6 +493,16 @@
       .mode-picker button { min-width: 70px; min-height: 25px; font-size: .58rem; }
       #select .action { min-height: 28px; padding: .22rem 1.1rem .46rem; margin: 0; }
       #vs .giant-vs { font-size: 5rem; }
+      #result { padding: 3% 4%; }
+      #resultFighter { left: 0; bottom: -7%; width: 43%; height: 103%; }
+      #resultFighter.crimson { left: 0; }
+      .result-copy { width: 61%; gap: .24rem; }
+      #result .eyebrow { font-size: .5rem; }
+      #result .logo { font-size: clamp(2.25rem, 9vw, 3.35rem); }
+      .result-stats > span { padding: .24rem .42rem; }
+      .result-stats small { font-size: .43rem; }
+      .result-stats strong { font-size: .72rem; }
+      .result-actions .action { min-height: 32px; padding: .3rem .5rem .55rem; font-size: .7rem; }
     }
     @media (max-width: 620px), (max-height: 500px) {
       .screen { gap: .35rem; padding: 2.5%; }
@@ -474,6 +511,7 @@
       .control-card { padding: .38rem; }
       .fighter-card { min-height: 120px; }
       .action { min-height: 38px; padding: .55rem 1.4rem .75rem; }
+      #result .action { min-height: 34px; padding: .35rem .6rem .58rem; }
     }
     @media (pointer: coarse) and (orientation: landscape) {
       #touch.active {
@@ -552,10 +590,13 @@
     <section id="result" class="screen hidden">
       <img id="resultFighter" src="assets/retro-clash/azure-portrait.png" alt="勝者 Azure Ren">
       <div class="result-copy">
-        <p class="eyebrow">Match complete · Champion</p>
+        <p class="eyebrow">Match complete</p>
         <h1 class="logo" id="winner">AZURE<br>WINS</h1>
-        <p class="result-stats" id="resultStats"></p>
-        <div>
+        <div class="result-stats" id="resultStats" aria-label="対戦結果">
+          <span><small>ROUNDS</small><strong id="resultRounds">2 — 1</strong></span>
+          <span><small>TOTAL HITS</small><strong id="resultHits">0 — 0</strong></span>
+        </div>
+        <div class="result-actions">
           <button class="action" data-action="restart">REMATCH</button>
           <button class="action secondary" data-action="title">TITLE</button>
         </div>
@@ -986,7 +1027,9 @@
           const nativeFacing = this.id ? -1 : 1;
           ctx.scale(this.facing / nativeFacing, 1);
           ctx.imageSmoothingEnabled = false;
-          ctx.drawImage(assets.knockdown, this.id * sourceW, 0, sourceW, sourceH, -112, -70, 224, 112);
+          const drawW = 224;
+          const drawH = drawW * sourceH / sourceW;
+          ctx.drawImage(assets.knockdown, this.id * sourceW, 0, sourceW, sourceH, -drawW / 2, -drawH * .76, drawW, drawH);
           ctx.restore();
           return;
         }
@@ -1450,7 +1493,8 @@
       resultFighter.alt = `勝者 ${winner ? 'Crimson Kai' : 'Azure Ren'}`;
       resultFighter.classList.toggle('crimson', winner === 1);
       document.querySelector('#winner').innerHTML = `${winner ? 'CRIMSON' : 'AZURE'}<br>WINS`;
-      document.querySelector('#resultStats').textContent = `ROUNDS ${game.wins[0]} — ${game.wins[1]}　·　TOTAL HITS ${game.matchHits[0]} — ${game.matchHits[1]}`;
+      document.querySelector('#resultRounds').textContent = `${game.wins[0]} — ${game.wins[1]}`;
+      document.querySelector('#resultHits').textContent = `${game.matchHits[0]} — ${game.matchHits[1]}`;
       document.querySelector('#help').classList.add('hidden');
       document.querySelector('#touch').classList.remove('active');
       showScreen('result');

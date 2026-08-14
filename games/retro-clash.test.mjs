@@ -188,6 +188,9 @@ test('specials use complete sprite cells and knockdowns use dedicated artwork', 
   assert.match(html, /assets\.knockdown/);
   assert.match(html, /if \(isDown && assets\.knockdown\.complete/);
   assert.match(html, /ctx\.scale\(this\.facing \/ nativeFacing, 1\)/);
+  assert.match(html, /const drawH = drawW \* sourceH \/ sourceW/);
+  assert.match(html, /-drawW \/ 2, -drawH \* \.76, drawW, drawH/);
+  assert.doesNotMatch(html, /-112, -70, 224, 112/);
   const knockdown = await pngMetadata('./assets/retro-clash/knockdown-sprites.png');
   assert.ok(knockdown.width >= 1600 && knockdown.height >= 800);
   assert.equal(knockdown.colorType, 6);
@@ -199,6 +202,10 @@ test('fighter portraits preserve aspect ratio and power the winner presentation'
   assert.match(html, /id="resultFighter"/);
   assert.match(html, /resultFighter\.classList\.toggle\('crimson', winner === 1\)/);
   assert.match(html, /#result[\s\S]*?key-visual\.png/);
+  assert.match(html, /id="resultRounds"/);
+  assert.match(html, /id="resultHits"/);
+  assert.match(html, /\.result-actions \{ display: flex/);
+  assert.match(html, /\.result-copy \{[\s\S]*?width: 58%/);
   for (const name of ['azure', 'crimson']) {
     const portrait = await pngMetadata(`./assets/retro-clash/${name}-portrait.png`);
     assert.deepEqual(portrait, { width: 480, height: 360, colorType: 6 });
