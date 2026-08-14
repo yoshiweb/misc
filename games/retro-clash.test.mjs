@@ -167,7 +167,7 @@ test('PWA manifest provides installable icons and fullscreen game launch', async
 });
 
 test('service worker caches the complete game shell without intercepting other games', () => {
-  assert.match(html, /navigator\.serviceWorker\.register\('retro-clash-sw\.js', \{ scope: '\.\/' \}\)/);
+  assert.match(html, /navigator\.serviceWorker\.register\('retro-clash-sw\.js', \{ scope: '\.\/', updateViaCache: 'none' \}\)/);
   for (const asset of [
     'retro-clash.html', 'retro-clash.webmanifest', 'azure-sprites.png',
     'crimson-sprites.png', 'azure-portrait.png', 'crimson-portrait.png',
@@ -232,11 +232,13 @@ test('portrait touch layout provides safe controls and an in-game resume action'
   assert.doesNotMatch(html, /id="rotate"/);
 });
 
-test('portrait title presents the key visual without duplicate content covering it', () => {
+test('title presents the key visual without duplicate content in every orientation', () => {
   assert.match(html, /#title \{[\s\S]*?justify-content: flex-end;[\s\S]*?key-visual\.png[\s\S]*?center \/ cover no-repeat;/);
   assert.match(html, /#title > \.logo,[\s\S]*?#title > \.controls-grid \{ display: none; \}/);
-  assert.match(html, /#title > \.action \{[\s\S]*?min-height: 38px;[\s\S]*?drop-shadow/);
-  assert.match(serviceWorker, /CACHE_NAME = `\$\{CACHE_PREFIX\}v5`/);
+  assert.match(html, /class="title-quickstart"/);
+  assert.match(html, /#title > \.action \{[\s\S]*?min-height: 46px;[\s\S]*?drop-shadow/);
+  assert.match(html, /@media \(pointer: coarse\)[\s\S]*?\.title-quickstart \{ display: none; \}/);
+  assert.match(serviceWorker, /CACHE_NAME = `\$\{CACHE_PREFIX\}v6`/);
 });
 
 test('touch movement uses an eight-way joystick instead of direction buttons', () => {
@@ -338,6 +340,10 @@ test('stage-specific pre-fight and victory visuals are wired into match flow', a
   assert.match(html, /function preloadPresentation\(stage\)/);
   assert.match(html, /presentationPreloads\.set\(path, loadImage\(path\)\)/);
   assert.match(html, /<small>STAGE<\/small>/);
+  assert.match(html, /NEXT BATTLE/);
+  assert.match(html, /BEST OF 3/);
+  assert.match(html, /@keyframes versus-mark/);
+  assert.match(html, /}, 1800\);/);
 });
 
 test('quarter-circle, dragon-punch, and reverse-quarter-circle motions are wired', () => {

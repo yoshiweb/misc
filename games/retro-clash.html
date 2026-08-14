@@ -100,10 +100,28 @@
         radial-gradient(circle at 50% 45%, rgba(39, 61, 111, .82), rgba(5, 8, 18, .98) 72%);
     }
     #title {
+      justify-content: flex-end;
+      gap: .55rem;
+      padding: 0 0 clamp(1.35rem, 5vh, 3rem);
       background:
-        linear-gradient(90deg, rgba(4, 7, 16, .82), rgba(4, 7, 16, .48) 50%, rgba(4, 7, 16, .82)),
-        linear-gradient(0deg, rgba(4, 7, 16, .92), transparent 55%),
-        url("assets/retro-clash/key-visual.png") center / cover;
+        linear-gradient(0deg, rgba(4, 7, 16, .88), transparent 34%),
+        url("assets/retro-clash/key-visual.png") center / cover no-repeat;
+    }
+    #title > .eyebrow,
+    #title > .logo,
+    #title > .subtitle,
+    #title > .controls-grid { display: none; }
+    .title-quickstart {
+      color: #e6edff;
+      font: 800 clamp(.58rem, 1.15vw, .78rem) system-ui, sans-serif;
+      letter-spacing: .13em;
+      text-shadow: 0 2px 5px #000;
+    }
+    #title > .action {
+      min-width: clamp(190px, 24vw, 270px);
+      min-height: 46px;
+      margin: 0;
+      filter: drop-shadow(0 7px 9px #000c);
     }
     .hidden { display: none !important; }
     .eyebrow {
@@ -247,6 +265,19 @@
         linear-gradient(0deg, #02040acc, transparent 36%),
         var(--vs-visual, url("assets/retro-clash/versus-dojo.jpg")) center / cover no-repeat;
     }
+    #vs::before {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 33%;
+      aspect-ratio: 1;
+      translate: -50% -50%;
+      border-radius: 50%;
+      background: radial-gradient(circle, #ffd44730, #5ebdff1a 30%, transparent 68%);
+      mix-blend-mode: screen;
+      content: "";
+      animation: versus-pulse 1.1s ease-out both;
+    }
     #vs .names {
       position: relative;
       z-index: 1;
@@ -257,6 +288,7 @@
       font-size: clamp(1rem, 3.2vw, 2.25rem);
       text-align: left;
       text-shadow: 3px 3px #080a12;
+      animation: versus-names .42s .12s ease-out both;
     }
     #vs .names span {
       display: grid;
@@ -282,6 +314,19 @@
       line-height: .72;
       text-shadow: 7px 7px #101424;
       transform: skew(-7deg) rotate(-4deg);
+      animation: versus-mark .36s cubic-bezier(.2, .9, .25, 1.2) both;
+    }
+    #vs .giant-vs::before {
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + .7rem);
+      translate: -50%;
+      width: max-content;
+      color: var(--gold);
+      font: 900 .08em system-ui, sans-serif;
+      letter-spacing: .28em;
+      text-shadow: 0 2px 4px #000;
+      content: "NEXT BATTLE";
     }
     #vsStage {
       position: relative;
@@ -291,8 +336,14 @@
       color: #fff;
       background: #050812d9;
       letter-spacing: .28em;
+      animation: versus-stage .4s .2s ease-out both;
     }
     #vsStage small { margin-right: .7em; color: var(--gold); font-size: .72em; letter-spacing: .16em; }
+    #vsStage b { margin-left: .9em; padding-left: .9em; border-left: 1px solid #ffd44777; color: #c8d2e7; font-size: .72em; letter-spacing: .13em; }
+    @keyframes versus-mark { from { opacity: 0; scale: 1.65; } to { opacity: 1; scale: 1; } }
+    @keyframes versus-names { from { opacity: 0; translate: 0 -18px; } to { opacity: 1; translate: 0; } }
+    @keyframes versus-stage { from { opacity: 0; translate: 0 18px; } to { opacity: 1; translate: 0; } }
+    @keyframes versus-pulse { from { opacity: 0; scale: .5; } 55% { opacity: 1; } to { opacity: .55; scale: 1; } }
     #announcement { z-index: 8; pointer-events: none; background: transparent; }
     #announcementText {
       color: var(--gold);
@@ -471,7 +522,7 @@
       font: 700 11px system-ui, sans-serif;
       pointer-events: none;
     }
-    @media (pointer: coarse) { #touch.active { display: flex; } #help { display: none; } }
+    @media (pointer: coarse) { #touch.active { display: flex; } #help, .title-quickstart { display: none; } }
     @media (orientation: portrait) and (max-width: 700px) {
       body { display: block; background: #070a14; }
       #shell {
@@ -506,23 +557,11 @@
       #help { display: none !important; }
       .screen { gap: .18rem; padding: 1.5%; }
       #title {
-        justify-content: flex-end;
         padding: 0 0 3.5%;
-        background:
-          linear-gradient(0deg, rgba(4, 7, 16, .72), transparent 36%),
-          url("assets/retro-clash/key-visual.png") center / cover no-repeat;
       }
-      /* The artwork already contains the game logo and fighters. Removing the
-         duplicate title/control cards lets the key visual read as a poster. */
-      #title > .eyebrow,
-      #title > .logo,
-      #title > .subtitle,
-      #title > .controls-grid { display: none; }
       #title > .action {
         min-width: 170px;
         min-height: 38px;
-        margin: 0;
-        filter: drop-shadow(0 5px 7px #000b);
       }
       .logo { font-size: clamp(2.55rem, 13vw, 4.5rem); }
       .controls-grid { grid-template-columns: 1fr; width: 78%; }
@@ -547,6 +586,7 @@
       #vs .names { gap: 24%; font-size: clamp(.72rem, 3vw, 1rem); }
       #vs .names span { padding: .22em .42em .28em; border-top-width: 2px; }
       #vs .giant-vs { font-size: clamp(4.2rem, 15vw, 5.5rem); border-block-width: 2px; }
+      #vs .giant-vs::before { bottom: calc(100% + .32rem); }
       #vsStage { padding: .3em .62em; font-size: .55rem; }
       #result { padding: 3% 4%; }
       #resultFighter { left: 0; bottom: -7%; width: 43%; height: 103%; }
@@ -583,7 +623,7 @@
       .touch-group button { width: min(11vh, 58px); height: min(11vh, 58px); }
       #pauseButton { bottom: max(10px, env(safe-area-inset-bottom)); }
     }
-    @media (prefers-reduced-motion: reduce) { .action { transition: none; } #announcementText, #result::before { animation: none; } }
+    @media (prefers-reduced-motion: reduce) { .action { transition: none; } #announcementText, #result::before, #vs::before, #vs .names, #vs .giant-vs, #vsStage { animation: none; } }
   </style>
 </head>
 <body>
@@ -607,6 +647,7 @@
           <span>Azure Renを操作して2ラウンド先取せよ</span>
         </div>
       </div>
+      <p class="title-quickstart">MOVE WASD / ARROWS · PUNCH J K L · KICK U I O</p>
       <button class="action" data-action="select">ENTER / START</button>
       <button id="installButton" class="action secondary hidden" type="button">INSTALL APP</button>
     </section>
@@ -638,7 +679,7 @@
         <span><small>CPU</small>CRIMSON KAI</span>
       </div>
       <div class="giant-vs" aria-hidden="true">VS</div>
-      <p class="eyebrow" id="vsStage"><small>STAGE</small>MOONLIT DOJO</p>
+      <p class="eyebrow" id="vsStage"><small>STAGE</small>MOONLIT DOJO<b>BEST OF 3</b></p>
     </section>
 
     <section id="announcement" class="screen hidden" aria-live="polite">
@@ -1533,7 +1574,7 @@
       const presentation = presentationVisuals[game.stage];
       document.querySelector('#vs').style.setProperty('--vs-visual', `url("${presentation.versus}")`);
       document.querySelector('#result').style.setProperty('--result-visual', `url("${presentation.victory}")`);
-      document.querySelector('#vsStage').innerHTML = `<small>STAGE</small>${stageNames[game.stage]}`;
+      document.querySelector('#vsStage').innerHTML = `<small>STAGE</small>${stageNames[game.stage]}<b>BEST OF 3</b>`;
       showScreen('vs');
       setTimeout(() => {
         if (game.mode !== 'vs') return;
@@ -1542,7 +1583,7 @@
         document.querySelector('#touch').classList.add('active');
         document.querySelector('#help').classList.remove('hidden');
         beginRound();
-      }, 1200);
+      }, 1800);
     }
 
     function showMatchResult(winner) {
@@ -2065,7 +2106,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('retro-clash-sw.js', { scope: './' })
+        navigator.serviceWorker.register('retro-clash-sw.js', { scope: './', updateViaCache: 'none' })
           .catch(error => console.warn('Retro Clash offline mode unavailable:', error));
       });
     }
