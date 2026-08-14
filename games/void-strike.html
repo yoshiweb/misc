@@ -7,7 +7,10 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="VOID STRIKE">
   <meta name="description" content="指一本で機体を操り、美しい弾幕を突破する本格縦スクロールシューティングゲーム。インストール不要・無料で遊べます。">
+  <link rel="manifest" href="void-strike.webmanifest">
+  <link rel="apple-touch-icon" href="assets/void-strike/icon-192.png">
   <link rel="canonical" href="https://misc.yoshiweb.net/games/void-strike.html">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="ja_JP">
@@ -15,9 +18,23 @@
   <meta property="og:title" content="VOID STRIKE — Neon Arcade Shmup">
   <meta property="og:description" content="移動だけに集中せよ。オートショットで弾幕を切り裂く、本格スマホ縦スクロールシューティング。">
   <meta property="og:url" content="https://misc.yoshiweb.net/games/void-strike.html">
-  <meta property="og:image" content="https://misc.yoshiweb.net/games/assets/void-strike/orbital-citadel.jpg">
+  <meta property="og:image" content="https://misc.yoshiweb.net/games/assets/void-strike/key-visual.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="巨大な軌道要塞の弾幕へ立ち向かうVOID STRIKEの戦闘機">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="VOID STRIKE — Neon Arcade Shmup">
+  <meta name="twitter:description" content="移動だけに集中せよ。オートショットで弾幕を切り裂く、本格スマホ縦スクロールシューティング。">
+  <meta name="twitter:image" content="https://misc.yoshiweb.net/games/assets/void-strike/key-visual.jpg">
   <title>VOID STRIKE — Neon Arcade Shmup</title>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-W2L9NES4NJ"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-W2L9NES4NJ');
+  </script>
   <style>
     :root { color-scheme: dark; --cyan:#5ffcff; --violet:#a77bff; --coral:#ff5f7e; --gold:#ffd776; --ink:#f5fbff; }
     * { box-sizing: border-box; }
@@ -42,7 +59,7 @@
     #pauseButton { position:absolute; z-index:7; top:max(13px, env(safe-area-inset-top)); right:12px; width:40px; height:40px; border:1px solid rgba(255,255,255,.14); border-radius:50%; background:rgba(4,9,24,.58); backdrop-filter:blur(8px); display:none; place-items:center; cursor:pointer; touch-action:manipulation; }
     #pauseButton::before { content:""; width:10px; height:14px; border-left:3px solid white; border-right:3px solid white; opacity:.85; }
     #pauseButton:focus-visible, .primary:focus-visible { outline:3px solid white; outline-offset:3px; }
-    #joystick { position:absolute; z-index:6; left:max(20px, env(safe-area-inset-left)); bottom:max(28px, env(safe-area-inset-bottom)); width:clamp(112px, 31vw, 142px); aspect-ratio:1; border:1px solid rgba(159,225,255,.2); border-radius:50%; background:radial-gradient(circle, rgba(95,252,255,.08), rgba(13,24,48,.2) 54%, rgba(5,10,25,.5)); box-shadow:inset 0 0 22px rgba(95,252,255,.09), 0 8px 30px rgba(0,0,0,.25); opacity:.7; display:none; touch-action:none; }
+    #joystick { position:absolute; z-index:6; left:50%; bottom:max(22px, env(safe-area-inset-bottom)); width:clamp(112px, 31vw, 142px); aspect-ratio:1; transform:translateX(-50%); border:1px solid rgba(159,225,255,.2); border-radius:50%; background:radial-gradient(circle, rgba(95,252,255,.08), rgba(13,24,48,.2) 54%, rgba(5,10,25,.5)); box-shadow:inset 0 0 22px rgba(95,252,255,.09), 0 8px 30px rgba(0,0,0,.25); opacity:.7; display:none; touch-action:none; }
     #joystick::before, #joystick::after { content:""; position:absolute; inset:48% 18%; height:1px; background:rgba(255,255,255,.1); }
     #joystick::after { transform:rotate(90deg); }
     #joystickKnob { position:absolute; left:50%; top:50%; width:42%; aspect-ratio:1; transform:translate(-50%,-50%); border:1px solid rgba(255,255,255,.42); border-radius:50%; background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.3), rgba(95,252,255,.16) 36%, rgba(30,49,92,.72)); box-shadow:0 0 20px rgba(95,252,255,.24); will-change:transform; }
@@ -57,6 +74,8 @@
     .primary { position:relative; min-width:210px; min-height:54px; padding:0 30px; border:1px solid rgba(255,255,255,.6); border-radius:999px; background:linear-gradient(100deg, rgba(95,252,255,.95), rgba(167,123,255,.95)); color:#03101b; font-size:13px; font-weight:950; letter-spacing:.18em; text-transform:uppercase; cursor:pointer; box-shadow:0 10px 38px rgba(104,136,255,.3), inset 0 1px rgba(255,255,255,.6); touch-action:manipulation; animation:breathe 1.7s ease-in-out infinite; }
     @keyframes breathe { 50% { transform:translateY(-2px); box-shadow:0 14px 48px rgba(104,136,255,.48), inset 0 1px rgba(255,255,255,.6); } }
     .best { margin-top:12px; color:#9eb1ca; font-size:10px; font-weight:750; letter-spacing:.12em; }
+    #installButton { display:none; margin:10px auto 0; min-height:38px; padding:0 20px; border:1px solid rgba(159,225,255,.32); border-radius:999px; background:rgba(3,9,24,.62); color:#c8faff; font-size:9px; font-weight:900; letter-spacing:.16em; text-transform:uppercase; cursor:pointer; touch-action:manipulation; }
+    #installButton.visible { display:block; }
     .control-hint { display:flex; align-items:center; gap:9px; margin-top:14px; color:#7f91aa; font-size:9px; font-weight:700; letter-spacing:.08em; }
     .mini-stick { position:relative; width:24px; height:24px; border:1px solid #667993; border-radius:50%; }
     .mini-stick::after { content:""; position:absolute; width:9px; height:9px; left:3px; bottom:3px; border-radius:50%; background:var(--cyan); box-shadow:0 0 10px var(--cyan); }
@@ -96,6 +115,7 @@
         <p class="tagline">移動だけに集中せよ。<br>ショットは自動、迷いは不要。</p>
         <button class="primary" id="startButton">Tap to launch</button>
         <div class="best">HIGH SCORE <span id="titleBest">00000000</span></div>
+        <button id="installButton">Install game</button>
         <div class="control-hint"><span class="mini-stick"></span><span>ドラッグで移動 · WASD / 矢印キー対応</span></div>
       </div>
     </section>
@@ -127,6 +147,9 @@
     bgImage.src='assets/void-strike/orbital-citadel.jpg'; ui.best.textContent=pad(state.best);
     const input={x:0,y:0,keys:new Set()};
     const player={x:W/2,y:H-142,vx:0,vy:0,r:5,lives:3,power:1,bombs:2,shield:0,inv:0,fire:0,options:0};
+    let installPrompt=null;
+
+    function track(name,params={}){ if(typeof window.gtag==='function')window.gtag('event',name,params); }
 
     // Small Web Audio synth: generated at runtime, so the game remains standalone.
     class AudioEngine {
@@ -143,11 +166,13 @@
 
     function pad(n){return Math.floor(n).toString().padStart(8,'0');}
     function resetGame(){
-      Object.assign(state,{mode:'playing',time:0,stageTime:0,stage:1,score:0,mult:1,chain:0,rank:0,shake:0,flash:0,slow:0,spawn:.5,boss:null,midbossDone:false,bossDone:false,msgTimer:0});
+      Object.assign(state,{mode:'playing',time:0,stageTime:0,stage:1,score:0,mult:1,chain:0,rank:0,shake:0,flash:0,slow:0,spawn:1.1,boss:null,midbossDone:false,bossDone:false,msgTimer:0});
       Object.assign(player,{x:W/2,y:H-142,vx:0,vy:0,lives:3,power:1,bombs:2,shield:0,inv:2.5,fire:0,options:0});
       bullets=[];enemyBullets=[];enemies=[];particles=[];items=[];initStars();
       ui.title.classList.add('hidden');ui.over.classList.add('hidden');ui.pauseScreen.classList.add('hidden');ui.hud.hidden=false;ui.pause.style.display='grid';ui.stick.style.display='block';ui.bossHud.classList.remove('visible');
       announce('STAGE 1','PERIMETER BREACH',2.2); audio.init(); updateHud();
+      track('game_start',{game_name:'void_strike',stage:1});
+      track('level_start',{game_name:'void_strike',stage:1});
     }
     function initStars(){stars=Array.from({length:100},()=>({x:Math.random()*W,y:Math.random()*H,z:rnd(.3,1.35),a:rnd(.2,.9)}));}
     initStars();
@@ -164,8 +189,8 @@
       enemies.push(Object.assign({type,x,y,t:0,fire:rnd(.4,1.2),phase:rnd(0,TAU),dead:false},defs[type],extra));
     }
     function formation(){const kind=Math.random()<.5?'scout':'sine',cx=rnd(90,W-90);for(let i=0;i<5;i++)spawnEnemy(kind,cx+(i-2)*38,-28-Math.abs(i-2)*24,{phase:i*.7});}
-    function spawnMidboss(){const e={type:'midboss',x:W/2,y:-80,t:0,fire:1,hp:1100,maxHp:1100,r:48,speed:26,score:7000,phase:0,dead:false};enemies.push(e);state.boss=e;ui.bossName.textContent='INTERCEPTOR // KESTREL';ui.bossHud.classList.add('visible');announce('WARNING','ARMORED SIGNAL DETECTED');}
-    function spawnBoss(){enemies.length=0;enemyBullets.length=0;const hp=5200+state.stage*900,e={type:'boss',x:W/2,y:-150,t:0,fire:1,hp,maxHp:hp,r:74,speed:18,score:30000,phase:1,dead:false};enemies.push(e);state.boss=e;ui.bossName.textContent='ORBITAL WARDEN // NYX';ui.bossHud.classList.add('visible');announce('BOSS APPROACH','VOID WARDEN NYX',2.5);audio.boom(true);state.shake=12;}
+    function spawnMidboss(){const e={type:'midboss',x:W/2,y:-80,t:0,fire:1,hp:1100,maxHp:1100,r:48,speed:26,score:7000,phase:0,dead:false};enemies.push(e);state.boss=e;ui.bossName.textContent='INTERCEPTOR // KESTREL';ui.bossHud.classList.add('visible');announce('WARNING','ARMORED SIGNAL DETECTED');track('boss_start',{game_name:'void_strike',boss:'kestrel',stage:state.stage});}
+    function spawnBoss(){enemies.length=0;enemyBullets.length=0;const hp=5200+state.stage*900,e={type:'boss',x:W/2,y:-150,t:0,fire:1,hp,maxHp:hp,r:74,speed:18,score:30000,phase:1,dead:false};enemies.push(e);state.boss=e;ui.bossName.textContent='ORBITAL WARDEN // NYX';ui.bossHud.classList.add('visible');announce('BOSS APPROACH','VOID WARDEN NYX',2.5);audio.boom(true);state.shake=12;track('boss_start',{game_name:'void_strike',boss:'nyx',stage:state.stage});}
     function dropItem(x,y,forced=false){if(forced||Math.random()<.14){const roll=Math.random(),type=roll<.66?'power':roll<.84?'shield':'bomb';items.push({x,y,vy:62,t:0,type,r:12});}}
 
     function firePlayer(){
@@ -180,6 +205,7 @@
       if(kind==='ring'){for(let i=0;i<count;i++){const a=offset+i*TAU/count;enemyBullets.push({x:e.x,y:e.y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,r:4,color:i%2?'violet':'coral',near:false});}}
       else {for(let i=0;i<count;i++){const a=base+offset+(i-(count-1)/2)*.16;enemyBullets.push({x:e.x,y:e.y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,r:4.2,color:count>3?'violet':'coral',near:false});}}
     }
+    function bulletIntensity(){ return clamp((state.stageTime-10)/78+(state.stage-1)*.24,0,1.35); }
     function bossShot(e,dt){
       const ratio=e.hp/e.maxHp;e.phase=ratio>.66?1:ratio>.32?2:3;ui.bossPhase.textContent=`PHASE ${e.phase}`;
       e.fire-=dt;
@@ -193,20 +219,21 @@
       let ix=input.x,iy=input.y;if(input.keys.has('arrowleft')||input.keys.has('a'))ix-=1;if(input.keys.has('arrowright')||input.keys.has('d'))ix+=1;if(input.keys.has('arrowup')||input.keys.has('w'))iy-=1;if(input.keys.has('arrowdown')||input.keys.has('s'))iy+=1;const len=Math.hypot(ix,iy)||1;if(len>1){ix/=len;iy/=len;}const target=255;player.vx+=(ix*target-player.vx)*Math.min(1,dt*11);player.vy+=(iy*target-player.vy)*Math.min(1,dt*11);if(Math.abs(ix)<.02)player.vx*=Math.pow(.0005,dt);if(Math.abs(iy)<.02)player.vy*=Math.pow(.0005,dt);player.x=clamp(player.x+player.vx*dt,20,W-20);player.y=clamp(player.y+player.vy*dt,82,H-35);player.inv=Math.max(0,player.inv-dt);player.shield=Math.max(0,player.shield-dt);player.fire-=dt;const interval=Math.max(.075,.16-player.power*.012);if(player.fire<=0){firePlayer();player.fire=interval;}trail(player.x-7,player.y+18,'cyan');trail(player.x+7,player.y+18,'violet');
     }
     function updateSpawns(dt){
-      if(state.boss)return;state.spawn-=dt;const difficulty=1+state.stage*.2+state.stageTime/90;
-      if(state.spawn<=0&&state.stageTime<112){const roll=Math.random();if(roll<.28)formation();else if(roll<.51)spawnEnemy('sine',rnd(35,W-35));else if(roll<.72)spawnEnemy('scout',rnd(30,W-30));else if(roll<.9)spawnEnemy('aimer',rnd(45,W-45));else spawnEnemy(state.stageTime>35?'spinner':'carrier',rnd(50,W-50));state.spawn=clamp(rnd(.55,1.05)/difficulty,.26,1.1);}
+      if(state.boss)return;state.spawn-=dt;const difficulty=.72+state.stage*.16+state.stageTime/105;
+      if(state.spawn<=0&&state.stageTime<112){const roll=Math.random();if(roll<.28)formation();else if(roll<.51)spawnEnemy('sine',rnd(35,W-35));else if(roll<.72)spawnEnemy('scout',rnd(30,W-30));else if(roll<.9)spawnEnemy('aimer',rnd(45,W-45));else spawnEnemy(state.stageTime>35?'spinner':'carrier',rnd(50,W-50));state.spawn=clamp(rnd(.65,1.18)/difficulty,.28,1.4);}
       if(state.stageTime>52&&!state.midbossDone){state.midbossDone=true;spawnMidboss();}
       if(state.stageTime>112&&!state.bossDone){state.bossDone=true;spawnBoss();}
     }
     function updateEnemies(dt){
       for(const e of enemies){e.t+=dt;e.fire-=dt;
         if(e.type==='boss'){if(e.y<118)e.y+=55*dt;else{e.x=W/2+Math.sin(e.t*.72)*112;bossShot(e,dt);}continue;}
-        if(e.type==='midboss'){if(e.y<126)e.y+=55*dt;else{e.x=W/2+Math.sin(e.t*.85)*132;if(e.fire<=0){enemyShot(e,'ring',14,105,e.t*.6);enemyShot(e,'aimed',3,155);e.fire=.85;}}continue;}
-        if(e.type==='scout'){e.y+=e.speed*dt;e.x+=Math.sin(e.t*2+e.phase)*18*dt;if(e.fire<=0&&e.y>80){enemyShot(e,'aimed',1,125+state.rank*8);e.fire=2.2;}}
-        if(e.type==='sine'){e.y+=e.speed*dt;e.x+=Math.sin(e.t*3.2+e.phase)*105*dt;if(e.fire<=0&&e.y>60){enemyShot(e,'aimed',2,120);e.fire=1.65;}}
-        if(e.type==='aimer'){e.y+=e.y<150?e.speed*dt:12*dt;e.x+=Math.sin(e.t+e.phase)*20*dt;if(e.fire<=0&&e.y>70){enemyShot(e,'aimed',3,145+state.rank*6);e.fire=1.25;}}
-        if(e.type==='spinner'){e.y+=e.speed*dt;e.x+=Math.cos(e.t*1.4+e.phase)*44*dt;if(e.fire<=0&&e.y>70){enemyShot(e,'ring',10,105,e.t);e.fire=1.05;}}
-        if(e.type==='carrier'){e.y+=e.speed*dt;e.x+=Math.sin(e.t*.8)*12*dt;if(e.fire<=0&&e.y>90){enemyShot(e,'aimed',5,110);e.fire=1.5;}}
+        const intensity=bulletIntensity(),cadence=.78+intensity*.38;
+        if(e.type==='midboss'){if(e.y<126)e.y+=55*dt;else{e.x=W/2+Math.sin(e.t*.85)*132;if(e.fire<=0){enemyShot(e,'ring',10+Math.floor(intensity*4),105,e.t*.6);enemyShot(e,'aimed',intensity<.65?1:3,155);e.fire=1/cadence;}}continue;}
+        if(e.type==='scout'){e.y+=e.speed*dt;e.x+=Math.sin(e.t*2+e.phase)*18*dt;if(e.fire<=0&&e.y>80){enemyShot(e,'aimed',1,125+state.rank*8);e.fire=2.5/cadence;}}
+        if(e.type==='sine'){e.y+=e.speed*dt;e.x+=Math.sin(e.t*3.2+e.phase)*105*dt;if(e.fire<=0&&e.y>60){enemyShot(e,'aimed',intensity<.38?1:2,120);e.fire=1.95/cadence;}}
+        if(e.type==='aimer'){e.y+=e.y<150?e.speed*dt:12*dt;e.x+=Math.sin(e.t+e.phase)*20*dt;if(e.fire<=0&&e.y>70){enemyShot(e,'aimed',intensity<.3?1:intensity<.82?2:3,145+state.rank*6);e.fire=1.55/cadence;}}
+        if(e.type==='spinner'){e.y+=e.speed*dt;e.x+=Math.cos(e.t*1.4+e.phase)*44*dt;if(e.fire<=0&&e.y>70){enemyShot(e,'ring',6+Math.floor(intensity*3),105,e.t);e.fire=1.3/cadence;}}
+        if(e.type==='carrier'){e.y+=e.speed*dt;e.x+=Math.sin(e.t*.8)*12*dt;if(e.fire<=0&&e.y>90){enemyShot(e,'aimed',3+Math.floor(intensity*1.6),110);e.fire=1.8/cadence;}}
       }
       enemies=enemies.filter(e=>!e.dead&&e.y<H+120);
     }
@@ -222,10 +249,10 @@
       enemyBullets=enemyBullets.filter(b=>!b.dead);items=items.filter(i=>!i.dead);
     }
     function killEnemy(e){e.dead=true;addScore(e.score);const big=e.type==='boss'||e.type==='midboss'||e.type==='carrier';particle(e.x,e.y,big?'coral':'violet',big?42:15,big?220:130,big?4:2.5);audio.boom(big);state.shake=Math.max(state.shake,big?14:3);if(e.type==='boss'){state.boss=null;ui.bossHud.classList.remove('visible');enemyBullets.length=0;items.push({x:e.x,y:e.y,vy:50,t:0,type:'power',r:12});announce('STAGE CLEAR',`SCORE +${Math.round(15000*state.mult)}`,3);addScore(15000);setTimeout(nextStage,2600);}else if(e.type==='midboss'){state.boss=null;ui.bossHud.classList.remove('visible');enemyBullets.length=0;dropItem(e.x,e.y,true);announce('CORE BROKEN','POWER SIGNAL ACQUIRED');}else dropItem(e.x,e.y);}
-    function nextStage(){if(state.mode!=='playing')return;state.stage++;state.stageTime=0;state.midbossDone=false;state.bossDone=false;state.rank=Math.min(4,state.rank+.65);player.bombs=Math.min(3,player.bombs+1);announce(`STAGE ${state.stage}`,'DEEPER INTO THE VOID',2.2);}
-    function hitPlayer(){if(player.inv>0)return;if(player.shield>0){player.shield=0;player.inv=1;particle(player.x,player.y,'cyan',24,150,3);audio.hit();state.shake=7;return;}if(player.bombs>0){player.bombs--;player.inv=2;enemyBullets.length=0;state.flash=.6;state.shake=18;particle(player.x,player.y,'gold',80,260,4);audio.boom(true);announce('AUTO BOMB','EMERGENCY FIELD DEPLOYED',1.2);return;}player.lives--;player.power=Math.max(1,player.power-1);player.inv=2.8;state.chain=0;state.mult=1;enemyBullets.length=0;particle(player.x,player.y,'coral',65,240,4);audio.boom(true);state.shake=20;if(player.lives<=0){setTimeout(gameOver,650);}else{player.x=W/2;player.y=H-130;announce('SHIP LOST',`${player.lives} UNIT${player.lives===1?'':'S'} REMAIN`,1.4);}}
-    function collect(i){if(i.type==='power'){player.power=Math.min(5,player.power+1);addScore(player.power===5?1500:500);}if(i.type==='shield'){player.shield=12;addScore(700);}if(i.type==='bomb'){player.bombs=Math.min(3,player.bombs+1);addScore(900);}particle(i.x,i.y,i.type==='bomb'?'gold':i.type==='shield'?'cyan':'violet',28,160,3);audio.power();announce(i.type==='power'?'POWER UP':i.type==='shield'?'SHIELD ONLINE':'AUTO BOMB +1',i.type==='power'?`SHOT LEVEL ${player.power}`:'SYSTEM CHARGED',.75);}
-    function gameOver(){if(state.mode!=='playing')return;state.mode='over';const isBest=state.score>state.best;if(isBest){state.best=Math.floor(state.score);localStorage.setItem('voidStrikeBest',state.best);}ui.final.textContent=pad(state.score);ui.newBest.textContent=isBest?'NEW HIGH SCORE':'HIGH SCORE '+pad(state.best);ui.best.textContent=pad(state.best);ui.over.classList.remove('hidden');ui.pause.style.display='none';ui.stick.style.display='none';ui.hud.hidden=true;ui.bossHud.classList.remove('visible');}
+    function nextStage(){if(state.mode!=='playing')return;track('level_end',{game_name:'void_strike',stage:state.stage,score:Math.floor(state.score),result:'clear'});state.stage++;state.stageTime=0;state.midbossDone=false;state.bossDone=false;state.rank=Math.min(4,state.rank+.65);player.bombs=Math.min(3,player.bombs+1);announce(`STAGE ${state.stage}`,'DEEPER INTO THE VOID',2.2);track('level_start',{game_name:'void_strike',stage:state.stage});}
+    function hitPlayer(){if(player.inv>0)return;if(player.shield>0){player.shield=0;player.inv=1;particle(player.x,player.y,'cyan',24,150,3);audio.hit();state.shake=7;return;}if(player.bombs>0){player.bombs--;player.inv=2;enemyBullets.length=0;state.flash=.6;state.shake=18;particle(player.x,player.y,'gold',80,260,4);audio.boom(true);announce('AUTO BOMB','EMERGENCY FIELD DEPLOYED',1.2);track('auto_bomb',{game_name:'void_strike',stage:state.stage});return;}player.lives--;player.power=Math.max(1,player.power-1);player.inv=2.8;state.chain=0;state.mult=1;enemyBullets.length=0;particle(player.x,player.y,'coral',65,240,4);audio.boom(true);state.shake=20;if(player.lives<=0){setTimeout(gameOver,650);}else{player.x=W/2;player.y=H-130;announce('SHIP LOST',`${player.lives} UNIT${player.lives===1?'':'S'} REMAIN`,1.4);}}
+    function collect(i){if(i.type==='power'){player.power=Math.min(5,player.power+1);addScore(player.power===5?1500:500);}if(i.type==='shield'){player.shield=12;addScore(700);}if(i.type==='bomb'){player.bombs=Math.min(3,player.bombs+1);addScore(900);}particle(i.x,i.y,i.type==='bomb'?'gold':i.type==='shield'?'cyan':'violet',28,160,3);audio.power();announce(i.type==='power'?'POWER UP':i.type==='shield'?'SHIELD ONLINE':'AUTO BOMB +1',i.type==='power'?`SHOT LEVEL ${player.power}`:'SYSTEM CHARGED',.75);track('power_up',{game_name:'void_strike',item_type:i.type,power_level:player.power});}
+    function gameOver(){if(state.mode!=='playing')return;state.mode='over';const isBest=state.score>state.best;if(isBest){state.best=Math.floor(state.score);localStorage.setItem('voidStrikeBest',state.best);}ui.final.textContent=pad(state.score);ui.newBest.textContent=isBest?'NEW HIGH SCORE':'HIGH SCORE '+pad(state.best);ui.best.textContent=pad(state.best);ui.over.classList.remove('hidden');ui.pause.style.display='none';ui.stick.style.display='none';ui.hud.hidden=true;ui.bossHud.classList.remove('visible');track('game_over',{game_name:'void_strike',score:Math.floor(state.score),stage:state.stage,new_high_score:isBest});}
 
     function update(dt){
       if(state.mode!=='playing')return;state.time+=dt;state.stageTime+=dt;state.rank=clamp(state.stage*.35+state.stageTime/48+state.score/150000,0,4);state.shake=Math.max(0,state.shake-dt*24);state.flash=Math.max(0,state.flash-dt*2);state.msgTimer-=dt;if(state.msgTimer<=0)ui.message.classList.remove('show');state.chain=Math.max(0,state.chain-dt*1.8);state.mult=Math.max(1,1+state.chain*.08);
@@ -256,12 +283,17 @@
     function frame(now){let dt=Math.min(.033,(now-state.last)/1000);state.last=now;if(state.mode==='playing')update(dt);draw();requestAnimationFrame(frame);}requestAnimationFrame(frame);
 
     // Pointer capture prevents the joystick from dropping when a thumb leaves its ring.
-    function setPaused(paused){if(paused&&state.mode==='playing'){state.mode='paused';ui.pauseScreen.classList.remove('hidden');ui.stick.style.display='none';ui.pause.style.display='none';}else if(!paused&&state.mode==='paused'){state.mode='playing';state.last=performance.now();ui.pauseScreen.classList.add('hidden');ui.stick.style.display='block';ui.pause.style.display='grid';audio.init();}}
+    function setPaused(paused){if(paused&&state.mode==='playing'){state.mode='paused';ui.pauseScreen.classList.remove('hidden');ui.stick.style.display='none';ui.pause.style.display='none';track('game_pause',{game_name:'void_strike',stage:state.stage});}else if(!paused&&state.mode==='paused'){state.mode='playing';state.last=performance.now();ui.pauseScreen.classList.add('hidden');ui.stick.style.display='block';ui.pause.style.display='grid';audio.init();}}
     function moveJoystick(ev){const r=ui.stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=ev.clientX-cx,dy=ev.clientY-cy,max=r.width*.31,len=Math.hypot(dx,dy),s=len>max?max/len:1,nx=dx*s,ny=dy*s;input.x=nx/max;input.y=ny/max;ui.knob.style.transform=`translate(calc(-50% + ${nx}px),calc(-50% + ${ny}px))`;}
     function releaseJoystick(ev){if(activePointer!==null&&ev.pointerId!==activePointer)return;activePointer=null;input.x=input.y=0;ui.knob.style.transform='translate(-50%,-50%)';}
     ui.stick.addEventListener('pointerdown',ev=>{if(state.mode!=='playing')return;activePointer=ev.pointerId;ui.stick.setPointerCapture(ev.pointerId);moveJoystick(ev);});ui.stick.addEventListener('pointermove',ev=>{if(ev.pointerId===activePointer)moveJoystick(ev);});ui.stick.addEventListener('pointerup',releaseJoystick);ui.stick.addEventListener('pointercancel',releaseJoystick);
     addEventListener('keydown',ev=>{const k=ev.key.toLowerCase();if(['arrowleft','arrowright','arrowup','arrowdown','w','a','s','d'].includes(k)){ev.preventDefault();input.keys.add(k);}if((k==='p'||k==='escape')&&state.mode==='playing')setPaused(true);else if((k==='p'||k==='escape')&&state.mode==='paused')setPaused(false);});addEventListener('keyup',ev=>input.keys.delete(ev.key.toLowerCase()));
     document.querySelector('#startButton').addEventListener('click',resetGame);document.querySelector('#restartButton').addEventListener('click',resetGame);document.querySelector('#resumeButton').addEventListener('click',()=>setPaused(false));ui.pause.addEventListener('click',()=>setPaused(true));
+    const installButton=document.querySelector('#installButton');
+    addEventListener('beforeinstallprompt',event=>{event.preventDefault();installPrompt=event;installButton.classList.add('visible');});
+    installButton.addEventListener('click',async()=>{if(!installPrompt)return;installPrompt.prompt();const choice=await installPrompt.userChoice;track('pwa_install_prompt',{outcome:choice.outcome});installPrompt=null;installButton.classList.remove('visible');});
+    addEventListener('appinstalled',()=>track('pwa_installed',{game_name:'void_strike'}));
+    if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('void-strike-sw.js',{scope:'./void-strike.html'}));
     document.addEventListener('visibilitychange',()=>{if(document.hidden&&state.mode==='playing')setPaused(true);});
     document.addEventListener('contextmenu',ev=>ev.preventDefault());document.addEventListener('selectstart',ev=>ev.preventDefault());document.addEventListener('gesturestart',ev=>ev.preventDefault(),{passive:false});
   })();
