@@ -1,4 +1,4 @@
-const CACHE_NAME = 'void-strike-v2';
+const CACHE_NAME = 'void-strike-v3';
 const SHELL = [
   './void-strike.html',
   './void-strike.webmanifest',
@@ -21,8 +21,20 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+  const requestUrl = new URL(event.request.url);
+  const isGameDocument = event.request.mode === 'navigate' || requestUrl.pathname.endsWith('/void-strike.html');
+  if (isGameDocument) {
+    event.respondWith(fetch(event.request, { cache: 'no-store' }).then(response => {
+      if (response.ok) {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put('./void-strike.html', copy));
+      }
+      return response;
+    }).catch(() => caches.match('./void-strike.html')));
+    return;
+  }
   event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
-    if (response.ok && new URL(event.request.url).origin === self.location.origin) {
+    if (response.ok && requestUrl.origin === self.location.origin) {
       const copy = response.clone();
       caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
     }

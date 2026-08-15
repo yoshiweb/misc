@@ -139,7 +139,8 @@ test('PWA manifest and isolated service worker provide an offline fullscreen ins
   for (const asset of ['void-strike.html', 'void-strike.webmanifest', 'orbital-citadel.jpg', 'key-visual.jpg', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png']) {
     assert.ok(serviceWorker.includes(asset), `service worker should cache ${asset}`);
   }
-  assert.match(serviceWorker, /CACHE_NAME = 'void-strike-v2'/);
+  assert.match(serviceWorker, /CACHE_NAME = 'void-strike-v3'/);
+  assert.match(serviceWorker, /fetch\(event\.request, \{ cache: 'no-store' \}\)/);
   assert.doesNotThrow(() => new Function(serviceWorker));
 });
 
