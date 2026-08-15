@@ -59,7 +59,7 @@
     #pauseButton { position:absolute; z-index:7; top:max(13px, env(safe-area-inset-top)); right:12px; width:40px; height:40px; border:1px solid rgba(255,255,255,.14); border-radius:50%; background:rgba(4,9,24,.58); backdrop-filter:blur(8px); display:none; place-items:center; cursor:pointer; touch-action:manipulation; }
     #pauseButton::before { content:""; width:10px; height:14px; border-left:3px solid white; border-right:3px solid white; opacity:.85; }
     #pauseButton:focus-visible, .primary:focus-visible { outline:3px solid white; outline-offset:3px; }
-    #joystick { position:absolute; z-index:6; left:50%; bottom:max(22px, env(safe-area-inset-bottom)); width:clamp(112px, 31vw, 142px); aspect-ratio:1; transform:translateX(-50%); border:1px solid rgba(159,225,255,.2); border-radius:50%; background:radial-gradient(circle, rgba(95,252,255,.08), rgba(13,24,48,.2) 54%, rgba(5,10,25,.5)); box-shadow:inset 0 0 22px rgba(95,252,255,.09), 0 8px 30px rgba(0,0,0,.25); opacity:.7; display:none; touch-action:none; }
+    #joystick { position:absolute; z-index:6; left:0; top:0; width:clamp(112px, 31vw, 142px); aspect-ratio:1; transform:translate(-50%,-50%); border:1px solid rgba(159,225,255,.2); border-radius:50%; background:radial-gradient(circle, rgba(95,252,255,.08), rgba(13,24,48,.2) 54%, rgba(5,10,25,.5)); box-shadow:inset 0 0 22px rgba(95,252,255,.09), 0 8px 30px rgba(0,0,0,.25); opacity:.7; display:none; pointer-events:none; touch-action:none; }
     #joystick::before, #joystick::after { content:""; position:absolute; inset:48% 18%; height:1px; background:rgba(255,255,255,.1); }
     #joystick::after { transform:rotate(90deg); }
     #joystickKnob { position:absolute; left:50%; top:50%; width:42%; aspect-ratio:1; transform:translate(-50%,-50%); border:1px solid rgba(255,255,255,.42); border-radius:50%; background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.3), rgba(95,252,255,.16) 36%, rgba(30,49,92,.72)); box-shadow:0 0 20px rgba(95,252,255,.24); will-change:transform; }
@@ -169,7 +169,7 @@
       Object.assign(state,{mode:'playing',time:0,stageTime:0,stage:1,score:0,mult:1,chain:0,rank:0,shake:0,flash:0,slow:0,spawn:1.1,boss:null,midbossDone:false,bossDone:false,msgTimer:0});
       Object.assign(player,{x:W/2,y:H-142,vx:0,vy:0,lives:3,power:1,bombs:2,shield:0,inv:2.5,fire:0,options:0});
       bullets=[];enemyBullets=[];enemies=[];particles=[];items=[];initStars();
-      ui.title.classList.add('hidden');ui.over.classList.add('hidden');ui.pauseScreen.classList.add('hidden');ui.hud.hidden=false;ui.pause.style.display='grid';ui.stick.style.display='block';ui.bossHud.classList.remove('visible');
+      ui.title.classList.add('hidden');ui.over.classList.add('hidden');ui.pauseScreen.classList.add('hidden');ui.hud.hidden=false;ui.pause.style.display='grid';ui.stick.style.display='none';ui.bossHud.classList.remove('visible');
       announce('STAGE 1','PERIMETER BREACH',2.2); audio.init(); updateHud();
       track('game_start',{game_name:'void_strike',stage:1});
       track('level_start',{game_name:'void_strike',stage:1});
@@ -282,11 +282,14 @@
     function draw(){ctx.save();const sx=state.shake?rnd(-state.shake,state.shake):0,sy=state.shake?rnd(-state.shake,state.shake):0;ctx.translate(sx,sy);drawBackground();drawItems();for(const e of enemies)drawEnemy(e);drawBullets();drawPlayer();drawParticles();ctx.restore();if(state.flash>0){ctx.fillStyle=`rgba(255,255,255,${state.flash*.65})`;ctx.fillRect(0,0,W,H);}}
     function frame(now){let dt=Math.min(.033,(now-state.last)/1000);state.last=now;if(state.mode==='playing')update(dt);draw();requestAnimationFrame(frame);}requestAnimationFrame(frame);
 
-    // Pointer capture prevents the joystick from dropping when a thumb leaves its ring.
-    function setPaused(paused){if(paused&&state.mode==='playing'){state.mode='paused';ui.pauseScreen.classList.remove('hidden');ui.stick.style.display='none';ui.pause.style.display='none';track('game_pause',{game_name:'void_strike',stage:state.stage});}else if(!paused&&state.mode==='paused'){state.mode='playing';state.last=performance.now();ui.pauseScreen.classList.add('hidden');ui.stick.style.display='block';ui.pause.style.display='grid';audio.init();}}
+    // A floating joystick appears exactly under the finger and follows its drag.
+    function setPaused(paused){if(paused&&state.mode==='playing'){state.mode='paused';releaseJoystick();ui.pauseScreen.classList.remove('hidden');ui.pause.style.display='none';track('game_pause',{game_name:'void_strike',stage:state.stage});}else if(!paused&&state.mode==='paused'){state.mode='playing';state.last=performance.now();ui.pauseScreen.classList.add('hidden');ui.pause.style.display='grid';audio.init();}}
+    function placeJoystick(ev){const shell=document.querySelector('#shell').getBoundingClientRect();ui.stick.style.left=`${ev.clientX-shell.left}px`;ui.stick.style.top=`${ev.clientY-shell.top}px`;ui.stick.style.display='block';}
     function moveJoystick(ev){const r=ui.stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=ev.clientX-cx,dy=ev.clientY-cy,max=r.width*.31,len=Math.hypot(dx,dy),s=len>max?max/len:1,nx=dx*s,ny=dy*s;input.x=nx/max;input.y=ny/max;ui.knob.style.transform=`translate(calc(-50% + ${nx}px),calc(-50% + ${ny}px))`;}
-    function releaseJoystick(ev){if(activePointer!==null&&ev.pointerId!==activePointer)return;activePointer=null;input.x=input.y=0;ui.knob.style.transform='translate(-50%,-50%)';}
-    ui.stick.addEventListener('pointerdown',ev=>{if(state.mode!=='playing')return;activePointer=ev.pointerId;ui.stick.setPointerCapture(ev.pointerId);moveJoystick(ev);});ui.stick.addEventListener('pointermove',ev=>{if(ev.pointerId===activePointer)moveJoystick(ev);});ui.stick.addEventListener('pointerup',releaseJoystick);ui.stick.addEventListener('pointercancel',releaseJoystick);
+    function releaseJoystick(ev){if(ev&&activePointer!==null&&ev.pointerId!==activePointer)return;activePointer=null;input.x=input.y=0;ui.knob.style.transform='translate(-50%,-50%)';ui.stick.style.display='none';}
+    canvas.addEventListener('pointerdown',ev=>{if(state.mode!=='playing'||activePointer!==null)return;ev.preventDefault();activePointer=ev.pointerId;placeJoystick(ev);canvas.setPointerCapture(ev.pointerId);moveJoystick(ev);});
+    canvas.addEventListener('pointermove',ev=>{if(ev.pointerId===activePointer){ev.preventDefault();moveJoystick(ev);}});
+    canvas.addEventListener('pointerup',releaseJoystick);canvas.addEventListener('pointercancel',releaseJoystick);canvas.addEventListener('lostpointercapture',releaseJoystick);
     addEventListener('keydown',ev=>{const k=ev.key.toLowerCase();if(['arrowleft','arrowright','arrowup','arrowdown','w','a','s','d'].includes(k)){ev.preventDefault();input.keys.add(k);}if((k==='p'||k==='escape')&&state.mode==='playing')setPaused(true);else if((k==='p'||k==='escape')&&state.mode==='paused')setPaused(false);});addEventListener('keyup',ev=>input.keys.delete(ev.key.toLowerCase()));
     document.querySelector('#startButton').addEventListener('click',resetGame);document.querySelector('#restartButton').addEventListener('click',resetGame);document.querySelector('#resumeButton').addEventListener('click',()=>setPaused(false));ui.pause.addEventListener('click',()=>setPaused(true));
     const installButton=document.querySelector('#installButton');

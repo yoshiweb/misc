@@ -46,15 +46,22 @@ test('the game script parses and only loads the GA4 measurement script', () => {
   assert.match(html, /assets\/void-strike\/orbital-citadel\.jpg/);
 });
 
-test('mobile movement is analog, inertial, and movement-only', () => {
+test('mobile movement uses a floating analog joystick at the touched position', () => {
   assert.match(html, /id="joystick"/);
   assert.match(html, /id="joystickKnob"/);
+  assert.match(html, /function placeJoystick\(/);
   assert.match(html, /function moveJoystick\(/);
   assert.match(html, /player\.vx\+=\(ix\*target-player\.vx\)/);
-  assert.match(html, /pointerdown/);
-  assert.match(html, /pointermove/);
+  assert.match(html, /canvas\.addEventListener\('pointerdown'/);
+  assert.match(html, /canvas\.addEventListener\('pointermove'/);
+  assert.match(html, /canvas\.setPointerCapture\(ev\.pointerId\)/);
+  assert.match(html, /ev\.clientX-shell\.left/);
+  assert.match(html, /ev\.clientY-shell\.top/);
+  assert.match(html, /ui\.stick\.style\.display='block'/);
+  assert.match(html, /ui\.stick\.style\.display='none'/);
   assert.match(html, /touch-action:none/);
-  assert.match(html, /#joystick \{[^}]*left:50%;[^}]*transform:translateX\(-50%\)/);
+  assert.match(html, /#joystick \{[^}]*left:0;[^}]*top:0;[^}]*transform:translate\(-50%,-50%\)/);
+  assert.match(html, /pointer-events:none/);
   assert.doesNotMatch(html, /fireButton|shootButton/);
 });
 
@@ -132,6 +139,7 @@ test('PWA manifest and isolated service worker provide an offline fullscreen ins
   for (const asset of ['void-strike.html', 'void-strike.webmanifest', 'orbital-citadel.jpg', 'key-visual.jpg', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png']) {
     assert.ok(serviceWorker.includes(asset), `service worker should cache ${asset}`);
   }
+  assert.match(serviceWorker, /CACHE_NAME = 'void-strike-v2'/);
   assert.doesNotThrow(() => new Function(serviceWorker));
 });
 

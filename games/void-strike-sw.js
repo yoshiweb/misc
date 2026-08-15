@@ -1,4 +1,4 @@
-const CACHE_NAME = 'void-strike-v1';
+const CACHE_NAME = 'void-strike-v2';
 const SHELL = [
   './void-strike.html',
   './void-strike.webmanifest',
