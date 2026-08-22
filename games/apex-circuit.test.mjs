@@ -39,7 +39,7 @@ test('lap progression is checkpoint-gated and results never fabricate zero rival
 });
 
 test('driving skill matters through corner grip and off-track penalties', () => {
-  assert.match(html, /target:31\+i\*1\.4/);
+  assert.match(html, /target:config\.aiBase\+i\*config\.aiStep/);
   assert.match(html, /turnAmount=clamp\(1-tangentNow\.dot\(tangentAhead\),0,1\)/);
   assert.match(html, /steeringError=Math\.max\(0,steeringNeed-steer\*turnDirection\)/);
   assert.match(html, /player\.lateral=clamp\(player\.lateral,-7\.4,7\.4\)/);
@@ -69,6 +69,20 @@ test('VOID STRIKE-style floating joystick and generated visual assets are wired'
     const bytes = await readFile(new URL(asset, import.meta.url));
     assert.equal(bytes.subarray(1, 4).toString(), 'PNG');
   }
+});
+
+test('the title flow supports staged progression with softer opening AI', () => {
+  assert.match(html, /SINGLE PLAYER \/\/ MOBILE ARCADE/);
+  assert.match(html, /TAP TO LAUNCH/);
+  assert.match(html, /stageSettings=\[\{name:'SUNRISE PASS',aiBase:23/);
+  assert.match(html, /name:'NEON RIDGE',aiBase:27/);
+  assert.match(html, /name:'NIGHT DESCENT',aiBase:31/);
+  assert.match(html, /state\.lastPosition=position/);
+  assert.match(html, /cleared=position<=3/);
+  assert.match(html, /state\.stage<state\.maxStage/);
+  assert.match(html, /state\.stage\+\+/);
+  assert.match(html, /apexCircuitBestStage/);
+  assert.match(html, /NEXT STAGE/);
 });
 
 test('the portal links to the new game', async () => {
