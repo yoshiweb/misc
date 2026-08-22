@@ -38,6 +38,15 @@ test('lap progression is checkpoint-gated and results never fabricate zero rival
   assert.doesNotMatch(html, /state\.time-\(i\+1\)\*\.37/);
 });
 
+test('driving skill matters through corner grip and off-track penalties', () => {
+  assert.match(html, /target:31\+i\*1\.4/);
+  assert.match(html, /turnAmount=clamp\(1-tangentNow\.dot\(tangentAhead\),0,1\)/);
+  assert.match(html, /steeringError=Math\.max\(0,steeringNeed-steer\*turnDirection\)/);
+  assert.match(html, /player\.lateral=clamp\(player\.lateral,-7\.4,7\.4\)/);
+  assert.match(html, /const offTrack=Math\.abs\(player\.lateral\)>4\.8/);
+  assert.match(html, /player\.speed=lerp\(player\.speed,Math\.min\(player\.speed,13\)/);
+});
+
 test('the portal links to the new game', async () => {
   const portal = await readFile(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(portal, /games\/apex-circuit\.html/);
