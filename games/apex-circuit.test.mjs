@@ -54,7 +54,7 @@ test('driving skill matters through corner grip and off-track penalties', () => 
 
 test('mobile steering prioritizes lateral input and restart removes stale cars', () => {
   assert.match(html, /Math\.abs\(input\.x\)>.35&&Math\.abs\(input\.x\)>Math\.abs\(input\.y\)\*1\.15/);
-  assert.match(html, /const PLAYER_MAX_SPEED=42/);
+  assert.match(html, /const PLAYER_MAX_SPEED=22/);
   assert.match(html, /reverse=player\.speed<1&&input\.y>.78/);
   assert.match(html, /for\(const racer of racers\)scene\.remove\(racer\.mesh\)/);
   assert.match(html, /document\.querySelectorAll\('\.map-dot'\)\.forEach\(dot=>dot\.remove\(\)\)/);
@@ -96,20 +96,21 @@ test('the title keeps the key visual visible and the race supports keyboard arro
 test('the title flow supports staged progression with softer opening AI', () => {
   assert.match(html, /SINGLE PLAYER \/\/ MOBILE ARCADE/);
   assert.match(html, /TAP TO LAUNCH/);
-  assert.match(html, /stageSettings=\[\{name:'SUNRISE PASS',aiBase:23/);
-  assert.match(html, /name:'NEON RIDGE',aiBase:27/);
-  assert.match(html, /name:'NIGHT DESCENT',aiBase:31/);
+  assert.match(html, /stageSettings=\[\{name:'SUNRISE PASS',aiBase:10/);
+  assert.match(html, /name:'NEON RIDGE',aiBase:12/);
+  assert.match(html, /name:'NIGHT DESCENT',aiBase:14/);
   assert.match(html, /state\.lastPosition=position/);
   assert.match(html, /cleared=position<=3/);
   assert.match(html, /state\.stage<state\.maxStage/);
   assert.match(html, /state\.stage\+\+/);
   assert.match(html, /apexCircuitBestStage/);
   assert.match(html, /NEXT STAGE/);
-  assert.match(html, /cornerDemand:\.16,apexSpeed:31/);
-  assert.match(html, /cornerDemand:\.11,apexSpeed:27/);
-  assert.match(html, /cornerDemand:\.08,apexSpeed:24/);
-  assert.match(html, /CLEAN CORNER/);
-  assert.match(html, /BRAKE FOR CORNER/);
+  assert.match(html, /playerMax:22,cornerDemand:\.16,apexSpeed:16/);
+  assert.match(html, /playerMax:24,cornerDemand:\.11,apexSpeed:15/);
+  assert.match(html, /playerMax:26,cornerDemand:\.08,apexSpeed:14/);
+  assert.match(html, /綺麗なコーナー/);
+  assert.match(html, /コーナー前：/);
+  assert.match(html, /drivingHint/);
   assert.match(html, /aiTurn=clamp\(1-tangent\(aiIndex\)\.dot/);
 });
 
