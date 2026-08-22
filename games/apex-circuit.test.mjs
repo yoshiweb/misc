@@ -93,6 +93,24 @@ test('the title keeps the key visual visible and the race supports keyboard arro
   assert.doesNotMatch(html, /id="dpad"|data-dpad-/);
 });
 
+test('Apex Circuit is installable as a fullscreen PWA', async () => {
+  assert.match(html, /rel="manifest" href="apex-circuit\.webmanifest"/);
+  assert.match(html, /apple-touch-icon" href="assets\/apex-circuit\/icon-192\.png"/);
+  assert.match(html, /serviceWorker\.register\('apex-circuit-sw\.js',\{scope:'\.\/apex-circuit\.html'\}/);
+  const manifest = JSON.parse(await readFile(new URL('./apex-circuit.webmanifest', import.meta.url), 'utf8'));
+  assert.equal(manifest.display, 'fullscreen');
+  assert.equal(manifest.start_url, './apex-circuit.html?source=pwa');
+  assert.equal(manifest.scope, './apex-circuit.html');
+  assert.deepEqual(manifest.icons.map(icon => icon.sizes), ['192x192', '512x512', '512x512']);
+  const worker = await readFile(new URL('./apex-circuit-sw.js', import.meta.url), 'utf8');
+  assert.match(worker, /apex-circuit-v1/);
+  assert.match(worker, /assets\/apex-circuit\/icon-maskable-512\.png/);
+  for (const asset of ['./assets/apex-circuit/icon-192.png', './assets/apex-circuit/icon-512.png', './assets/apex-circuit/icon-maskable-512.png']) {
+    const bytes = await readFile(new URL(asset, import.meta.url));
+    assert.equal(bytes.subarray(1, 4).toString(), 'PNG');
+  }
+});
+
 test('the title flow supports staged progression with softer opening AI', () => {
   assert.match(html, /SINGLE PLAYER \/\/ MOBILE ARCADE/);
   assert.match(html, /TAP TO LAUNCH/);

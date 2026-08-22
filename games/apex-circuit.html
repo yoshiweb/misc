@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <link rel="manifest" href="apex-circuit.webmanifest">
+  <link rel="apple-touch-icon" href="assets/apex-circuit/icon-192.png">
   <meta name="theme-color" content="#09111f">
   <meta name="description" content="Apex Circuit — ジョイスティックだけで遊べる3Dブラウザ・レーシングゲーム。">
   <meta property="og:title" content="Apex Circuit — 3D Arcade Racing">
@@ -105,6 +107,7 @@
     function updateCamera(dt){const sample=trackSample(player.progress),p=sample.p,t=sample.t,lookAhead=8,followDistance=7.2,desired=p.clone().addScaledVector(t,-followDistance).add(new THREE.Vector3(0,5.5,0));camera.position.lerp(desired,1-Math.pow(.001,dt));const look=p.clone().addScaledVector(t,lookAhead).add(new THREE.Vector3(0,1.05,0));if(dt>0.5)v.copy(look);else v.lerp(look,1-Math.pow(.003,dt));camera.lookAt(v);camera.fov=lerp(camera.fov,62+player.speed*.25,1-Math.pow(.02,dt));camera.updateProjectionMatrix()}
     function updateMap(){for(const r of racers){let d=r.map;if(!d){d=document.createElement('i');d.className='map-dot';document.querySelector('#minimap').appendChild(d);r.map=d}const p=center[Math.floor(r.progress)%N];const minX=-105,maxX=100,minZ=-105,maxZ=100;d.style.left=`${clamp((p.x-minX)/(maxX-minX)*100,3,97)}%`;d.style.top=`${clamp((p.z-minZ)/(maxZ-minZ)*100,5,92)}%`;d.classList.toggle('player',r===player)}}
     document.querySelector('#startButton').addEventListener('click',start);document.querySelector('#restartButton').addEventListener('click',()=>{if(state.lastPosition<=3&&state.stage<state.maxStage)state.stage++;start()});document.addEventListener('keydown',e=>{const key=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright'].includes(key)){e.preventDefault();keyboard.up=keyboard.up||key==='arrowup';keyboard.down=keyboard.down||key==='arrowdown';keyboard.left=keyboard.left||key==='arrowleft';keyboard.right=keyboard.right||key==='arrowright';syncKeyboardInput()}if(key==='p'&&state.phase==='race'){state.paused=!state.paused;showMessage('PAUSED',state.paused?'PAUSED':'RESUME','PRESS P TO CONTINUE',1)}});document.addEventListener('keyup',e=>{const key=e.key.toLowerCase();if(['arrowup','arrowdown','arrowleft','arrowright'].includes(key)){e.preventDefault();if(key==='arrowup')keyboard.up=false;if(key==='arrowdown')keyboard.down=false;if(key==='arrowleft')keyboard.left=false;if(key==='arrowright')keyboard.right=false;syncKeyboardInput()}});document.addEventListener('visibilitychange',()=>{if(document.hidden&&state.phase==='race')state.paused=true});
+    if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('apex-circuit-sw.js',{scope:'./apex-circuit.html'}));
     function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}addEventListener('resize',resize);resize();updateMap();for(const r of racers)place(r);
     function frame(now){const elapsed=Math.min(.1,(now-state.last)/1000);state.last=now;state.accumulator+=elapsed;let steps=0;while(state.accumulator>=1/60&&steps<5){update(1/60);state.accumulator-=1/60;steps++}renderer.render(scene,camera);requestAnimationFrame(frame)}requestAnimationFrame(frame);
   </script>
