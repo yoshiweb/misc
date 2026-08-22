@@ -1,4 +1,4 @@
-const CACHE_NAME = 'apex-circuit-v1';
+const CACHE_NAME = 'apex-circuit-v2';
 const SHELL = [
   './apex-circuit.html',
   './apex-circuit.webmanifest',

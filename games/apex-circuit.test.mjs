@@ -103,7 +103,7 @@ test('Apex Circuit is installable as a fullscreen PWA', async () => {
   assert.equal(manifest.scope, './apex-circuit.html');
   assert.deepEqual(manifest.icons.map(icon => icon.sizes), ['192x192', '512x512', '512x512']);
   const worker = await readFile(new URL('./apex-circuit-sw.js', import.meta.url), 'utf8');
-  assert.match(worker, /apex-circuit-v1/);
+  assert.match(worker, /apex-circuit-v2/);
   assert.match(worker, /assets\/apex-circuit\/icon-maskable-512\.png/);
   for (const asset of ['./assets/apex-circuit/icon-192.png', './assets/apex-circuit/icon-512.png', './assets/apex-circuit/icon-maskable-512.png']) {
     const bytes = await readFile(new URL(asset, import.meta.url));
@@ -114,9 +114,22 @@ test('Apex Circuit is installable as a fullscreen PWA', async () => {
 test('the title flow supports staged progression with softer opening AI', () => {
   assert.match(html, /SINGLE PLAYER \/\/ MOBILE ARCADE/);
   assert.match(html, /TAP TO LAUNCH/);
-  assert.match(html, /stageSettings=\[\{name:'SUNRISE PASS',aiBase:10/);
+  assert.match(html, /stageSettings=\[\s*\{name:'SUNRISE PASS',aiBase:10/);
   assert.match(html, /name:'NEON RIDGE',aiBase:12/);
   assert.match(html, /name:'NIGHT DESCENT',aiBase:14/);
+  for (const stage of ['ROADWORKS', 'SPLIT LINE', 'WET CIRCUIT', 'RIVAL TACTICS', 'APEX FINAL']) {
+    assert.match(html, new RegExp(`name:'${stage}'`));
+  }
+  assert.match(html, /function getStageConfig\(stage\)/);
+  assert.match(html, /maxStage:999/);
+  assert.match(html, /aiBase:base\.aiBase\+extra\*1\.35/);
+  assert.match(html, /barrierLayout=/);
+  assert.match(html, /boostLayout=/);
+  assert.match(html, /wetLayout=/);
+  assert.match(html, /function applyTrackChallenges\(r\)/);
+  assert.match(html, /r\.speed\*=\.46/);
+  assert.match(html, /r\.speed=clamp\(r\.speed\+2\.4/);
+  assert.match(html, /config\.tactical&&gap<14/);
   assert.match(html, /state\.lastPosition=position/);
   assert.match(html, /cleared=position<=3/);
   assert.match(html, /state\.stage<state\.maxStage/);
@@ -131,7 +144,7 @@ test('the title flow supports staged progression with softer opening AI', () => 
   assert.match(html, /drivingHint/);
   assert.match(html, /aiTurn=clamp\(1-tangent\(aiIndex\)\.dot/);
   assert.match(html, /hazardLayout=\[\{progress:46,lateral:-2\.2/);
-  assert.match(html, /state\.stage>=3/);
+  assert.match(html, /config\.badRoad/);
   assert.match(html, /function hazardFor\(r\)/);
   assert.match(html, /r\.speed\*=\.54/);
   assert.match(html, /左右に避けよう/);
