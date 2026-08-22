@@ -47,6 +47,15 @@ test('driving skill matters through corner grip and off-track penalties', () => 
   assert.match(html, /player\.speed=lerp\(player\.speed,Math\.min\(player\.speed,13\)/);
 });
 
+test('mobile steering prioritizes lateral input and restart removes stale cars', () => {
+  assert.match(html, /Math\.abs\(input\.x\)>.35&&Math\.abs\(input\.x\)>Math\.abs\(input\.y\)\*1\.15/);
+  assert.match(html, /const PLAYER_MAX_SPEED=42/);
+  assert.match(html, /reverse=player\.speed<1&&input\.y>.78/);
+  assert.match(html, /for\(const racer of racers\)scene\.remove\(racer\.mesh\)/);
+  assert.match(html, /document\.querySelectorAll\('\.map-dot'\)\.forEach\(dot=>dot\.remove\(\)\)/);
+  assert.match(html, /state\.accumulator\+=elapsed/);
+});
+
 test('the portal links to the new game', async () => {
   const portal = await readFile(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(portal, /games\/apex-circuit\.html/);
