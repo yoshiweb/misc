@@ -12,9 +12,6 @@ test('Apex Circuit is a self-contained Three.js racing page', () => {
   assert.match(html, /id="game"/);
   assert.match(html, /id="joystick"/);
   assert.match(html, /id="joystickKnob"/);
-  assert.match(html, /id="dpad"/);
-  assert.match(html, /data-dpad-x="-1"/);
-  assert.match(html, /data-dpad-y="-1"/);
   assert.match(html, /pointerdown/);
   assert.match(html, /setPointerCapture/);
   assert.match(html, /touch-action:none/);
@@ -74,14 +71,18 @@ test('VOID STRIKE-style floating joystick and generated visual assets are wired'
   }
 });
 
-test('the title keeps the key visual visible and the race supports a touch d-pad', () => {
+test('the title keeps the key visual visible and the race supports keyboard arrows', () => {
   assert.match(html, /\.screen#titleScreen \.panel\{[^}]*background:transparent/);
   assert.match(html, /\.screen#titleScreen \.panel\{[^}]*border:0/);
   assert.match(html, /background:linear-gradient\(180deg,#020a1850/);
-  assert.match(html, /dpad\.querySelectorAll\('\[data-dpad-x\],\[data-dpad-y\]'\)/);
-  assert.match(html, /input\.x=Number\(button\.dataset\.dpadX\|\|0\)/);
-  assert.match(html, /input\.y=Number\(button\.dataset\.dpadY\|\|0\)/);
-  assert.match(html, /dpad\.style\.display='grid'/);
+  assert.match(html, /const keyboard=\{up:false,down:false,left:false,right:false\}/);
+  assert.match(html, /key==='arrowup'/);
+  assert.match(html, /key==='arrowdown'/);
+  assert.match(html, /key==='arrowleft'/);
+  assert.match(html, /key==='arrowright'/);
+  assert.match(html, /document\.addEventListener\('keyup'/);
+  assert.match(html, /syncKeyboardInput\(\)/);
+  assert.doesNotMatch(html, /id="dpad"|data-dpad-/);
 });
 
 test('the title flow supports staged progression with softer opening AI', () => {
