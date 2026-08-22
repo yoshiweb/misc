@@ -112,6 +112,11 @@ test('the title flow supports staged progression with softer opening AI', () => 
   assert.match(html, /コーナー前：/);
   assert.match(html, /drivingHint/);
   assert.match(html, /aiTurn=clamp\(1-tangent\(aiIndex\)\.dot/);
+  assert.match(html, /hazardLayout=\[\{progress:46,lateral:-2\.2/);
+  assert.match(html, /state\.stage>=3/);
+  assert.match(html, /function hazardFor\(r\)/);
+  assert.match(html, /r\.speed\*=\.54/);
+  assert.match(html, /左右に避けよう/);
 });
 
 test('the portal links to the new game', async () => {
