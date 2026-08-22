@@ -36,6 +36,9 @@ test('lap progression is checkpoint-gated and results never fabricate zero rival
   assert.match(html, /r\.finishTime=r\.finishTime\?\?state\.time/);
   assert.match(html, /formatTime\(r\.finishTime\?\?Math\.max\(\.1,state\.time/);
   assert.doesNotMatch(html, /state\.time-\(i\+1\)\*\.37/);
+  assert.match(html, /player\.finished=true;player\.finishTime=player\.finishTime\?\?state\.time/);
+  assert.match(html, /if\(a\.finished!==b\.finished\)return a\.finished\?-1:1/);
+  assert.match(html, /if\(a\.finished\)return a\.finishTime-b\.finishTime/);
 });
 
 test('driving skill matters through corner grip and off-track penalties', () => {
@@ -54,6 +57,9 @@ test('mobile steering prioritizes lateral input and restart removes stale cars',
   assert.match(html, /for\(const racer of racers\)scene\.remove\(racer\.mesh\)/);
   assert.match(html, /document\.querySelectorAll\('\.map-dot'\)\.forEach\(dot=>dot\.remove\(\)\)/);
   assert.match(html, /state\.accumulator\+=elapsed/);
+  assert.match(html, /function trackSample\(progress\)/);
+  assert.match(html, /center\[\(i\+1\)%N\]/);
+  assert.match(html, /tangent\(i\)\.lerp\(tangent\(\(i\+1\)%N\)/);
 });
 
 test('VOID STRIKE-style floating joystick and generated visual assets are wired', async () => {
