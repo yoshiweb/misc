@@ -32,7 +32,9 @@ test('lap progression is checkpoint-gated and results never fabricate zero rival
   assert.match(html, /startProgress=12/);
   assert.match(html, /function crossed\(/);
   assert.match(html, /function advance\(r,amount\)/);
-  assert.match(html, /r\.checkpoint===checkpointPositions\.length-1/);
+  assert.match(html, /r\.raceDistance\+=amount/);
+  assert.match(html, /r\.lap=Math\.min\(state\.laps,Math\.max\(0,Math\.floor\(r\.raceDistance\/N\)\)\)/);
+  assert.match(html, /if\(r\.raceDistance>=state\.laps\*N\)/);
   assert.match(html, /r\.finishTime=r\.finishTime\?\?state\.time/);
   assert.match(html, /formatTime\(r\.finishTime\?\?Math\.max\(\.1,state\.time/);
   assert.doesNotMatch(html, /state\.time-\(i\+1\)\*\.37/);
