@@ -27,6 +27,17 @@ test('the race has the requested flow, HUD, loop, AI, and feedback systems', () 
   assert.doesNotMatch(html, /accelerateButton|brakeButton|steerButton/);
 });
 
+test('lap progression is checkpoint-gated and results never fabricate zero rival times', () => {
+  assert.match(html, /checkpointPositions=\[Math\.floor\(N\*\.25\),Math\.floor\(N\*\.5\),Math\.floor\(N\*\.75\),0\]/);
+  assert.match(html, /startProgress=12/);
+  assert.match(html, /function crossed\(/);
+  assert.match(html, /function advance\(r,amount\)/);
+  assert.match(html, /r\.checkpoint===checkpointPositions\.length-1/);
+  assert.match(html, /r\.finishTime=r\.finishTime\?\?state\.time/);
+  assert.match(html, /formatTime\(r\.finishTime\?\?Math\.max\(\.1,state\.time/);
+  assert.doesNotMatch(html, /state\.time-\(i\+1\)\*\.37/);
+});
+
 test('the portal links to the new game', async () => {
   const portal = await readFile(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(portal, /games\/apex-circuit\.html/);
