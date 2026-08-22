@@ -105,6 +105,12 @@ test('the title flow supports staged progression with softer opening AI', () => 
   assert.match(html, /state\.stage\+\+/);
   assert.match(html, /apexCircuitBestStage/);
   assert.match(html, /NEXT STAGE/);
+  assert.match(html, /cornerDemand:\.16,apexSpeed:31/);
+  assert.match(html, /cornerDemand:\.11,apexSpeed:27/);
+  assert.match(html, /cornerDemand:\.08,apexSpeed:24/);
+  assert.match(html, /CLEAN CORNER/);
+  assert.match(html, /BRAKE FOR CORNER/);
+  assert.match(html, /aiTurn=clamp\(1-tangent\(aiIndex\)\.dot/);
 });
 
 test('the portal links to the new game', async () => {
