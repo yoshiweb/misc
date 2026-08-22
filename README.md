@@ -25,6 +25,7 @@
 - [Disaster Stockpile Simulator](./tools/disaster-stockpile/index.html)
 - [node-fusion game](./games/node-fusion.html)
 - [pulse-bloom game](./games/pulse-bloom.html)
+- [Apex Circuit 3D racing game](./games/apex-circuit.html)
 
 ## 特徴
 
