@@ -56,6 +56,21 @@ test('mobile steering prioritizes lateral input and restart removes stale cars',
   assert.match(html, /state\.accumulator\+=elapsed/);
 });
 
+test('VOID STRIKE-style floating joystick and generated visual assets are wired', async () => {
+  assert.match(html, /function placeJoystick\(/);
+  assert.match(html, /function moveJoystick\(/);
+  assert.match(html, /canvas\.setPointerCapture\(e\.pointerId\)/);
+  assert.match(html, /joystick\.style\.display='block'/);
+  assert.match(html, /joystick\.style\.display='none'/);
+  assert.match(html, /assets\/apex-circuit\/asphalt-texture\.png/);
+  assert.match(html, /assets\/apex-circuit\/key-visual\.png/);
+  assert.match(html, /new THREE\.TextureLoader\(\)/);
+  for (const asset of ['./assets/apex-circuit/key-visual.png', './assets/apex-circuit/asphalt-texture.png']) {
+    const bytes = await readFile(new URL(asset, import.meta.url));
+    assert.equal(bytes.subarray(1, 4).toString(), 'PNG');
+  }
+});
+
 test('the portal links to the new game', async () => {
   const portal = await readFile(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(portal, /games\/apex-circuit\.html/);
