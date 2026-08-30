@@ -50,11 +50,16 @@ test('ヘッダーの犬・猫ガイドはページ内リンクになってい�
   assert.match(html, /id="guide-title">犬・猫ガイド<\/h2>/);
 });
 
-test('画像・PDFと暮らしの用途カードは各カテゴリーへのページ内リンクになっている', () => {
-  assert.match(html, /class="quick-card blue" href="#category-media"/);
-  assert.match(html, /class="quick-card yellow" href="#category-life"/);
-  assert.match(html, /id="category-media">画像・PDF<\/h3>/);
-  assert.match(html, /id="category-life">暮らし<\/h3>/);
+test('画像・PDFと暮らしの用途は1つのツールカードにまとまっている', () => {
+  const quickStart = html.indexOf('<div class="quick-grid">');
+  const quickEnd = html.indexOf('</div></section>', quickStart);
+  const quick = html.slice(quickStart, quickEnd);
+
+  assert.equal((quick.match(/class="quick-card /g) ?? []).length, 3);
+  assert.match(quick, /class="quick-card blue" href="#tools"/);
+  assert.match(quick, /<span>ツールを<br>使う<\/span>/);
+  assert.doesNotMatch(quick, /画像・PDF<br>を加工/);
+  assert.doesNotMatch(quick, /暮らしを<br>計算/);
 });
 
 test('ヒーロー見出しは意図した2行に分かれている', () => {
@@ -66,7 +71,7 @@ test('用途カードと人気ツールに生成画像が組み込まれてい�
   const quickImages = html.match(/assets\/images\/home\/quick\/[a-z-]+\.png/g) ?? [];
   const popularImages = html.match(/assets\/images\/home\/popular-tools\/[a-z-]+\.png/g) ?? [];
 
-  assert.equal(new Set(quickImages).size, 4);
+  assert.equal(new Set(quickImages).size, 3);
   assert.equal(new Set(popularImages).size, 4);
   assert.doesNotMatch(html, /class="q-icon"/);
 });
