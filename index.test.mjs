@@ -85,5 +85,5 @@ test('人気ツールの画像領域と文字領域が分離されている', ()
 test('犬種・猫種リンクの矢印はフォントに依存せず中央表示される', () => {
   assert.match(html, /\.breed-guide-link span\{font-size:0\}/);
   assert.match(html, /\.breed-guide-link span::before\{[^}]*border-top:3px solid currentColor/);
-  assert.match(html, /\.breed-guide-link span::before\{[^}]*transform:rotate\(45deg\)/);
+  assert.match(html, /\.breed-guide-link span::before\{[^}]*transform:translateX\(-3px\) rotate\(45deg\)/);
 });
