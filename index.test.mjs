@@ -26,14 +26,20 @@ test('タブはクリックと矢印キーで切り替えられる', () => {
   assert.match(html, /panel\.dataset\.panel !== tab\.dataset\.panel/);
 });
 
-test('ペット向けの主要3ツールがトップに表示される', () => {
-  const heroEnd = html.indexOf('</section>', html.indexOf('<section class="hero">'));
-  const hero = html.slice(html.indexOf('<section class="hero">'), heroEnd);
+test('ペット向けの主要3ツールが犬・猫ガイド内に表示される', () => {
+  const guideStart = html.indexOf('<section class="guide-section"');
+  const guideEnd = html.indexOf('</section>', guideStart);
+  const guide = html.slice(guideStart, guideEnd);
 
-  assert.match(hero, /href="tools\/pet-welcome\/"/);
-  assert.match(hero, /href="tools\/pet-timeline\/"/);
-  assert.match(hero, /href="tools\/pet-end-of-life\/"/);
-  assert.match(hero, /迎え入れ準備/);
-  assert.match(hero, /成長カレンダー/);
-  assert.match(hero, /終活ノート/);
+  assert.match(guide, /href="tools\/pet-welcome\/"/);
+  assert.match(guide, /href="tools\/pet-timeline\/"/);
+  assert.match(guide, /href="tools\/pet-end-of-life\/"/);
+  assert.match(guide, /welcome-preparation\.png/);
+  assert.match(guide, /growth-calendar\.png/);
+  assert.match(guide, /end-of-life-notebook\.png/);
+});
+
+test('ヒーロー見出しは意図した2行に分かれている', () => {
+  assert.match(html, /<span class="hero-line">毎日の「ちょっと困った」を、<\/span>/);
+  assert.match(html, /<span class="hero-line"><em>よし!<\/em>に変える。<\/span>/);
 });
