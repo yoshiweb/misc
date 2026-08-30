@@ -4,26 +4,20 @@ import test from 'node:test';
 
 const html = await readFile(new URL('./index.html', import.meta.url), 'utf8');
 
-test('もっと見るに操作可能な4つのタブと対応パネルがある', () => {
-  const tabs = html.match(/class="tab-button"/g) ?? [];
-  const panels = html.match(/class="tool-panel"/g) ?? [];
+test('もっと見るは4カテゴリーを常時表示する', () => {
+  const moreStart = html.indexOf('<section class="more"');
+  const moreEnd = html.indexOf('<section class="game-lab"', moreStart);
+  const more = html.slice(moreStart, moreEnd);
+  const categories = more.match(/class="tool-category"/g) ?? [];
 
-  assert.equal(tabs.length, 4);
-  assert.equal(panels.length, 4);
-  assert.match(html, /role="tablist"/);
-  assert.match(html, /aria-selected="true"/);
-});
-
-test('すべてのツールを見るは全パネルを展開できるボタンである', () => {
-  assert.match(html, /<button class="more-link"[^>]+aria-expanded="false"/);
-  assert.match(html, /panels\.forEach\(panel => \{ panel\.hidden = false; \}\)/);
-  assert.match(html, /allLabel\.textContent = 'カテゴリ表示に戻す'/);
-});
-
-test('タブはクリックと矢印キーで切り替えられる', () => {
-  assert.match(html, /tab\.addEventListener\('click'/);
-  assert.match(html, /'ArrowLeft', 'ArrowRight', 'Home', 'End'/);
-  assert.match(html, /panel\.dataset\.panel !== tab\.dataset\.panel/);
+  assert.equal(categories.length, 4);
+  assert.match(html, /id="category-media">画像・PDF/);
+  assert.match(html, /id="category-video">動画/);
+  assert.match(html, /id="category-life">暮らし/);
+  assert.match(html, /id="category-work">仕事/);
+  assert.doesNotMatch(more, /role="tab"/);
+  assert.doesNotMatch(more, /class="more-link"/);
+  assert.doesNotMatch(more, /\shidden(?:\s|>)/);
 });
 
 test('ペット向けの主要3ツールが犬・猫ガイド内に表示される', () => {
