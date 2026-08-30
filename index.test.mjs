@@ -33,6 +33,18 @@ test('ペット向けの主要3ツールが犬・猫ガイド内に表示され�
   assert.match(guide, /end-of-life-notebook\.png/);
 });
 
+test('犬種一覧と猫種一覧が1つのガイドにまとまっている', () => {
+  const guideStart = html.indexOf('<section class="guide-section"');
+  const guideEnd = html.indexOf('</section>', guideStart);
+  const guide = html.slice(guideStart, guideEnd);
+
+  assert.equal((guide.match(/class="guide-card"/g) ?? []).length, 1);
+  assert.match(guide, /犬種・猫種ガイド/);
+  assert.match(guide, /うちの子を迎え入れる前に犬種／猫種による傾向を認識し/);
+  assert.match(guide, /href="tools\/pet-welcome\/breeds\/dog\/">犬種一覧/);
+  assert.match(guide, /href="tools\/pet-welcome\/breeds\/cat\/">猫種一覧/);
+});
+
 test('ヒーロー見出しは意図した2行に分かれている', () => {
   assert.match(html, /<span class="hero-line">毎日の「ちょっと困った」を、<\/span>/);
   assert.match(html, /<span class="hero-line"><em>よし!<\/em>に変える。<\/span>/);
