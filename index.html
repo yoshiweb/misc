@@ -1,228 +1,42 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="msvalidate.01" content="82400F73C4D1277DB33175C1C682F24D" />
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W2L9NES4NJ"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag("js", new Date());
-        gtag("config", "G-W2L9NES4NJ");
-    </script>
-    <meta name="description" content="ブラウザですぐに使える小さなツールとゲームのコレクション。">
-    <title>便利な無料Webツール・ゲーム集｜misc.yoshiweb.net</title>
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="misc.yoshiweb.net">
-    <meta property="og:title" content="便利な無料Webツール・ゲーム集｜misc.yoshiweb.net">
-    <meta property="og:description" content="ブラウザですぐに使える小さなツールとゲームのコレクション。">
-    <meta property="og:url" content="https://misc.yoshiweb.net/">
-    <meta property="og:locale" content="ja_JP">
-    <meta property="og:image" content="https://misc.yoshiweb.net/assets/images/ogp/home.jpg">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="misc.yoshiweb.netの紹介画像">
-    <meta name="twitter:card" content="summary_large_image">
-    <style>
-        :root {
-            color-scheme: light;
-            --ink: #172033;
-            --muted: #667085;
-            --line: #e6e9ef;
-            --surface: #ffffff;
-            --accent: #635bff;
-            --accent-soft: #f0efff;
-            --page: #f7f8fc;
-        }
-
-        * { box-sizing: border-box; }
-
-        body {
-            margin: 0;
-            color: var(--ink);
-            background: var(--page);
-            font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
-            line-height: 1.6;
-        }
-
-        .container {
-            width: min(1080px, calc(100% - 40px));
-            margin: 0 auto;
-            padding: 72px 0 80px;
-        }
-
-        header { margin-bottom: 48px; }
-
-        .eyebrow {
-            margin: 0 0 10px;
-            color: var(--accent);
-            font-size: .78rem;
-            font-weight: 700;
-            letter-spacing: .12em;
-            text-transform: uppercase;
-        }
-
-        h1 {
-            margin: 0;
-            font-size: clamp(2rem, 5vw, 3.4rem);
-            letter-spacing: -.04em;
-        }
-
-        .intro {
-            max-width: 560px;
-            margin: 14px 0 0;
-            color: var(--muted);
-        }
-
-        section { margin-top: 42px; }
-
-        h2 {
-            margin: 0 0 16px;
-            font-size: 1.2rem;
-            letter-spacing: -.02em;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 14px;
-        }
-
-        .card {
-            display: flex;
-            flex-direction: column;
-            min-height: 140px;
-            padding: 20px;
-            color: inherit;
-            background: var(--surface);
-            border: 1px solid var(--line);
-            border-radius: 16px;
-            text-decoration: none;
-            transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
-        }
-
-        .card:hover,
-        .card:focus-visible {
-            border-color: var(--accent);
-            box-shadow: 0 10px 24px rgba(23, 32, 51, .08);
-            outline: none;
-            transform: translateY(-2px);
-        }
-
-        .card-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 700;
-        }
-
-        .icon {
-            display: inline-grid;
-            width: 30px;
-            height: 30px;
-            place-items: center;
-            color: var(--accent);
-            background: var(--accent-soft);
-            border-radius: 9px;
-            font-size: .95rem;
-        }
-
-        .card-description {
-            margin: 10px 0 0 40px;
-            color: var(--muted);
-            font-size: .9rem;
-        }
-
-        footer {
-            margin-top: 60px;
-            color: var(--muted);
-            font-size: .82rem;
-        }
-
-        @media (max-width: 560px) {
-            .container { width: min(100% - 28px, 1080px); padding-top: 48px; }
-            header { margin-bottom: 36px; }
-            section { margin-top: 34px; }
-        }
-    </style>
-    <script src="./assets/seo-schema.js" defer></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="暮らしと制作に役立つ、ブラウザですぐ使える無料Webツールとゲーム。">
+  <title>よしラボ｜暮らしと制作に役立つ無料Webツール</title>
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="よしラボ｜暮らしと制作に役立つ無料Webツール">
+  <meta property="og:description" content="画像・PDF、犬猫、暮らし、ゲーム。ブラウザですぐ使える小さな道具。">
+  <meta property="og:url" content="https://misc.yoshiweb.net/">
+  <meta property="og:image" content="https://misc.yoshiweb.net/assets/images/ogp/home.jpg">
+  <script src="./assets/seo-schema.js" defer></script>
+  <style>
+    :root{--ink:#11172b;--muted:#626b80;--purple:#4333d8;--lav:#f3f2ff;--line:#dce1ef;--bg:#f8f9fd;--teal:#16bfae;--coral:#ff7778;--yellow:#ffb91f;--shadow:0 18px 45px rgba(35,41,90,.10)}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.65}a{color:inherit;text-decoration:none}button,input{font:inherit}.wrap{width:min(1160px,calc(100% - 40px));margin:auto}
+    .site-header{height:78px;background:#fff;border-bottom:1px solid #e8ebf3;display:flex;align-items:center}.nav{display:flex;align-items:center;justify-content:space-between;gap:28px}.brand{display:flex;align-items:center;gap:13px}.brand-mark{width:52px;height:52px;border-radius:13px;background:linear-gradient(145deg,#5747ed,#3020b5);color:#fff;display:grid;place-items:center;font-size:20px;font-weight:900;line-height:.95;box-shadow:0 6px 12px #4333d82b}.brand-mark span{display:block;text-align:center}.brand-name{font-size:1.25rem;font-weight:900;letter-spacing:.04em}.brand-name small{display:block;color:var(--muted);font-size:.65rem;font-weight:600;letter-spacing:.08em}.nav-links{display:flex;align-items:center;gap:42px;font-weight:800;font-size:.95rem}.nav-links a{padding:22px 0}.search-btn{display:flex;align-items:center;gap:9px;border:1.5px solid var(--purple);border-radius:999px;color:var(--purple);background:#fff;padding:8px 17px;font-weight:800;cursor:pointer}.search-icon{width:17px;height:17px;border:3px solid currentColor;border-radius:50%;display:inline-block;position:relative}.search-icon:after{content:"";width:7px;height:3px;background:currentColor;position:absolute;right:-6px;bottom:-3px;transform:rotate(45deg);border-radius:2px}
+    .hero{background:#fff;overflow:hidden}.hero-inner{min-height:380px;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:20px;padding:48px 0 45px}.hero-copy h1{font-size:clamp(2rem,4vw,3.3rem);line-height:1.32;letter-spacing:.02em;margin:0 0 20px;font-weight:900}.hero-copy h1 em{font-style:normal;color:var(--purple);position:relative}.hero-copy h1 em:after{content:"✓";font-size:.65em;color:var(--teal);position:absolute;right:-.5em;bottom:-.18em;transform:rotate(-12deg)}.hero-copy p{margin:0 0 25px;color:var(--muted);font-size:1rem}.hero-search{display:flex;max-width:500px;background:linear-gradient(100deg,#4834d7,#3a27c3);padding:14px 18px;border-radius:18px;box-shadow:0 12px 22px #4333d82e}.hero-search .search-icon{color:#fff;border-width:2px;margin-right:6px}.hero-search input{border:0;outline:0;background:transparent;color:#fff;width:100%;font-size:1rem}.hero-search input::placeholder{color:#e3e1ff}.hero-art{height:290px;position:relative;border-radius:50%;background:radial-gradient(circle,#edfaff 0 38%,#e9f7ff 39% 64%,transparent 65%);display:grid;place-items:center}.browser{width:290px;height:190px;background:#fff;border:3px solid #4539d8;border-radius:16px 16px 11px 11px;box-shadow:12px 17px 0 #bac3ff;position:relative;padding:53px 18px 14px;transform:rotate(-2deg)}.browser:before{content:"";position:absolute;left:0;right:0;top:0;height:35px;background:linear-gradient(90deg,#6253ec,#4435d2);border-radius:12px 12px 0 0}.browser:after{content:"•  •  •";position:absolute;top:2px;left:14px;color:#fff;letter-spacing:4px;font-size:20px}.browser-body{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.browser-body i{height:43px;border-radius:8px;background:#e8f5ff;border:2px solid #b8c8ff;display:grid;place-items:center;font-style:normal;font-size:1.45rem;color:#21b6ad}.browser-check{position:absolute;bottom:28px;left:100px;width:72px;height:72px;border-radius:50%;background:#30c7b4;color:#fff;display:grid;place-items:center;font-size:2.5rem;font-weight:900;border:6px solid #fff}.pet{position:absolute;font-size:6.2rem;filter:drop-shadow(0 7px 2px #d6d9ed)}.dog{left:9%;bottom:6px}.cat{right:2%;bottom:-6px;font-size:5.8rem}.spark{position:absolute;color:var(--yellow);font-size:1.8rem}.spark.one{left:9%;top:15%}.spark.two{right:7%;top:20%;color:#6ca6ff}.spark.three{right:18%;bottom:2%;color:var(--coral)}
+    .content{padding:22px 0 70px}.section{margin-top:26px}.section-heading{text-align:center;margin:0 0 16px;font-size:1.65rem;font-weight:900;letter-spacing:.06em}.section-heading:before,.section-heading:after{content:"✦";font-size:.65em;color:var(--teal);margin:0 16px;vertical-align:.18em}.section-heading:after{color:var(--coral)}.quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.quick-card{min-height:122px;border:1.5px solid;border-radius:17px;padding:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;font-size:1.08rem;font-weight:900}.quick-card .q-icon{font-size:2.6rem;line-height:1}.quick-card .arrow{width:28px;height:28px;border-radius:50%;color:#fff;display:grid;place-items:center;font-size:1.2rem}.quick-card.teal{border-color:#59d9cb;background:#f1fffc}.quick-card.teal .arrow{background:var(--teal)}.quick-card.blue{border-color:#83baff;background:#f1f7ff}.quick-card.blue .arrow{background:#3d92ef}.quick-card.yellow{border-color:#ffc848;background:#fffaf0}.quick-card.yellow .arrow{background:#f2ae14}.quick-card.coral{border-color:#ff9b9d;background:#fff5f5}.quick-card.coral .arrow{background:var(--coral)}
+    .guide-section{background:#fff;border-radius:22px;padding:25px 30px 30px;margin-top:30px}.guide-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.guide-card{min-height:235px;border:1.5px solid;border-radius:18px;overflow:hidden;display:grid;grid-template-columns:44% 56%;background:#fff}.guide-card.dog-guide{border-color:#4dd3c3}.guide-card.cat-guide{border-color:#ff9b9d}.guide-card img{width:100%;height:100%;min-height:235px;object-fit:cover}.guide-copy{padding:24px 18px 18px}.guide-copy h3{margin:0 0 7px;font-size:1.55rem;line-height:1.25}.guide-copy p{margin:0;color:var(--muted);font-size:.83rem}.chips{display:flex;gap:5px;flex-wrap:wrap;margin:12px 0 15px}.chip{border:1px solid #9bd8d0;border-radius:999px;padding:2px 8px;font-size:.72rem;color:#4e6b74}.cat-guide .chip{border-color:#e1afb1}.cta{display:flex;justify-content:space-between;align-items:center;background:var(--purple);color:white;border-radius:999px;padding:7px 12px 7px 14px;font-weight:800;font-size:.8rem}.cta span{width:23px;height:23px;background:#fff;color:var(--purple);border-radius:50%;display:grid;place-items:center;font-size:1.1rem}
+    .tools-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.tool-card{background:#fff;border:1px solid var(--line);border-radius:17px;overflow:hidden;position:relative;box-shadow:0 4px 10px #26346b08;transition:transform .2s,box-shadow .2s}.tool-card:hover,.tool-card:focus-visible{transform:translateY(-4px);box-shadow:var(--shadow);outline:3px solid #c5c0ff;outline-offset:2px}.tool-card img{width:100%;height:138px;object-fit:cover;display:block}.tool-body{padding:12px 14px 15px}.tool-body h3{font-size:1.08rem;margin:0 0 2px}.tool-body p{font-size:.78rem;color:var(--muted);margin:0}.ribbon{position:absolute;top:0;left:0;background:var(--teal);color:#fff;font-size:.72rem;font-weight:900;padding:4px 15px 4px 12px;clip-path:polygon(0 0,100% 0,88% 50%,100% 100%,0 100%)}.tool-card:nth-child(2) .ribbon{background:#4d9ef5}.tool-card:nth-child(3) .ribbon{background:#f4b51d}.tool-card:nth-child(4) .ribbon{background:var(--coral)}
+    .more{margin-top:30px;background:#fff;border-radius:20px;padding:22px 28px;border:1px solid #ebedf5}.tabs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line);text-align:center;font-weight:800}.tabs a{padding:9px;border:1px solid var(--line);border-bottom:0}.tabs a:first-child{background:var(--purple);color:#fff;border-radius:8px 8px 0 0}.more-list{display:grid;grid-template-columns:1fr 1fr}.more-list a{padding:8px 15px;border:1px solid var(--line);font-size:.82rem;display:flex;justify-content:space-between}.more-link{text-align:center;padding-top:10px;color:var(--purple);font-weight:800}.game-lab{margin-top:20px;padding:22px 30px 27px;border-radius:21px;background:#111735;color:#fff}.game-lab h2{text-align:center;margin:0 0 16px;color:#d9e0ff;letter-spacing:.08em}.game-lab h2 strong{font-size:1.8rem;color:#45e0db;letter-spacing:.12em}.game-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.game-card{border:2px solid #51e5e2;border-radius:14px;overflow:hidden;background:#090d26;box-shadow:0 0 12px #35deda55}.game-card:nth-child(2){border-color:#f261d4;box-shadow:0 0 12px #f261d455}.game-card img{width:100%;height:120px;object-fit:cover;display:block}.game-card div{padding:9px 12px}.game-card h3{margin:0;color:#61e9e0;font-size:1rem}.game-card:nth-child(2) h3{color:#fb6bd5}.game-card p{margin:0;font-size:.72rem;color:#dce0fb}.site-footer{background:#fff;padding:23px 0;border-top:1px solid #eceef6}.footer-inner{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:.78rem}.footer-brand{display:flex;align-items:center;gap:9px;color:var(--ink);font-weight:800}.footer-brand .brand-mark{width:38px;height:38px;font-size:15px;border-radius:10px}
+    @media(max-width:800px){.nav-links{gap:18px}.hero-inner{grid-template-columns:1fr;padding:38px 0}.hero-art{height:250px;order:-1}.quick-grid,.tools-grid{grid-template-columns:repeat(2,1fr)}.guide-grid{grid-template-columns:1fr}.game-grid{grid-template-columns:1fr 1fr}.game-card:last-child{display:none}}
+    @media(max-width:560px){.wrap{width:min(100% - 28px,1160px)}.site-header{height:68px}.brand-mark{width:43px;height:43px;font-size:16px}.brand-name{font-size:1.05rem}.nav-links a{display:none}.search-btn{padding:7px 12px}.hero-copy h1{font-size:2rem}.hero-art{transform:scale(.9);margin:-12px -20px}.browser{width:250px}.pet{font-size:5.2rem}.cat{font-size:5rem}.quick-grid{gap:9px}.quick-card{min-height:105px;padding:13px;font-size:.9rem;display:block;position:relative}.quick-card .q-icon{font-size:2rem;display:block;margin-bottom:6px}.quick-card .arrow{position:absolute;right:10px;bottom:10px}.guide-section{padding:20px 14px}.guide-card{grid-template-columns:40% 60%}.guide-copy{padding:17px 12px}.guide-copy h3{font-size:1.18rem}.tool-card img{height:110px}.tool-body h3{font-size:.94rem}.more{padding:16px 10px}.more-list a{font-size:.72rem;padding:7px 8px}.game-lab{padding:18px 14px}.game-grid{grid-template-columns:1fr}.game-card:last-child{display:block}.game-card img{height:130px}.footer-inner{gap:10px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.tool-card{transition:none}}
+  </style>
 </head>
 <body>
-    <main class="container">
-        <header>
-            <p class="eyebrow">無料で使えるWebツール集</p>
-            <h1>便利なWebツールとゲーム</h1>
-            <p class="intro">画像・動画・PDFの変換、ペットや防災に役立つ計算ツール、ブラウザゲームを無料で使えます。インストール不要で、ファイルを外部へ送らず手元で完結するものが中心です。</p>
-        </header>
-
-        <section aria-labelledby="reading-heading">
-            <h2 id="reading-heading">閲覧</h2>
-            <div class="grid">
-                <a class="card" href="feed-viewer/">
-                    <span class="card-title"><span class="icon" aria-hidden="true">◌</span>RSSフィードリーダー</span>
-                    <span class="card-description">RSSフィードをまとめて読む</span>
-                </a>
-            </div>
-        </section>
-
-        <section aria-labelledby="media-heading">
-            <h2 id="media-heading">画像・PDF</h2>
-            <div class="grid">
-                <a class="card" href="tools/pdf2img/"><span class="card-title"><span class="icon" aria-hidden="true">▧</span>PDFを画像に変換</span><span class="card-description">PDFのページを画像に変換</span></a>
-                <a class="card" href="tools/imgcrop/"><span class="card-title"><span class="icon" aria-hidden="true">⌗</span>画像を切り抜く</span><span class="card-description">画像を切り抜いて保存</span></a>
-                <a class="card" href="tools/png2webp/"><span class="card-title"><span class="icon" aria-hidden="true">⇢</span>PNGをWEBPに変換</span><span class="card-description">PNG画像をWEBPに変換</span></a>
-                <a class="card" href="tools/webp2png/"><span class="card-title"><span class="icon" aria-hidden="true">⇢</span>WEBPをPNGに変換</span><span class="card-description">WEBP画像をPNGに変換</span></a>
-                <a class="card" href="tools/stroke-order/"><span class="card-title"><span class="icon" aria-hidden="true">書</span>漢字の書き順</span><span class="card-description">漢字の書き順を確認</span></a>
-            </div>
-        </section>
-
-        <section aria-labelledby="video-heading">
-            <h2 id="video-heading">動画</h2>
-            <div class="grid">
-                <a class="card" href="tools/video2png/"><span class="card-title"><span class="icon" aria-hidden="true">▶</span>動画から画像を抽出</span><span class="card-description">動画からフレーム画像を抽出</span></a>
-                <a class="card" href="tools/video-editor/"><span class="card-title"><span class="icon" aria-hidden="true">✂</span>動画編集</span><span class="card-description">ブラウザで動画を編集</span></a>
-                <a class="card" href="tools/thumbnail-generator/"><span class="card-title"><span class="icon" aria-hidden="true">▣</span>動画サムネイル作成</span><span class="card-description">動画用サムネイルを作成</span></a>
-                <a class="card" href="tools/video-delivery-checker/"><span class="card-title"><span class="icon" aria-hidden="true">✓</span>動画納品チェック</span><span class="card-description">納品前の動画仕様をまとめて確認</span></a>
-            </div>
-        </section>
-
-        <section aria-labelledby="life-heading">
-            <h2 id="life-heading">暮らし・計算</h2>
-            <div class="grid">
-                <a class="card" href="tools/pfc-calculator/"><span class="card-title"><span class="icon" aria-hidden="true">%</span>PFCカロリー計算</span><span class="card-description">たんぱく質・脂質・炭水化物を計算</span></a>
-                <a class="card" href="tools/pet-timeline/"><span class="card-title"><span class="icon" aria-hidden="true">♡</span>ペット成長カレンダー</span><span class="card-description">うちの子の成長を記録</span></a>
-                <a class="card" href="tools/pet-end-of-life/"><span class="card-title"><span class="icon" aria-hidden="true">♡</span>ペット終活ノート</span><span class="card-description">ペットの終活情報を整理</span></a>
-                <a class="card" href="tools/pet-welcome/"><span class="card-title"><span class="icon" aria-hidden="true">♡</span>ペットを迎える準備</span><span class="card-description">犬猫を迎える準備を確認</span></a>
-                <a class="card" href="tools/disaster-stockpile/"><span class="card-title"><span class="icon" aria-hidden="true">⌂</span>防災備蓄シミュレーター</span><span class="card-description">防災備蓄の目安をシミュレーション</span></a>
-                <a class="card" href="tools/affiliate-links/"><span class="card-title"><span class="icon" aria-hidden="true">↗</span>アフィリエイトリンク作成</span><span class="card-description">アフィリエイトリンクを作成</span></a>
-            </div>
-        </section>
-
-        <section aria-labelledby="work-heading">
-            <h2 id="work-heading">仕事・提出</h2>
-            <div class="grid">
-                <a class="card" href="tools/submission-packager/"><span class="card-title"><span class="icon" aria-hidden="true">▤</span>提出用ZIPを作成</span><span class="card-description">ファイルを整理して提出用ZIPを作成</span></a>
-                <a class="card" href="tools/site-auditor/"><span class="card-title"><span class="icon" aria-hidden="true">⌕</span>Webサイト公開前チェック</span><span class="card-description">HTMLサイトを公開前にローカル監査</span></a>
-                <a class="card" href="tools/public-image-cleaner/"><span class="card-title"><span class="icon" aria-hidden="true">◈</span>画像の公開前クリーナー</span><span class="card-description">画像の情報を除去して公開用に整える</span></a>
-                <a class="card" href="tools/checklist-maker/"><span class="card-title"><span class="icon" aria-hidden="true">☑</span>チェックリスト作成</span><span class="card-description">用途別に必要なものを整理</span></a>
-                <a class="card" href="tools/shooting-setup-diagnosis/"><span class="card-title"><span class="icon" aria-hidden="true">◎</span>撮影セット診断</span><span class="card-description">スマホ撮影に必要な道具を診断</span></a>
-            </div>
-        </section>
-
-        <section aria-labelledby="games-heading">
-            <h2 id="games-heading">ゲーム</h2>
-            <div class="grid">
-                <a class="card" href="games/void-strike.html"><span class="card-title"><span class="icon" aria-hidden="true">▲</span>縦スクロールSTG（VOID STRIKE）</span><span class="card-description">移動だけで弾幕を突破する本格ネオン・シューティング</span></a>
-                <a class="card" href="games/retro-clash.html"><span class="card-title"><span class="icon" aria-hidden="true">拳</span>2D格闘ゲーム（Retro Clash）</span><span class="card-description">スマホ縦画面でも遊べる本格CPU対戦アーケードファイター</span></a>
-                <a class="card" href="games/pulse-bloom.html"><span class="card-title"><span class="icon" aria-hidden="true">✦</span>リズムゲーム（Pulse Bloom）</span><span class="card-description">リズムに合わせて遊ぶミニゲーム</span></a>
-                <a class="card" href="games/node-fusion.html"><span class="card-title"><span class="icon" aria-hidden="true">✣</span>ノード成長ゲーム（Node Fusion）</span><span class="card-description">ノードをつないで成長させるゲーム</span></a>
-                <a class="card" href="games/apex-circuit.html"><span class="card-title"><span class="icon" aria-hidden="true">🏁</span>3Dレーシング（Apex Circuit）</span><span class="card-description">ジョイスティックだけで走る6台対戦のアーケードレース</span></a>
-            </div>
-        </section>
-
-        <footer>© yoshiweb</footer>
-    </main>
+  <header class="site-header"><div class="wrap nav"><a class="brand" href="./" aria-label="よしラボ ホーム"><span class="brand-mark"><span>よし!<br>ラボ</span></span><span class="brand-name">よしラボ<small>いいくらし研究所</small></span></a><nav class="nav-links" aria-label="メインナビゲーション"><a href="#tools">ツール</a><a href="tools/pet-welcome/">犬・猫ガイド</a><a href="#games">ゲーム</a><button class="search-btn" type="button" onclick="document.querySelector('#site-search').focus()"><i class="search-icon" aria-hidden="true"></i>検索</button></nav></div></header>
+  <main>
+    <section class="hero"><div class="wrap hero-inner"><div class="hero-copy"><h1>毎日の「ちょっと困った」を、<br><em>よし!</em>に変える。</h1><p>暮らしと制作に役立つ無料Webツールを、<br>ブラウザですぐに使えます。</p><form class="hero-search" onsubmit="return false"><i class="search-icon" aria-hidden="true"></i><input id="site-search" type="search" placeholder="画像、PDF、犬種などで検索" aria-label="サイト内検索"></form></div><div class="hero-art" aria-hidden="true"><span class="spark one">✦</span><span class="spark two">✦</span><span class="spark three">✦</span><div class="browser"><div class="browser-body"><i>▰</i><i>PDF</i><i>▤</i><i>✦</i><i>✓</i><i>▤</i></div><div class="browser-check">✓</div></div><span class="pet dog">🐕</span><span class="pet cat">🐈</span></div></div></section>
+    <div class="content wrap">
+      <section class="section" aria-labelledby="quick-title"><h2 class="section-heading" id="quick-title">今日は何をよくする？</h2><div class="quick-grid"><a class="quick-card teal" href="tools/pet-welcome/"><span class="q-icon">🐕<br>🐈</span><span>犬・猫を<br>調べる</span><span class="arrow">›</span></a><a class="quick-card blue" href="#tools"><span class="q-icon">🖼️</span><span>画像・PDF<br>を加工</span><span class="arrow">›</span></a><a class="quick-card yellow" href="tools/pfc-calculator/"><span class="q-icon">🧮</span><span>暮らしを<br>計算</span><span class="arrow">›</span></a><a class="quick-card coral" href="#games"><span class="q-icon">🎮</span><span>ゲームで<br>遊ぶ</span><span class="arrow">›</span></a></div></section>
+      <section class="guide-section" aria-labelledby="guide-title"><h2 class="section-heading" id="guide-title">犬・猫ガイド</h2><div class="guide-grid"><a class="guide-card dog-guide" href="tools/pet-welcome/breeds/dog/"><img src="assets/images/pet-calendar-hero-dog-large.jpg" alt="犬種ガイドのイメージ" loading="lazy"><div class="guide-copy"><h3>犬種一覧</h3><p>性格や特徴、運動量、<br>お手入れのコツまで分かる！</p><div class="chips"><span class="chip">大きさ</span><span class="chip">運動量</span><span class="chip">抜け毛</span></div><span class="cta">ぴったりの子を探す <span>›</span></span></div></a><a class="guide-card cat-guide" href="tools/pet-welcome/breeds/cat/"><img src="assets/images/pet-calendar-hero-cat.jpg" alt="猫種ガイドのイメージ" loading="lazy"><div class="guide-copy"><h3>猫種一覧</h3><p>性格や特徴、運動量、<br>お手入れのコツまで分かる！</p><div class="chips"><span class="chip">大きさ</span><span class="chip">運動量</span><span class="chip">抜け毛</span></div><span class="cta">ぴったりの子を探す <span>›</span></span></div></a></div></section>
+      <section class="section" id="tools" aria-labelledby="tools-title"><h2 class="section-heading" id="tools-title">すぐ使える人気ツール</h2><div class="tools-grid"><a class="tool-card" href="tools/imgcrop/"><span class="ribbon">おすすめ</span><img src="assets/images/ogp/tools-imgcrop-home.jpg" alt="一括画像トリミング" loading="lazy"><div class="tool-body"><h3>一括画像トリミング</h3><p>複数の画像をまとめてトリミング・リサイズ！</p></div></a><a class="tool-card" href="tools/pfc-calculator/"><span class="ribbon">おすすめ</span><img src="assets/images/ogp/tools-pfc-calculator-home.jpg" alt="PFCカロリー計算" loading="lazy"><div class="tool-body"><h3>PFCカロリー計算</h3><p>食材のPFCとカロリーを手軽に計算！</p></div></a><a class="tool-card" href="tools/disaster-stockpile/"><span class="ribbon">おすすめ</span><img src="assets/images/ogp/tools-disaster-stockpile-home.jpg" alt="防災備蓄シミュレーター" loading="lazy"><div class="tool-body"><h3>防災備蓄シミュレーター</h3><p>家族構成に合わせた備蓄量を自動で計算！</p></div></a><a class="tool-card" href="tools/shooting-setup-diagnosis/"><span class="ribbon">おすすめ</span><img src="assets/images/ogp/tools-shooting-setup-diagnosis-home.jpg" alt="撮影セット診断" loading="lazy"><div class="tool-body"><h3>撮影セット診断</h3><p>被写体やシーンに合うおすすめ機材を提案！</p></div></a></div></section>
+      <section class="more" aria-labelledby="more-title"><h2 class="section-heading" id="more-title">もっと見る</h2><div class="tabs"><a href="#tools">画像・PDF</a><a href="#tools">動画</a><a href="#tools">暮らし</a><a href="#tools">仕事</a></div><div class="more-list"><a href="tools/png2webp/">画像圧縮（JPEG/PNG/WebP）<span>›</span></a><a href="tools/pdf2img/">PDF圧縮<span>›</span></a><a href="tools/pdf2img/">PDF 結合・分割<span>›</span></a><a href="tools/pdf2img/">PDFから画像変換<span>›</span></a><a href="tools/png2webp/">画像からPDF変換<span>›</span></a><a href="tools/imgcrop/">画像リサイズ<span>›</span></a><a href="tools/public-image-cleaner/">背景透過（PNG）<span>›</span></a><a href="tools/public-image-cleaner/">EXIF情報確認<span>›</span></a></div><a class="more-link" href="#tools">すべてのツールを見る　→</a></section>
+      <section class="game-lab" id="games" aria-labelledby="games-title"><h2 id="games-title"><strong>🎮 GAME LAB</strong><br><small>ブラウザで遊べるオリジナルゲーム</small></h2><div class="game-grid"><a class="game-card" href="games/void-strike.html"><img src="games/assets/void-strike/key-visual.jpg" alt="VOID STRIKE" loading="lazy"><div><h3>VOID STRIKE</h3><p>迫り来る敵を撃ち落とす爽快シューティング！</p></div></a><a class="game-card" href="games/retro-clash.html"><img src="games/assets/retro-clash/key-visual.png" alt="Retro Clash" loading="lazy"><div><h3>Retro Clash</h3><p>ドットの世界で殴り広げるターン制バトル！</p></div></a><a class="game-card" href="games/pulse-bloom.html"><img src="assets/images/ogp/games-pulse-bloom.jpg" alt="Pulse Bloom" loading="lazy"><div><h3>Pulse Bloom</h3><p>同じ色をつなげて花を咲かせる爽快パズル！</p></div></a></div></section>
+    </div>
+  </main>
+  <footer class="site-footer"><div class="wrap footer-inner"><span class="footer-brand"><span class="brand-mark"><span>よし!<br>ラボ</span></span>よしラボ</span><span>© yoshiweb</span><span aria-hidden="true">✦ ✓</span></div></footer>
 </body>
 </html>
