@@ -25,3 +25,15 @@ test('タブはクリックと矢印キーで切り替えられる', () => {
   assert.match(html, /'ArrowLeft', 'ArrowRight', 'Home', 'End'/);
   assert.match(html, /panel\.dataset\.panel !== tab\.dataset\.panel/);
 });
+
+test('ペット向けの主要3ツールがトップに表示される', () => {
+  const heroEnd = html.indexOf('</section>', html.indexOf('<section class="hero">'));
+  const hero = html.slice(html.indexOf('<section class="hero">'), heroEnd);
+
+  assert.match(hero, /href="tools\/pet-welcome\/"/);
+  assert.match(hero, /href="tools\/pet-timeline\/"/);
+  assert.match(hero, /href="tools\/pet-end-of-life\/"/);
+  assert.match(hero, /迎え入れ準備/);
+  assert.match(hero, /成長カレンダー/);
+  assert.match(hero, /終活ノート/);
+});
