@@ -45,6 +45,11 @@ test('犬種一覧と猫種一覧が1つのガイドにまとまっている', (
   assert.match(guide, /href="tools\/pet-welcome\/breeds\/cat\/">猫種一覧/);
 });
 
+test('ヘッダーの犬・猫ガイドはページ内リンクになっている', () => {
+  assert.match(html, /<a href="#guide-title">犬・猫ガイド<\/a>/);
+  assert.match(html, /id="guide-title">犬・猫ガイド<\/h2>/);
+});
+
 test('ヒーロー見出しは意図した2行に分かれている', () => {
   assert.match(html, /<span class="hero-line">毎日の「ちょっと困った」を、<\/span>/);
   assert.match(html, /<span class="hero-line"><em>よし!<\/em>に変える。<\/span>/);
