@@ -52,3 +52,9 @@ test('用途カードと人気ツールに生成画像が組み込まれてい�
   assert.equal(new Set(popularImages).size, 4);
   assert.doesNotMatch(html, /class="q-icon"/);
 });
+
+test('人気ツールの画像領域と文字領域が分離されている', () => {
+  assert.match(html, /\.tool-visual\{[^}]*overflow:hidden/);
+  assert.match(html, /\.tool-body\{[^}]*z-index:2/);
+  assert.match(html, /\.tool-body\{[^}]*background:#fff/);
+});
