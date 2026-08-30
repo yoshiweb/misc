@@ -43,3 +43,12 @@ test('ヒーロー見出しは意図した2行に分かれている', () => {
   assert.match(html, /<span class="hero-line">毎日の「ちょっと困った」を、<\/span>/);
   assert.match(html, /<span class="hero-line"><em>よし!<\/em>に変える。<\/span>/);
 });
+
+test('用途カードと人気ツールに生成画像が組み込まれている', () => {
+  const quickImages = html.match(/assets\/images\/home\/quick\/[a-z-]+\.png/g) ?? [];
+  const popularImages = html.match(/assets\/images\/home\/popular-tools\/[a-z-]+\.png/g) ?? [];
+
+  assert.equal(new Set(quickImages).size, 4);
+  assert.equal(new Set(popularImages).size, 4);
+  assert.doesNotMatch(html, /class="q-icon"/);
+});
