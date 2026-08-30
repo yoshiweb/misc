@@ -50,6 +50,13 @@ test('ヘッダーの犬・猫ガイドはページ内リンクになってい�
   assert.match(html, /id="guide-title">犬・猫ガイド<\/h2>/);
 });
 
+test('画像・PDFと暮らしの用途カードは各カテゴリーへのページ内リンクになっている', () => {
+  assert.match(html, /class="quick-card blue" href="#category-media"/);
+  assert.match(html, /class="quick-card yellow" href="#category-life"/);
+  assert.match(html, /id="category-media">画像・PDF<\/h3>/);
+  assert.match(html, /id="category-life">暮らし<\/h3>/);
+});
+
 test('ヒーロー見出しは意図した2行に分かれている', () => {
   assert.match(html, /<span class="hero-line">毎日の「ちょっと困った」を、<\/span>/);
   assert.match(html, /<span class="hero-line"><em>よし!<\/em>に変える。<\/span>/);
