@@ -87,3 +87,11 @@ test('犬種・猫種リンクの矢印はフォントに依存せず中央表�
   assert.match(html, /\.breed-guide-link span::before\{[^}]*border-top:3px solid currentColor/);
   assert.match(html, /\.breed-guide-link span::before\{[^}]*transform:translateX\(-3px\) rotate\(45deg\)/);
 });
+
+test('フッターは著作権表記とサイトポリシーを左右に配置する', () => {
+  assert.match(html, /<span class="footer-copyright">Copyright © yoshiweb\.NET All Right Reserved\.<\/span>/);
+  assert.match(html, /href="https:\/\/yoshiweb\.net\/privacy-policy\.html">プライバシーポリシー<\/a>/);
+  assert.match(html, /href="https:\/\/yoshiweb\.net\/terms\.html">利用規約<\/a>/);
+  assert.match(html, /\.footer-legal\{[^}]*margin-left:auto/);
+  assert.match(html, /\.footer-legal\{[^}]*text-align:right/);
+});

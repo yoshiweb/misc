@@ -25,6 +25,8 @@
     @media(max-width:800px){.quick-grid{grid-template-columns:repeat(3,1fr)}}
     @media(max-width:560px){.quick-grid{grid-template-columns:1fr}.quick-card{display:flex}.quick-icon{margin:0}}
     .breed-guide-link span{font-size:0}.breed-guide-link span::before{content:"";width:8px;height:8px;border-top:3px solid currentColor;border-right:3px solid currentColor;transform:translateX(-3px) rotate(45deg)}
+    .footer-copyright{text-align:left}.footer-legal{margin-left:auto;display:flex;align-items:center;justify-content:flex-end;gap:9px;text-align:right}.footer-legal a:hover,.footer-legal a:focus-visible{color:var(--purple);text-decoration:underline;text-underline-offset:3px}.footer-legal-separator{color:#a5abba}
+    @media(max-width:560px){.footer-inner{align-items:stretch;flex-direction:column}.footer-legal{margin-left:0;justify-content:flex-end}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.tool-card{transition:none}}
   </style>
 </head>
@@ -40,6 +42,6 @@
       <section class="game-lab" id="games" aria-labelledby="games-title"><h2 id="games-title"><strong>🎮 GAME LAB</strong><br><small>ブラウザで遊べるオリジナルゲーム</small></h2><div class="game-grid"><a class="game-card" href="games/void-strike.html"><img src="games/assets/void-strike/key-visual.jpg" alt="VOID STRIKE" loading="lazy"><div><h3>VOID STRIKE</h3><p>迫り来る敵を撃ち落とす爽快シューティング！</p></div></a><a class="game-card" href="games/retro-clash.html"><img src="games/assets/retro-clash/key-visual.png" alt="Retro Clash" loading="lazy"><div><h3>Retro Clash</h3><p>ドットの世界で殴り広げるターン制バトル！</p></div></a><a class="game-card" href="games/pulse-bloom.html"><img src="assets/images/ogp/games-pulse-bloom.jpg" alt="Pulse Bloom" loading="lazy"><div><h3>Pulse Bloom</h3><p>同じ色をつなげて花を咲かせる爽快パズル！</p></div></a></div></section>
     </div>
   </main>
-  <footer class="site-footer"><div class="wrap footer-inner"><span class="footer-brand"><span class="brand-mark"><span>よし!<br>ラボ</span></span>よしラボ</span><span>© yoshiweb</span><span aria-hidden="true">✦ ✓</span></div></footer>
+  <footer class="site-footer"><div class="wrap footer-inner"><span class="footer-copyright">Copyright © yoshiweb.NET All Right Reserved.</span><nav class="footer-legal" aria-label="サイトポリシー"><a href="https://yoshiweb.net/privacy-policy.html">プライバシーポリシー</a><span class="footer-legal-separator" aria-hidden="true">/</span><a href="https://yoshiweb.net/terms.html">利用規約</a></nav></div></footer>
 </body>
 </html>
