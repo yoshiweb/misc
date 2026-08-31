@@ -20,16 +20,18 @@ test('もっと見るは4カテゴリーを常時表示する', () => {
   assert.doesNotMatch(more, /\shidden(?:\s|>)/);
 });
 
-test('ペット向けの主要3ツールが犬・猫ガイド内に表示される', () => {
+test('ペット向けの主要4ツールが犬・猫ガイド内に表示される', () => {
   const guideStart = html.indexOf('<section class="guide-section"');
   const guideEnd = html.indexOf('</section>', guideStart);
   const guide = html.slice(guideStart, guideEnd);
 
   assert.match(guide, /href="tools\/pet-welcome\/"/);
   assert.match(guide, /href="tools\/pet-timeline\/"/);
+  assert.match(guide, /href="tools\/pet-disaster\/"/);
   assert.match(guide, /href="tools\/pet-end-of-life\/"/);
   assert.match(guide, /welcome-preparation\.png/);
   assert.match(guide, /growth-calendar\.png/);
+  assert.match(guide, /emergency-stockpile\.png/);
   assert.match(guide, /end-of-life-notebook\.png/);
 });
 
