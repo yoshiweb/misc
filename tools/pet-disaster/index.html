@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-W2L9NES4NJ"></script>
+    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-W2L9NES4NJ');</script>
+    <title>ペット防災・同行避難プランナー｜犬・猫の備蓄と避難準備</title>
+    <meta name="description" content="犬・猫のフードと水の備蓄量を計算し、同行避難先・連絡先・持ち出し品を1枚にまとめられる無料ツール。入力内容は端末内だけに保存されます。">
+    <link rel="canonical" href="https://misc.yoshiweb.net/tools/pet-disaster/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="よしラボ">
+    <meta property="og:title" content="ペット防災・同行避難プランナー">
+    <meta property="og:description" content="うちの子と避難する準備を、今できることから。">
+    <meta property="og:url" content="https://misc.yoshiweb.net/tools/pet-disaster/">
+    <meta property="og:locale" content="ja_JP">
+    <meta property="og:image" content="https://misc.yoshiweb.net/assets/images/ogp/tools-pet-disaster-home.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="犬と猫のための防災用品と同行避難チェックリスト">
+    <meta name="twitter:card" content="summary_large_image">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="../../assets/seo-schema.js" defer></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+        :root{--ink:#24362e;--muted:#65756d;--sage:#4f715e;--sage-light:#edf6f0;--clay:#b96843;--cream:#fbf7ed;--line:#dce6df;--indigo:#4338a8}
+        *{box-sizing:border-box}body{margin:0;color:var(--ink);background:radial-gradient(circle at 5% 0%,#eef7f0 0,transparent 32rem),#f7f8f6;font-family:'Noto Sans JP',sans-serif;line-height:1.7}button,input,select,textarea{font:inherit}.shell{width:min(1080px,calc(100% - 32px));margin:auto}.related-nav{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;padding-top:18px}.nav-pill{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:7px 12px;border:1px solid #dbe4df;border-radius:999px;background:#fff;color:#53645b;font-size:.78rem;font-weight:700;text-decoration:none}.nav-pill.current{border-color:#a6c9b4;background:var(--sage-light);color:#365342}.nav-pill:focus-visible,.focus-ring:focus-visible{outline:3px solid #c4bff8;outline-offset:2px}.intro{display:grid;grid-template-columns:minmax(0,1fr) 260px;align-items:center;gap:28px;padding:28px 0 22px}.eyebrow{margin:0 0 7px;color:var(--clay);font-size:.74rem;font-weight:700;letter-spacing:.1em}.intro h1{margin:0;font-size:clamp(1.85rem,4vw,2.55rem);line-height:1.35}.intro h1 span{color:var(--sage)}.intro p{max-width:660px;margin:12px 0 0;color:var(--muted);font-size:.94rem}.intro img{width:260px;height:164px;border-radius:24px;object-fit:cover;box-shadow:0 14px 32px rgba(53,77,63,.13)}.privacy-note{display:flex;align-items:flex-start;gap:10px;margin-top:16px;padding:11px 14px;border:1px solid #d8e8dc;border-radius:13px;background:#f1f8f3;color:#456153;font-size:.78rem}.layout{display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);gap:20px;align-items:start}.panel{border:1px solid var(--line);border-radius:20px;background:#fff;box-shadow:0 9px 25px rgba(66,82,72,.06)}.panel-head{padding:19px 21px 15px;border-bottom:1px solid #edf1ee}.panel-head p{margin:2px 0 0;color:var(--muted);font-size:.78rem}.panel h2{margin:0;font-size:1.16rem}.panel-body{padding:20px}.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.field{display:block}.field.wide{grid-column:1/-1}.field span,.field-label{display:block;margin-bottom:5px;color:#4b5c53;font-size:.78rem;font-weight:700}.control{width:100%;min-height:44px;padding:10px 12px;border:1px solid #ccd8d0;border-radius:11px;background:#fff;color:var(--ink);outline:none}.control:focus{border-color:#7ba089;box-shadow:0 0 0 3px #dcebe1}.helper{display:block!important;margin:5px 0 0!important;color:#84918a!important;font-size:.68rem!important;font-weight:400!important}.result-strip{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:17px}.result-card{padding:15px;border:1px solid #dce7df;border-radius:15px;background:#f7fbf8}.result-card span{display:flex;align-items:center;gap:7px;color:#577064;font-size:.74rem;font-weight:700}.result-card strong{display:block;margin-top:4px;color:var(--indigo);font-size:1.45rem;line-height:1.25}.result-card small{display:block;margin-top:4px;color:#78867e;font-size:.67rem;line-height:1.5}.progress-line{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px}.progress-line strong{font-size:.87rem}.progress-line span{color:var(--muted);font-size:.74rem;font-weight:700}.progress-track{height:8px;overflow:hidden;border-radius:99px;background:#e9eeeb}.progress-bar{height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,var(--sage),#65a37d);transition:width .2s}.checklist{display:grid;gap:8px;margin-top:16px}.check-row{display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start;padding:11px 12px;border:1px solid #e1e8e3;border-radius:12px;background:#fff;cursor:pointer}.check-row:hover{background:#f8fbf9}.check-row input{width:19px;height:19px;margin:2px 0 0;accent-color:var(--sage)}.check-row strong{display:block;font-size:.81rem;line-height:1.45}.check-row small{display:block;margin-top:2px;color:#79877f;font-size:.69rem;line-height:1.55}.action-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.primary-btn,.secondary-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:10px 17px;border-radius:12px;font-size:.83rem;font-weight:700;cursor:pointer}.primary-btn{border:1px solid var(--sage);background:var(--sage);color:#fff}.primary-btn:hover{background:#3f5e4c}.secondary-btn{border:1px solid #d4ddd7;background:#fff;color:#5b6861}.secondary-btn:hover{background:#f4f6f4}.lower-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}.source-card{padding:21px}.source-card h2{display:flex;align-items:center;gap:8px}.source-card p,.source-card li{color:var(--muted);font-size:.78rem}.source-card a{color:#4b43a8;font-weight:700;text-underline-offset:3px}.source-card ul{padding-left:1.2rem}.note-box{margin-top:13px;padding:12px 14px;border-radius:12px;background:var(--cream);color:#705844!important}.site-footer{padding:28px 0 34px;text-align:center;color:#8a958f;font-size:.72rem}.print-only{display:none}
+        @media(max-width:760px){.related-nav{justify-content:flex-start}.intro{grid-template-columns:1fr}.intro img{width:100%;height:190px}.layout,.lower-grid{grid-template-columns:1fr}.field-grid{grid-template-columns:1fr}.field.wide{grid-column:auto}.panel-body{padding:16px}.result-strip{grid-template-columns:1fr}.intro h1{font-size:1.75rem}}
+        @media(prefers-reduced-motion:reduce){.progress-bar{transition:none}}
+        @media print{body{background:#fff}.no-print{display:none!important}.print-only{display:block}.shell{width:100%}#printable-plan{padding:0;color:#111}#printable-plan h2{margin:0 0 4px;font-size:22px}#printable-plan>p{margin:0 0 18px;color:#555}#printable-plan h3{margin:17px 0 7px;padding-bottom:4px;border-bottom:1px solid #999;font-size:14px}#printable-plan dl{display:grid;grid-template-columns:120px 1fr;margin:0;font-size:12px}#printable-plan dt,#printable-plan dd{margin:0;padding:5px;border-bottom:1px solid #ddd}#printable-plan dt{font-weight:700}#printable-plan ul{display:grid;grid-template-columns:1fr 1fr;gap:3px 20px;padding:0;list-style:none;font-size:11px}}
+    </style>
+</head>
+<body>
+    <div class="shell no-print">
+        <nav class="related-nav" aria-label="ペット関連ページ">
+            <a class="nav-pill" href="../pet-welcome/"><i data-lucide="house" class="w-4 h-4"></i>迎え入れ準備</a>
+            <a class="nav-pill" href="../pet-timeline/"><i data-lucide="calendar-heart" class="w-4 h-4"></i>成長カレンダー</a>
+            <a class="nav-pill current" href="../pet-disaster/" aria-current="page"><i data-lucide="shield-check" class="w-4 h-4"></i>防災・同行避難</a>
+            <a class="nav-pill" href="../pet-end-of-life/"><i data-lucide="heart-handshake" class="w-4 h-4"></i>終活ノート</a>
+            <a class="nav-pill" href="../disaster-stockpile/"><i data-lucide="backpack" class="w-4 h-4"></i>家族の防災備蓄</a>
+        </nav>
+        <header class="intro">
+            <div><p class="eyebrow">PET EMERGENCY PLAN</p><h1>ペット防災・<span>同行避難プランナー</span></h1><p>うちの子のフードと水の備蓄量、避難先、連絡先、持ち出し品をひとつに整理。印刷して家族と共有できます。</p><div class="privacy-note"><i data-lucide="lock-keyhole" class="w-4 h-4"></i><span>入力内容はこの端末のブラウザ内だけに保存され、サーバーには送信されません。</span></div></div>
+            <img src="../../assets/images/pet-calendar-hero.jpg" alt="寄り添う犬と猫" width="520" height="328">
+        </header>
+        <main>
+            <form id="planner-form" class="layout" onsubmit="return false">
+                <div class="panel">
+                    <div class="panel-head"><h2>1. うちの子と備蓄量</h2><p>普段食べている量を基準に、必要量を計算します。</p></div>
+                    <div class="panel-body field-grid">
+                        <label class="field"><span>名前</span><input class="control" data-field="petName" autocomplete="off" placeholder="例：ポチ"></label>
+                        <label class="field"><span>種類</span><select class="control" data-field="species"><option value="dog">犬</option><option value="cat">猫</option></select></label>
+                        <label class="field"><span>備蓄する日数</span><select class="control" data-field="days"><option value="3">3日分</option><option value="5">5日分</option><option value="7">7日分</option><option value="10">10日分</option><option value="14">14日分</option></select><small class="helper">地域や健康状態に合わせて余裕を持たせてください。</small></label>
+                        <label class="field"><span>フードの1日量（g）</span><input class="control" data-field="dailyFood" type="number" min="0" max="10000" inputmode="numeric" placeholder="例：180"><small class="helper">パッケージや獣医師の指示を確認してください。</small></label>
+                        <label class="field"><span>水の1日量（mL）</span><input class="control" data-field="dailyWater" type="number" min="0" max="10000" inputmode="numeric" placeholder="例：500"><small class="helper">普段の飲水量を目安にしてください。</small></label>
+                        <label class="field wide"><span>薬・療法食・ケア方法</span><textarea class="control" data-field="medication" rows="3" placeholder="薬の名前、回数、保管方法など"></textarea></label>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-head"><h2>必要量と準備チェック</h2><p>数字を確認したら、手元にあるものをチェックします。</p></div>
+                    <div class="panel-body">
+                        <div class="result-strip" aria-live="polite">
+                            <div class="result-card"><span><i data-lucide="utensils" class="w-4 h-4"></i>フード</span><strong id="food-result">1日量を入力</strong><small id="food-formula"></small></div>
+                            <div class="result-card"><span><i data-lucide="droplets" class="w-4 h-4"></i>水</span><strong id="water-result">1日量を入力</strong><small id="water-formula"></small></div>
+                        </div>
+                        <div class="progress-line"><strong>持ち出し・避難準備</strong><span id="progress-text">0項目を確認</span></div>
+                        <div class="progress-track" aria-hidden="true"><div id="progress-bar" class="progress-bar"></div></div>
+                        <div id="checklist" class="checklist"></div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-head"><h2>2. 連絡先カード</h2><p>緊急時に家族や支援者へ渡せる情報をまとめます。</p></div>
+                    <div class="panel-body field-grid">
+                        <label class="field"><span>飼い主の名前</span><input class="control" data-field="ownerName" autocomplete="name"></label>
+                        <label class="field"><span>電話番号</span><input class="control" data-field="ownerPhone" type="tel" autocomplete="tel"></label>
+                        <label class="field"><span>かかりつけ動物病院</span><input class="control" data-field="veterinarian"></label>
+                        <label class="field"><span>病院の電話番号</span><input class="control" data-field="veterinarianPhone" type="tel"></label>
+                        <label class="field"><span>緊急連絡先</span><input class="control" data-field="emergencyContact" placeholder="名前・電話番号"></label>
+                        <label class="field"><span>マイクロチップ番号</span><input class="control" data-field="microchip" inputmode="numeric"></label>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-head"><h2>3. 避難先とルート</h2><p>同行避難の条件は、施設や自治体へ直接確認してください。</p></div>
+                    <div class="panel-body field-grid">
+                        <label class="field"><span>第1候補</span><input class="control" data-field="primaryShelter" placeholder="避難所・知人宅など"></label>
+                        <label class="field"><span>第2候補</span><input class="control" data-field="backupShelter" placeholder="別ルートの候補も"></label>
+                        <label class="field wide"><span>家族の集合場所</span><input class="control" data-field="meetingPlace"></label>
+                        <label class="field wide"><span>避難ルート・注意点</span><textarea class="control" data-field="routeNotes" rows="4" placeholder="危険な道路、キャリーの保管場所、鍵の位置など"></textarea></label>
+                        <div class="field wide action-row"><button id="print-plan" type="button" class="primary-btn focus-ring"><i data-lucide="printer" class="w-4 h-4"></i>避難プランを印刷・PDF保存</button><button id="reset-plan" type="button" class="secondary-btn focus-ring"><i data-lucide="rotate-ccw" class="w-4 h-4"></i>すべてリセット</button></div>
+                    </div>
+                </div>
+            </form>
+            <div class="lower-grid">
+                <section class="panel source-card"><h2><i data-lucide="book-open-check" class="w-5 h-5"></i>準備の根拠</h2><p>環境省は、ペット用の水・食料・常備薬、避難用品、避難ルート、一時預け先などを平時から準備するよう案内しています。</p><ul><li><a href="https://www.env.go.jp/nature/dobutsu/aigo/1_law/disaster.html" target="_blank" rel="noopener noreferrer">環境省「ペットの災害対策」</a></li><li><a href="https://www.env.go.jp/nature/dobutsu/aigo/2_data/pamph/h3009a.html" target="_blank" rel="noopener noreferrer">人とペットの災害対策ガイドライン</a></li></ul></section>
+                <section class="panel source-card"><h2><i data-lucide="triangle-alert" class="w-5 h-5"></i>知っておきたいこと</h2><p>「同行避難」は、飼い主とペットが同じ場所で過ごせることを必ずしも意味しません。避難所ごとに受入条件が異なるため、事前確認と複数の候補が大切です。</p><p class="note-box">表示量は入力した普段の1日量を単純計算した目安です。病気・年齢・気温などで必要量は変わります。薬、療法食、飲水量は獣医師へ相談してください。</p></section>
+            </div>
+        </main>
+        <footer class="site-footer">このツールは避難計画の整理を支援するもので、自治体や獣医師の判断に代わるものではありません。</footer>
+    </div>
+    <section id="printable-plan" class="print-only" aria-label="印刷用同行避難プラン"></section>
+    <script src="planner.js"></script>
+</body>
+</html>
